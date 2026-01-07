@@ -45,7 +45,7 @@ export default function Home() {
         {/* Left Column: Summary / Actions (Span 4) */}
         <div className="md:col-span-5 flex flex-col gap-6">
            <div className="glass-card flex flex-col items-center justify-center text-center py-10 relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
               
               <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center shadow-lg shadow-blue-500/20 mb-6 rotate-3 group-hover:rotate-6 transition-transform">
                  <Calendar className="text-white w-10 h-10" />
@@ -59,7 +59,10 @@ export default function Home() {
               </p>
 
               <button 
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => {
+                  console.log('Open modal clicked');
+                  setIsModalOpen(true);
+                }}
                 className="btn-primary w-full max-w-[200px] flex items-center justify-center gap-2"
               >
                 <Plus size={20} />

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Recipe } from '@/types';
 import { Minus, Plus, Utensils, X, Save, Scale as ScaleIcon, Calculator, Edit, Trash2, ChevronRight } from 'lucide-react';
 import clsx from 'clsx';
+import { useImmersiveMode } from '@/hooks/useImmersiveMode';
 
 interface RecipeCalculatorProps {
   recipe: Recipe;
@@ -23,26 +24,7 @@ export default function RecipeCalculator({ recipe, onClose, onDelete, onAdd, onE
   const [targetAmount, setTargetAmount] = useState<string>('');
 
   // ✨ 自動隱藏導航列 (Immersive Mode)
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    const navbar = document.querySelector('nav') || document.querySelector('header');
-    
-    if (navbar) {
-      const originalTransition = navbar.style.transition;
-      navbar.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-      navbar.style.transform = 'translateY(-100%)';
-      
-      return () => {
-        document.body.style.overflow = 'unset';
-        navbar.style.transform = 'translateY(0)';
-        setTimeout(() => {
-            navbar.style.transition = originalTransition;
-        }, 400);
-      };
-    } else {
-        return () => { document.body.style.overflow = 'unset'; };
-    }
-  }, []);
+  useImmersiveMode(true);
 
   const handleServingsChange = (newServings: number) => {
     if (newServings < 0.1) return;
@@ -292,7 +274,7 @@ export default function RecipeCalculator({ recipe, onClose, onDelete, onAdd, onE
 
   return (
     // 外層容器 (高 z-index)
-    <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 md:p-6 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-6 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200">
         {/* 手機版顯示 MobileLayout */}
         <div className="md:hidden w-full max-w-lg">
             <MobileLayout />

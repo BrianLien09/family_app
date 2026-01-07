@@ -5,34 +5,60 @@ import { useDates } from '@/hooks/useDates';
 import DateCard from '@/components/DateManager/DateCard';
 import AddDateModal from '@/components/DateManager/AddDateModal';
 import { Plus, Calendar, Sparkles, ListChecks, Clock } from 'lucide-react';
-import { CATEGORIES, DateCategory } from '@/types';
+import { CATEGORIES, DateCategory, DateItem } from '@/types';
 import Login from '@/components/Login';
 import clsx from 'clsx';
+import { useImmersiveMode } from '@/hooks/useImmersiveMode';
 
 export default function Home() {
-  const { dates, addDate, deleteDate, isLoaded } = useDates();
+  const { dates, addDate, deleteDate, updateDate, isLoaded } = useDates();
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingDate, setEditingDate] = useState<DateItem | null>(null);
+  
   const [filter, setFilter] = useState<DateCategory | '全部'>('全部');
 
   const upcomingDates = useMemo(() => {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     
-    // Sort logic inside
     return dates
       .filter(d => new Date(d.date).getTime() >= todayStart && (filter === '全部' || d.category === filter))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [dates, filter]);
 
+  // 開啟新增視窗
+  const handleOpenAdd = () => {
+    setEditingDate(null);
+    setIsModalOpen(true);
+  };
+
+  // 開啟編輯視窗
+  const handleOpenEdit = (dateItem: DateItem) => {
+    setEditingDate(dateItem);
+    setIsModalOpen(true);
+  };
+
+  // 統一處理送出
+  const handleModalSubmit = (data: any) => {
+    if (editingDate) {
+      updateDate(editingDate.id, data);
+    } else {
+      addDate(data);
+    }
+    setIsModalOpen(false);
+    setEditingDate(null);
+  };
+
   if (!isLoaded) return <div className="min-h-screen flex items-center justify-center text-slate-500">載入中...</div>;
 
   return (
-    // Added pt-28 to prevent navbar overlap (Navbar is ~70px)
-    <div className="container mx-auto px-4 py-8 pt-28 max-w-5xl">
+    // ✨ 修改 1: pt-28 -> pt-20 (減少頂部間距)
+    <div className="container mx-auto px-4 py-8 pt-20 max-w-5xl">
       
       {/* Hero Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10 mt-4">
-        {/* 左側標題 */}
+      {/* ✨ 修改 2: 移除 mt-4, mb-10 -> mb-8 (減少標題區塊的上下間距) */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div className="space-y-1">
           <h1 className="text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 drop-shadow-sm">
              歡迎回來，饅頭perfect！
@@ -42,8 +68,6 @@ export default function Home() {
              今天也是充滿活力的一天
           </p>
         </div>
-
-        {/* 右側登入按鈕 (新增這塊) */}
         <div className="shrink-0">
           <Login />
         </div>
@@ -51,35 +75,31 @@ export default function Home() {
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
         
-        {/* Left Column: Summary / Actions (Span 4) */}
+        {/* Left Column: Summary / Actions */}
         <div className="md:col-span-5 flex flex-col gap-6">
            <div className="glass-card flex flex-col items-center justify-center text-center py-10 relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-              
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center shadow-lg shadow-blue-500/20 mb-6 rotate-3 group-hover:rotate-6 transition-transform">
+             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+             
+             <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center shadow-lg shadow-blue-500/20 mb-6 rotate-3 group-hover:rotate-6 transition-transform">
                  <Calendar className="text-white w-10 h-10" />
-              </div>
-              
-              <h2 className="text-3xl font-bold text-white mb-1">
+             </div>
+             
+             <h2 className="text-3xl font-bold text-white mb-1">
                  {new Date().getDate()}
-              </h2>
-              <p className="text-blue-200 uppercase tracking-widest text-xs font-semibold mb-6">
+             </h2>
+             <p className="text-blue-200 uppercase tracking-widest text-xs font-semibold mb-6">
                  {new Date().toLocaleString('zh-TW', { month: 'long' })}
-              </p>
+             </p>
 
-              <button 
-                onClick={() => {
-                  console.log('Open modal clicked');
-                  setIsModalOpen(true);
-                }}
-                className="btn-primary w-full max-w-[200px] flex items-center justify-center gap-2"
-              >
-                <Plus size={20} />
-                新增行程
-              </button>
+             <button 
+               onClick={handleOpenAdd}
+               className="btn-primary w-full max-w-[200px] flex items-center justify-center gap-2"
+             >
+               <Plus size={20} />
+               新增行程
+             </button>
            </div>
 
-           {/* Quick Stats or Quote (Optional) */}
            {/* Quick Stats */}
            <div className="glass-card p-5 grid grid-cols-2 divide-x divide-white/10">
               <div className="relative flex flex-col items-center justify-center text-center px-4 py-2 group overflow-hidden">
@@ -100,7 +120,7 @@ export default function Home() {
            </div>
         </div>
 
-        {/* Right Column: Upcoming List (Span 8) */}
+        {/* Right Column: Upcoming List */}
         <div className="md:col-span-7">
            <div className="glass-card h-full min-h-[500px]">
               <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 overflow-hidden">
@@ -109,7 +129,7 @@ export default function Home() {
                     即將到來的活動
                  </h3>
                  
-                 {/* Filter Pills with Horizontal Scroll */}
+                 {/* Filter Pills */}
                  <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto custom-scrollbar scroll-smooth">
                     <button 
                       onClick={() => setFilter('全部')}
@@ -138,7 +158,12 @@ export default function Home() {
               <div className="space-y-3">
                  {upcomingDates.length > 0 ? (
                    upcomingDates.map(item => (
-                     <DateCard key={item.id} item={item} onDelete={deleteDate} />
+                     <DateCard 
+                       key={item.id} 
+                       item={item} 
+                       onDelete={deleteDate}
+                       onEdit={() => handleOpenEdit(item)}
+                     />
                    ))
                  ) : (
                    <div className="flex flex-col items-center justify-center h-64 text-slate-500">
@@ -154,7 +179,8 @@ export default function Home() {
       <AddDateModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        onAdd={addDate} 
+        onSubmit={handleModalSubmit}
+        initialData={editingDate}
       />
     </div>
   );

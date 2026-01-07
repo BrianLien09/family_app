@@ -1,25 +1,53 @@
 'use client';
 
-import { useState } from 'react';
-import { X, Calendar, Type, Hash, AlignLeft } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Type, Calendar, Clock, AlignLeft, Hash, Check } from 'lucide-react';
 import { DateItem, CATEGORIES, DateCategory } from '@/types';
+import clsx from 'clsx';
+import { useImmersiveMode } from '@/hooks/useImmersiveMode';
 
 interface AddDateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (item: DateItem) => void;
+  onSubmit: (data: any) => void;
+  initialData?: DateItem | null;
 }
 
-export default function AddDateModal({ isOpen, onClose, onAdd }: AddDateModalProps) {
+export default function AddDateModal({ isOpen, onClose, onSubmit, initialData }: AddDateModalProps) {
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [category, setCategory] = useState<DateCategory>('其它');
   const [description, setDescription] = useState('');
+  useImmersiveMode(isOpen);
+
+  // 1. 自動填入資料的 Effect (保持原本邏輯)
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        setTitle(initialData.title);
+        setDate(initialData.date);
+        setTime(initialData.time || '');
+        setCategory(initialData.category || '其它');
+        setDescription(initialData.description || '');
+      } else {
+        const today = new Date().toISOString().split('T')[0];
+        const now = new Date().toTimeString().slice(0, 5);
+        setTitle('');
+        setDate(today);
+        setTime(now);
+        setCategory('其它');
+        setDescription('');
+      }
+    }
+  }, [isOpen, initialData]);
+
+
 
   if (!isOpen) return null;
 
-  const handleManualSubmit = () => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     if (!title.trim()) {
       alert('請輸入行程標題！');
       return;
@@ -29,121 +57,134 @@ export default function AddDateModal({ isOpen, onClose, onAdd }: AddDateModalPro
       return;
     }
 
-    try {
-      onAdd({
-        id: Date.now().toString(),
-        title,
-        date,
-        time,
-        category,
-        description
-      });
-      
-      // Reset and close
-      setTitle('');
-      setDate('');
-      setTime('');
-      setCategory('其它');
-      setDescription('');
-      onClose();
-    } catch (error) {
-       console.error(error);
-       alert('新增失敗，請稍後再試。');
-    }
+    onSubmit({
+      title,
+      date,
+      time,
+      category,
+      description
+    });
+    onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="glass-card w-full max-w-md p-0 overflow-hidden shadow-2xl animate-scale-in border border-white/10 bg-[#1a1d2d]">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+      {/* 卡片本體：保持你喜歡的深色實心簡潔風格 */}
+      <div className="w-full max-w-md bg-[#161b2c] border border-slate-700 shadow-2xl rounded-xl overflow-hidden flex flex-col animate-scale-in">
         
         {/* Header */}
-        <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
-           <h2 className="text-xl font-bold text-white flex items-center gap-2">
-             <div className="w-1 h-5 bg-gradient-to-b from-blue-500 to-purple-500 rounded-full"></div>
-             新增行程
+        <div className="flex items-center justify-between p-6 pb-2">
+           <h2 className="text-xl font-bold text-white flex items-center gap-3">
+             <span className="w-1 h-6 bg-purple-500 rounded-full"></span>
+             {initialData ? '編輯行程' : '新增行程'}
            </h2>
            <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
-             <X size={20} />
+             <X size={24} />
            </button>
         </div>
 
-        <div className="p-6 space-y-5">
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
           
-          <div className="space-y-4">
-             <div className="relative">
-                <Type className="absolute left-3 top-3 text-slate-500" size={18} />
+          {/* Title */}
+          <div className="group relative">
+             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors">
+                <Type size={18} />
+             </div>
+             <input 
+               required
+               autoFocus
+               className="w-full bg-[#1e2336] border border-slate-700 rounded-lg pl-12 pr-4 py-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-purple-500 transition-all text-base"
+               placeholder="行程標題 (例如：阿弟排班)"
+               value={title}
+               onChange={e => setTitle(e.target.value)}
+             />
+          </div>
+
+          {/* Date & Time */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+             <div className="group relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors">
+                   <Calendar size={18} />
+                </div>
                 <input 
-                  autoFocus
-                  className="glass-input pl-10"
-                  placeholder="行程標題 (例如：阿弟排班)" 
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
+                  type="date"
+                  required
+                  className="w-full bg-[#1e2336] border border-slate-700 rounded-lg pl-12 pr-4 py-3.5 text-white focus:outline-none focus:border-purple-500 transition-all [color-scheme:dark]"
+                  value={date}
+                  onChange={e => setDate(e.target.value)}
                 />
              </div>
-
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <div className="relative">
-                  <Calendar className="absolute left-3 top-3 text-slate-500" size={18} />
-                  <input 
-                    type="date"
-                    className="glass-input pl-10 text-slate-300 cursor-pointer" 
-                    value={date}
-                    onChange={e => setDate(e.target.value)}
-                  />
-               </div>
-               <div className="relative">
-                  <div className="absolute left-3 top-3 text-slate-500 pointer-events-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  </div>
-                  <input 
-                    type="time"
-                    className="glass-input pl-10 text-slate-300 cursor-pointer" 
-                    value={time}
-                    onChange={e => setTime(e.target.value)}
-                  />
-               </div>
-               <div className="relative col-span-2 md:col-span-1">
-                  <Hash className="absolute left-3 top-3 text-slate-500" size={18} />
-                  <select 
-                    className="glass-input pl-10 appearance-none text-slate-300 cursor-pointer"
-                    value={category}
-                    onChange={e => setCategory(e.target.value as DateCategory)}
-                  >
-                    {CATEGORIES.map(c => (
-                      <option key={c} value={c} className="bg-slate-800">{c}</option>
-                    ))}
-                  </select>
-               </div>
-             </div>
-
-             <div className="relative">
-                <AlignLeft className="absolute left-3 top-3 text-slate-500" size={18} />
-                <textarea 
-                  className="glass-input pl-10 min-h-[100px] resize-none"
-                  placeholder="備註 (選填)" 
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
+             <div className="group relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors">
+                   <Clock size={18} />
+                </div>
+                <input 
+                  type="time"
+                  className="w-full bg-[#1e2336] border border-slate-700 rounded-lg pl-12 pr-4 py-3.5 text-white focus:outline-none focus:border-purple-500 transition-all [color-scheme:dark]"
+                  value={time}
+                  onChange={e => setTime(e.target.value)}
                 />
              </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
-            <button 
-              type="button" 
-              onClick={onClose} 
-              className="px-6 py-2.5 rounded-xl text-slate-400 font-medium hover:text-white hover:bg-white/5 transition-all"
-            >
-              取消
-            </button>
-            <button 
-              type="button"
-              onClick={handleManualSubmit}
-              className="btn-primary py-2.5 px-8"
-            >
-              確認新增
-            </button>
+          {/* Category */}
+          <div className="space-y-2">
+             <div className="flex items-center gap-2 text-slate-400 mb-1">
+                <Hash size={14} />
+                <span className="text-xs font-bold uppercase tracking-wider">選擇分類</span>
+             </div>
+             <div className="flex flex-wrap gap-2">
+                {CATEGORIES.map(cat => (
+                   <button
+                     key={cat}
+                     type="button"
+                     onClick={() => setCategory(cat)}
+                     className={clsx(
+                       "px-4 py-2 rounded-lg text-sm font-medium transition-all border",
+                       category === cat 
+                         ? "bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-500/20" 
+                         : "bg-[#1e2336] border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200"
+                     )}
+                   >
+                     {cat}
+                   </button>
+                ))}
+             </div>
           </div>
-        </div>
+
+          {/* Description */}
+          <div className="group relative">
+             <div className="absolute left-4 top-4 text-slate-500 group-focus-within:text-purple-400 transition-colors">
+                <AlignLeft size={18} />
+             </div>
+             <textarea 
+               className="w-full bg-[#1e2336] border border-slate-700 rounded-lg pl-12 pr-4 py-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-purple-500 transition-all resize-none h-24"
+               placeholder="備註 (選填)"
+               value={description}
+               onChange={e => setDescription(e.target.value)}
+             />
+          </div>
+
+          {/* Footer Buttons */}
+          <div className="pt-2 flex justify-end gap-3">
+             <button 
+               type="button" 
+               onClick={onClose} 
+               className="px-6 py-3 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors font-medium"
+             >
+                取消
+             </button>
+             <button 
+               type="submit" 
+               className="px-8 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-lg shadow-purple-500/20 transition-all font-bold flex items-center gap-2"
+             >
+                <Check size={18} />
+                {initialData ? '確認修改' : '確認新增'}
+             </button>
+          </div>
+
+        </form>
       </div>
     </div>
   );

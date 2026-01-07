@@ -5,33 +5,31 @@ import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 
-// Simplified hook internal for now to avoid creating new file if possible, 
-// strictly we should separate, but let's inline simple logic or better, create hook.
-// Let's create the hook logic inline inside component for simplicity or create a new hook file if cleaner.
-// Actually, creating a hook file is better practice. Let's assume I'll create the hook next.
-
 export default function Navbar() {
   const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
 
+  // 🖱️ 滑動偵測邏輯
   useEffect(() => {
+    let lastScrollY = window.scrollY;
+
     const controlNavbar = () => {
-      if (typeof window !== 'undefined') { 
-        if (window.scrollY > lastScrollY && window.scrollY > 100) { // scrolling down
-          setIsVisible(false);
-        } else { // scrolling up
-          setIsVisible(true);
-        }
-        setLastScrollY(window.scrollY);
+      if (typeof window === 'undefined') return;
+      
+      const currentScrollY = window.scrollY;
+      
+      // 往下滑超過 100px 就隱藏，往上滑就顯示
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setIsVisible(false);
+      } else {
+        setIsVisible(true);
       }
+      lastScrollY = currentScrollY;
     };
 
-    window.addEventListener('scroll', controlNavbar);
-    return () => {
-      window.removeEventListener('scroll', controlNavbar);
-    };
-  }, [lastScrollY]);
+    window.addEventListener('scroll', controlNavbar, { passive: true });
+    return () => window.removeEventListener('scroll', controlNavbar);
+  }, []);
 
   const navItems = [
     { name: '總覽', href: '/' },
@@ -39,13 +37,14 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className={clsx(
-      "fixed top-0 left-0 w-full z-50 h-[70px] bg-[#0f111a]/95 backdrop-blur-md border-b border-[#232942] transition-transform duration-500",
-      !isVisible && "-translate-y-full"
-    )}>
+    <nav 
+      id="navbar" // 👈 重要：一定要有這個 ID
+      className={clsx(
+        "fixed top-0 left-0 w-full z-[40] h-[70px] bg-[#0f111a]/95 backdrop-blur-md border-b border-[#232942] transition-transform duration-500 ease-in-out",
+        !isVisible && "-translate-y-full" // 控制顯示/隱藏
+      )}
+    >
        <div className="container h-full flex items-center justify-between !max-w-7xl !py-0 px-4">
-          
-          {/* Logo Section */}
           <div className="flex items-center gap-3">
              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden shrink-0">
                 <span className="text-white text-xs font-bold">B</span>
@@ -58,7 +57,6 @@ export default function Navbar() {
              </span>
           </div>
 
-          {/* Links Section */}
           <div className="flex items-center gap-2 sm:gap-6">
             {navItems.map((item) => {
               const isActive = pathname === item.href;

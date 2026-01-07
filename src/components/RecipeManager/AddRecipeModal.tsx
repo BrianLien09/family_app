@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ChefHat, Plus, Trash2, X } from 'lucide-react';
 import { Recipe, RecipeIngredient } from '@/types';
+import { useImmersiveMode } from '@/hooks/useImmersiveMode';
 
 interface AddRecipeModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ export default function AddRecipeModal({ isOpen, onClose, onSubmit, initialData 
   const [title, setTitle] = useState('');
   const [baseServings, setBaseServings] = useState(1);
   const [description, setDescription] = useState('');
+  useImmersiveMode(isOpen);
   
   const [ingredients, setIngredients] = useState<Omit<RecipeIngredient, 'id'>[]>([
       { name: '', amount: 0, unit: 'g' }

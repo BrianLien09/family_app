@@ -4,13 +4,14 @@ import {
   collection, 
   addDoc, 
   deleteDoc, 
+  updateDoc, // 👈 1. 新增引入這個
   doc, 
   onSnapshot, 
   query, 
   orderBy 
 } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth'; // 👈 新增這個
-import { db, auth } from '@/lib/firebase';         // 👈 記得引入 auth
+import { onAuthStateChanged } from 'firebase/auth';
+import { db, auth } from '@/lib/firebase';
 import { DateItem } from '@/types';
 
 export function useDates() {
@@ -20,18 +21,14 @@ export function useDates() {
   useEffect(() => {
     let unsubscribeSnapshot: (() => void) | null = null;
 
-    // 1. 監聽「登入狀態」改變
-    // 這是最重要的一步！Firebase 會自動告訴我們現在使用者登入沒
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      
-      // 先取消上一次的監聽 (避免重複訂閱)
       if (unsubscribeSnapshot) {
         unsubscribeSnapshot();
         unsubscribeSnapshot = null;
       }
 
       if (user) {
-        // ✅ 狀況 A：使用者已登入 -> 開始抓資料
+        // 使用 "schedules" 集合
         const q = query(collection(db, "schedules"), orderBy("date", "asc"));
         
         unsubscribeSnapshot = onSnapshot(q, 
@@ -42,21 +39,19 @@ export function useDates() {
             })) as DateItem[];
             
             setDates(datesData);
-            setIsLoaded(true); // 載入完成！
+            setIsLoaded(true);
           },
           (error) => {
             console.error("資料讀取失敗:", error);
-            setIsLoaded(true); // 就算失敗也要讓畫面出來
+            setIsLoaded(true);
           }
         );
       } else {
-        // ❌ 狀況 B：使用者沒登入 -> 清空資料，但顯示畫面
         setDates([]);
-        setIsLoaded(true); // 讓 Loading 消失，這樣才看得到登入按鈕！
+        setIsLoaded(true);
       }
     });
 
-    // 元件卸載時的清理工作
     return () => {
       unsubscribeAuth();
       if (unsubscribeSnapshot) unsubscribeSnapshot();
@@ -91,5 +86,21 @@ export function useDates() {
     }
   };
 
-  return { dates, addDate, deleteDate, isLoaded };
+  // 👇 2. 新增這個更新函式
+  const updateDate = async (id: string, updatedData: Partial<DateItem>) => {
+    if (!auth.currentUser) return;
+    try {
+      const dateRef = doc(db, "schedules", id);
+      await updateDoc(dateRef, {
+        ...updatedData,
+        // updatedAt: new Date() // 如果你想紀錄更新時間可以加這行
+      });
+    } catch (error) {
+      console.error("Error updating document: ", error);
+      alert("更新失敗");
+    }
+  };
+
+  // 👈 3. 記得把它匯出
+  return { dates, addDate, deleteDate, updateDate, isLoaded };
 }

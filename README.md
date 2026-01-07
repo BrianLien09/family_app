@@ -55,8 +55,7 @@
 1. **安裝依賴**
    ```bash
    npm install
-
-```
+   ```
 
 2. **設定環境變數**
 請在根目錄建立 `.env.local` 檔案，並填入你的 Firebase Config：

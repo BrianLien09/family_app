@@ -6,6 +6,7 @@ export interface DateItem {
   id: string;
   title: string;
   date: string; // YYYY-MM-DD
+  time?: string; // HH:mm
   category: DateCategory;
   description?: string;
 }

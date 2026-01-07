@@ -13,6 +13,7 @@ interface AddDateModalProps {
 export default function AddDateModal({ isOpen, onClose, onAdd }: AddDateModalProps) {
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
+  const [time, setTime] = useState('');
   const [category, setCategory] = useState<DateCategory>('其它');
   const [description, setDescription] = useState('');
 
@@ -33,6 +34,7 @@ export default function AddDateModal({ isOpen, onClose, onAdd }: AddDateModalPro
         id: Date.now().toString(),
         title,
         date,
+        time,
         category,
         description
       });
@@ -40,6 +42,7 @@ export default function AddDateModal({ isOpen, onClose, onAdd }: AddDateModalPro
       // Reset and close
       setTitle('');
       setDate('');
+      setTime('');
       setCategory('其它');
       setDescription('');
       onClose();
@@ -78,7 +81,7 @@ export default function AddDateModal({ isOpen, onClose, onAdd }: AddDateModalPro
                 />
              </div>
 
-             <div className="grid grid-cols-2 gap-4">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                <div className="relative">
                   <Calendar className="absolute left-3 top-3 text-slate-500" size={18} />
                   <input 
@@ -89,6 +92,17 @@ export default function AddDateModal({ isOpen, onClose, onAdd }: AddDateModalPro
                   />
                </div>
                <div className="relative">
+                  <div className="absolute left-3 top-3 text-slate-500 pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  </div>
+                  <input 
+                    type="time"
+                    className="glass-input pl-10 text-slate-300 cursor-pointer" 
+                    value={time}
+                    onChange={e => setTime(e.target.value)}
+                  />
+               </div>
+               <div className="relative col-span-2 md:col-span-1">
                   <Hash className="absolute left-3 top-3 text-slate-500" size={18} />
                   <select 
                     className="glass-input pl-10 appearance-none text-slate-300 cursor-pointer"

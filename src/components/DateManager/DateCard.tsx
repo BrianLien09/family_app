@@ -1,5 +1,5 @@
 import { DateItem } from '@/types';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Clock, Tag } from 'lucide-react';
 import clsx from 'clsx';
 
 interface DateCardProps {
@@ -25,18 +25,30 @@ export default function DateCard({ item, onDelete }: DateCardProps) {
 
        <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-             <h3 className="text-gray-200 font-medium truncate">{item.title}</h3>
+             <h3 className="text-white font-bold text-lg truncate tracking-wide">{item.title}</h3>
              
              {/* Tag - matching the "緊急" tag in image */}
              {isUrgent && (
-               <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold bg-white text-pink-500">
+               <span className="shrink-0 px-2 py-0.5 rounded textxs font-bold bg-pink-500 text-white animate-pulse">
                  緊急
                </span>
              )}
           </div>
-          <p className="text-gray-500 text-xs mt-0.5 font-mono">
-            {item.date} <span className="opacity-50 mx-1">|</span> {item.category}
-          </p>
+          <div className="flex flex-wrap items-center gap-3 mt-1.5">
+            <span className="flex items-center gap-1.5 text-blue-300 font-medium text-sm bg-blue-500/10 px-2 py-0.5 rounded-md">
+              <Clock size={14} />
+              {item.date} {item.time && <span className="text-white border-l border-blue-400/30 pl-1.5 ml-0.5">{item.time}</span>}
+            </span>
+            <span className="flex items-center gap-1.5 text-purple-300 font-medium text-sm bg-purple-500/10 px-2 py-0.5 rounded-md">
+              <Tag size={14} />
+              {item.category}
+            </span>
+          </div>
+          {item.description && (
+             <p className="text-slate-500 text-sm mt-2 line-clamp-2 border-l-2 border-slate-700 pl-2">
+               {item.description}
+             </p>
+          )}
        </div>
 
        <button 

@@ -87,30 +87,30 @@ export default function Home() {
         {/* Right Column: Upcoming List (Span 8) */}
         <div className="md:col-span-7">
            <div className="glass-card h-full min-h-[500px]">
-              <div className="flex items-center justify-between mb-6">
-                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
+              <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 overflow-hidden">
+                 <h3 className="text-xl font-bold text-white flex items-center gap-2 whitespace-nowrap shrink-0">
                     <div className="w-1.5 h-6 bg-pink-500 rounded-full"></div>
                     即將到來的活動
                  </h3>
                  
-                 {/* Simple Filter Pills */}
-                 <div className="flex gap-2">
+                 {/* Filter Pills with Horizontal Scroll */}
+                 <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto no-scrollbar scroll-smooth">
                     <button 
                       onClick={() => setFilter('全部')}
                       className={clsx(
-                        "text-xs px-3 py-1 rounded-full border transition-all",
-                        filter === '全部' ? "bg-white text-black border-white" : "border-white/20 text-slate-400 hover:border-white/50"
+                        "text-xs px-4 py-1.5 rounded-full border transition-all whitespace-nowrap shrink-0 font-medium",
+                        filter === '全部' ? "bg-white text-black border-white shadow-lg shadow-white/10" : "border-white/20 text-slate-400 hover:border-white/50 hover:bg-white/5"
                       )}
                     >
                       全部
                     </button>
-                    {CATEGORIES.slice(0, 2).map(c => (
+                    {CATEGORIES.map(c => (
                        <button
                          key={c} 
                          onClick={() => setFilter(c)}
                          className={clsx(
-                           "text-xs px-3 py-1 rounded-full border transition-all",
-                           filter === c ? "bg-white text-black border-white" : "border-white/20 text-slate-400 hover:border-white/50"
+                           "text-xs px-4 py-1.5 rounded-full border transition-all whitespace-nowrap shrink-0 font-medium",
+                           filter === c ? "bg-white text-black border-white shadow-lg shadow-white/10" : "border-white/20 text-slate-400 hover:border-white/50 hover:bg-white/5"
                          )}
                        >
                          {c}

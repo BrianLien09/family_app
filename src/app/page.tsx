@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { useDates } from '@/hooks/useDates';
 import DateCard from '@/components/DateManager/DateCard';
 import AddDateModal from '@/components/DateManager/AddDateModal';
-import { Plus, Calendar, Sparkles } from 'lucide-react';
+import { Plus, Calendar, Sparkles, ListChecks, Clock } from 'lucide-react';
 import { CATEGORIES, DateCategory } from '@/types';
 import Login from '@/components/Login';
 import clsx from 'clsx';
@@ -80,15 +80,22 @@ export default function Home() {
            </div>
 
            {/* Quick Stats or Quote (Optional) */}
-           <div className="glass-card p-6 flex items-center justify-between">
-              <div>
-                 <p className="text-slate-400 text-xs uppercase tracking-wider font-bold">即將到來</p>
-                 <p className="text-2xl font-bold text-white">{upcomingDates.length}</p>
+           {/* Quick Stats */}
+           <div className="glass-card p-5 grid grid-cols-2 divide-x divide-white/10">
+              <div className="relative flex flex-col items-center justify-center text-center px-4 py-2 group overflow-hidden">
+                 <Clock className="absolute right-0 -bottom-2 w-16 h-16 text-blue-500/5 -rotate-12 transition-transform group-hover:scale-110 pointer-events-none" />
+                 <p className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-br from-blue-400 to-purple-400 z-10 relative">
+                    {upcomingDates.length}
+                 </p>
+                 <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest -mt-1 z-10 relative">即將到來</p>
               </div>
-              <div className="h-10 w-[1px] bg-white/10"></div>
-              <div>
-                 <p className="text-slate-400 text-xs uppercase tracking-wider font-bold">總計</p>
-                 <p className="text-2xl font-bold text-white">{dates.length}</p>
+              
+              <div className="relative flex flex-col items-center justify-center text-center px-4 py-2 group overflow-hidden">
+                 <ListChecks className="absolute right-0 -bottom-2 w-16 h-16 text-pink-500/5 -rotate-12 transition-transform group-hover:scale-110 pointer-events-none" />
+                 <p className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-br from-pink-400 to-orange-400 z-10 relative">
+                    {dates.length}
+                 </p>
+                 <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest -mt-1 z-10 relative">總計</p>
               </div>
            </div>
         </div>

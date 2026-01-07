@@ -19,7 +19,7 @@ export default function DateCard({ item, onDelete }: DateCardProps) {
   const isUrgent = diffDays >= 0 && diffDays <= 3;
 
   return (
-    <div className="group relative flex items-start gap-4 p-3 rounded-lg hover:bg-white/5 transition-colors">
+    <div className="group relative flex items-start gap-4 p-3 rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 hover:border-white/20 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300">
        {/* Bullet Point */}
        <div className="mt-1.5 w-2 h-2 rounded-full shrink-0 bg-pink-500"></div>
 
@@ -35,7 +35,7 @@ export default function DateCard({ item, onDelete }: DateCardProps) {
              )}
           </div>
           <div className="flex flex-wrap items-center gap-3 mt-1.5">
-            <span className="flex items-center gap-1.5 text-blue-300 font-medium text-sm bg-blue-500/10 px-2 py-0.5 rounded-md">
+            <span className="flex items-center gap-1.5 text-blue-200 font-medium text-sm bg-blue-500/10 px-2 py-0.5 rounded-md">
               <Clock size={14} />
               {item.date} {item.time && <span className="text-white border-l border-blue-400/30 pl-1.5 ml-0.5">{item.time}</span>}
             </span>

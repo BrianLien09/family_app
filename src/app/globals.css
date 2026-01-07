@@ -13,9 +13,16 @@
   }
   body {
     @apply bg-[#0f111a] text-white min-h-screen relative overflow-x-hidden;
-    background-image: 
-        radial-gradient(circle at 15% 50%, rgba(76, 29, 149, 0.15), transparent 40%),
-        radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.1), transparent 40%);
+    background-image: radial-gradient(
+        circle at 15% 50%,
+        rgba(76, 29, 149, 0.15),
+        transparent 40%
+      ),
+      radial-gradient(
+        circle at 85% 30%,
+        rgba(236, 72, 153, 0.1),
+        transparent 40%
+      );
   }
 }
 
@@ -24,7 +31,7 @@
   .glass-card {
     @apply bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 shadow-xl;
   }
-  
+
   .glass-input {
     @apply w-full bg-white/5 border-b border-white/20 px-4 py-3 outline-none transition-all focus:border-purple-500 focus:bg-white/10 rounded-t-lg;
   }
@@ -61,4 +68,21 @@
 
 .animate-scale-in {
   animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    height: 4px;
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 100px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
+  }
 }

@@ -103,7 +103,7 @@ export default function Home() {
                  </h3>
                  
                  {/* Filter Pills with Horizontal Scroll */}
-                 <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto no-scrollbar scroll-smooth">
+                 <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto custom-scrollbar scroll-smooth">
                     <button 
                       onClick={() => setFilter('全部')}
                       className={clsx(

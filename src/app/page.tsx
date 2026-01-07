@@ -35,7 +35,7 @@ export default function Home() {
         {/* 左側標題 */}
         <div className="space-y-1">
           <h1 className="text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 drop-shadow-sm">
-             歡迎回來，家人們！
+             歡迎回來，饅頭perfect！
           </h1>
           <p className="text-slate-400 text-lg flex items-center gap-2">
              <Sparkles size={18} className="text-yellow-400" />

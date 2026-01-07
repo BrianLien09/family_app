@@ -6,6 +6,7 @@ import DateCard from '@/components/DateManager/DateCard';
 import AddDateModal from '@/components/DateManager/AddDateModal';
 import { Plus, Calendar, Sparkles } from 'lucide-react';
 import { CATEGORIES, DateCategory } from '@/types';
+import Login from '@/components/Login';
 import clsx from 'clsx';
 
 export default function Home() {
@@ -30,14 +31,22 @@ export default function Home() {
     <div className="container mx-auto px-4 py-8 pt-28 max-w-5xl">
       
       {/* Hero Header */}
-      <div className="text-left mb-10 mt-4 space-y-1">
-        <h1 className="text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 drop-shadow-sm">
-           歡迎回來，家人們！
-        </h1>
-        <p className="text-slate-400 text-lg flex items-center gap-2">
-           <Sparkles size={18} className="text-yellow-400" />
-           今天也是充滿活力的一天
-        </p>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10 mt-4">
+        {/* 左側標題 */}
+        <div className="space-y-1">
+          <h1 className="text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 drop-shadow-sm">
+             歡迎回來，家人們！
+          </h1>
+          <p className="text-slate-400 text-lg flex items-center gap-2">
+             <Sparkles size={18} className="text-yellow-400" />
+             今天也是充滿活力的一天
+          </p>
+        </div>
+
+        {/* 右側登入按鈕 (新增這塊) */}
+        <div className="shrink-0">
+          <Login />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8">

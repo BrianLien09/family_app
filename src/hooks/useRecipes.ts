@@ -5,6 +5,7 @@ import {
   collection, 
   addDoc, 
   deleteDoc, 
+  updateDoc,
   doc, 
   onSnapshot, 
   query,
@@ -98,5 +99,28 @@ export function useRecipes() {
     }
   };
 
-  return { recipes, addRecipe, deleteRecipe, isLoaded };
+  const updateRecipe = async (id: string, updatedFields: Partial<Recipe>) => {
+    if (!auth.currentUser) {
+      alert("請先登入才能修改食譜！");
+      return;
+    }
+
+    try {
+      // 找到該食譜的文件參考
+      const recipeRef = doc(db, "recipes", id);
+      
+      // 更新指定的欄位 (Firestore 會只更新你有傳進去的欄位，不會覆蓋整個文件)
+      await updateDoc(recipeRef, {
+        ...updatedFields,
+        // updatedBy: auth.currentUser.email, // 如果你想紀錄最後是誰改的，可以加這行
+        updatedAt: new Date() // 更新修改時間
+      });
+
+    } catch (error) {
+      console.error("Error updating recipe: ", error);
+      alert("更新失敗，請檢查權限");
+    }
+  };
+
+  return { recipes, addRecipe, deleteRecipe, updateRecipe, isLoaded }; // 👈 3. 記得把 updateRecipe 匯出
 }

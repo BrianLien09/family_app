@@ -1,66 +1,142 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client';
+
+import { useState, useMemo } from 'react';
+import { useDates } from '@/hooks/useDates';
+import DateCard from '@/components/DateManager/DateCard';
+import AddDateModal from '@/components/DateManager/AddDateModal';
+import { Plus, Calendar, Sparkles } from 'lucide-react';
+import { CATEGORIES, DateCategory } from '@/types';
+import clsx from 'clsx';
 
 export default function Home() {
+  const { dates, addDate, deleteDate, isLoaded } = useDates();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [filter, setFilter] = useState<DateCategory | '全部'>('全部');
+
+  const upcomingDates = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    
+    // Sort logic inside
+    return dates
+      .filter(d => new Date(d.date).getTime() >= todayStart && (filter === '全部' || d.category === filter))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [dates, filter]);
+
+  if (!isLoaded) return <div className="min-h-screen flex items-center justify-center text-slate-500">載入中...</div>;
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    // Added pt-28 to prevent navbar overlap (Navbar is ~70px)
+    <div className="container mx-auto px-4 py-8 pt-28 max-w-5xl">
+      
+      {/* Hero Header */}
+      <div className="text-left mb-10 mt-4 space-y-1">
+        <h1 className="text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 drop-shadow-sm">
+           歡迎回來，家人們！
+        </h1>
+        <p className="text-slate-400 text-lg flex items-center gap-2">
+           <Sparkles size={18} className="text-yellow-400" />
+           今天也是充滿活力的一天
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+        
+        {/* Left Column: Summary / Actions (Span 4) */}
+        <div className="md:col-span-5 flex flex-col gap-6">
+           <div className="glass-card flex flex-col items-center justify-center text-center py-10 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center shadow-lg shadow-blue-500/20 mb-6 rotate-3 group-hover:rotate-6 transition-transform">
+                 <Calendar className="text-white w-10 h-10" />
+              </div>
+              
+              <h2 className="text-3xl font-bold text-white mb-1">
+                 {new Date().getDate()}
+              </h2>
+              <p className="text-blue-200 uppercase tracking-widest text-xs font-semibold mb-6">
+                 {new Date().toLocaleString('zh-TW', { month: 'long' })}
+              </p>
+
+              <button 
+                onClick={() => setIsModalOpen(true)}
+                className="btn-primary w-full max-w-[200px] flex items-center justify-center gap-2"
+              >
+                <Plus size={20} />
+                新增行程
+              </button>
+           </div>
+
+           {/* Quick Stats or Quote (Optional) */}
+           <div className="glass-card p-6 flex items-center justify-between">
+              <div>
+                 <p className="text-slate-400 text-xs uppercase tracking-wider font-bold">即將到來</p>
+                 <p className="text-2xl font-bold text-white">{upcomingDates.length}</p>
+              </div>
+              <div className="h-10 w-[1px] bg-white/10"></div>
+              <div>
+                 <p className="text-slate-400 text-xs uppercase tracking-wider font-bold">總計</p>
+                 <p className="text-2xl font-bold text-white">{dates.length}</p>
+              </div>
+           </div>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Right Column: Upcoming List (Span 8) */}
+        <div className="md:col-span-7">
+           <div className="glass-card h-full min-h-[500px]">
+              <div className="flex items-center justify-between mb-6">
+                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    <div className="w-1.5 h-6 bg-pink-500 rounded-full"></div>
+                    即將到來的活動
+                 </h3>
+                 
+                 {/* Simple Filter Pills */}
+                 <div className="flex gap-2">
+                    <button 
+                      onClick={() => setFilter('全部')}
+                      className={clsx(
+                        "text-xs px-3 py-1 rounded-full border transition-all",
+                        filter === '全部' ? "bg-white text-black border-white" : "border-white/20 text-slate-400 hover:border-white/50"
+                      )}
+                    >
+                      全部
+                    </button>
+                    {CATEGORIES.slice(0, 2).map(c => (
+                       <button
+                         key={c} 
+                         onClick={() => setFilter(c)}
+                         className={clsx(
+                           "text-xs px-3 py-1 rounded-full border transition-all",
+                           filter === c ? "bg-white text-black border-white" : "border-white/20 text-slate-400 hover:border-white/50"
+                         )}
+                       >
+                         {c}
+                       </button>
+                    ))}
+                 </div>
+              </div>
+
+              <div className="space-y-3">
+                 {upcomingDates.length > 0 ? (
+                   upcomingDates.map(item => (
+                     <DateCard key={item.id} item={item} onDelete={deleteDate} />
+                   ))
+                 ) : (
+                   <div className="flex flex-col items-center justify-center h-64 text-slate-500">
+                      <p>目前沒有即將到來的行程</p>
+                   </div>
+                 )}
+              </div>
+           </div>
         </div>
-      </main>
+
+      </div>
+
+      <AddDateModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onAdd={addDate} 
+      />
     </div>
   );
 }

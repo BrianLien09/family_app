@@ -40,7 +40,7 @@ export default function Navbar() {
 
   return (
     <nav className={clsx(
-      "fixed top-0 left-0 w-full z-50 h-[70px] bg-[#0f111a]/95 backdrop-blur-md border-b border-[#232942] transition-transform duration-300",
+      "fixed top-0 left-0 w-full z-50 h-[70px] bg-[#0f111a]/95 backdrop-blur-md border-b border-[#232942] transition-transform duration-500",
       !isVisible && "-translate-y-full"
     )}>
        <div className="container h-full flex items-center justify-between !max-w-7xl !py-0 px-4">

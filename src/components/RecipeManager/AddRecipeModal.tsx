@@ -93,7 +93,7 @@ export default function AddRecipeModal({ isOpen, onClose, onAdd }: AddRecipeModa
                <label className="block text-sm font-medium mb-1 pl-1">食譜名稱</label>
                <input 
                  required
-                 className="input"
+                 className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500/50 transition-all hover:bg-white/10"
                  placeholder="例如：阿嬤的滷肉" 
                  value={title}
                  onChange={e => setTitle(e.target.value)}
@@ -107,7 +107,7 @@ export default function AddRecipeModal({ isOpen, onClose, onAdd }: AddRecipeModa
                     required
                     type="number"
                     min="1"
-                    className="input"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500/50 transition-all hover:bg-white/10"
                     value={baseServings}
                     onChange={e => setBaseServings(Number(e.target.value))}
                   />
@@ -115,7 +115,7 @@ export default function AddRecipeModal({ isOpen, onClose, onAdd }: AddRecipeModa
                <div>
                   <label className="block text-sm font-medium mb-1 pl-1">備註 (選填)</label>
                   <input 
-                    className="input"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500/50 transition-all hover:bg-white/10"
                     placeholder="簡單筆記..." 
                     value={description}
                     onChange={e => setDescription(e.target.value)}
@@ -136,21 +136,21 @@ export default function AddRecipeModal({ isOpen, onClose, onAdd }: AddRecipeModa
                {ingredients.map((ing, idx) => (
                  <div key={idx} className="flex gap-2 items-start">
                     <input 
-                       className="input flex-[2]"
+                       className="flex-[2] bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500/50 transition-all hover:bg-white/10"
                        placeholder="食材名 (如：豬肉)"
                        value={ing.name}
                        onChange={e => updateIngredient(idx, 'name', e.target.value)}
                     />
                     <input 
                        type="number"
-                       className="input flex-1 min-w-[60px]"
+                       className="flex-1 min-w-[60px] bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500/50 transition-all hover:bg-white/10"
                        placeholder="數量"
                        required={idx === 0}
                        value={ing.amount || ''}
                        onChange={e => updateIngredient(idx, 'amount', e.target.value)}
                     />
                     <input 
-                       className="input flex-1 min-w-[60px]"
+                       className="flex-1 min-w-[60px] bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500/50 transition-all hover:bg-white/10"
                        placeholder="單位"
                        value={ing.unit}
                        onChange={e => updateIngredient(idx, 'unit', e.target.value)}

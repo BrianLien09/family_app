@@ -124,6 +124,7 @@ export default function RecipesPage() {
              deleteRecipe(id);
              setSelectedRecipe(null);
           }}
+          onAdd={addRecipe}
           // 👇 傳入編輯函式
           onEdit={() => openEditModal(selectedRecipe)}
         />

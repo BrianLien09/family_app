@@ -13,12 +13,15 @@ import {
 import { onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from '@/lib/firebase';
 import { Recipe } from '@/types'; 
-import toast from 'react-hot-toast'; // ✨ 確保有引入 toast
+import toast from 'react-hot-toast'; 
 
 export function useRecipes() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // 🛠️ 輔助函式：產生食譜的快取 Key
+  const getCacheKey = (uid: string) => `recipe_cache_${uid}`;
 
   // 1. 讀取食譜
   const fetchRecipes = useCallback(async (user: any) => {
@@ -30,20 +33,36 @@ export function useRecipes() {
         id: doc.id,
         ...doc.data()
       })) as Recipe[];
+      
       setRecipes(recipesData);
+
+      // ✨✨✨ 關鍵 1: 抓到新資料後，馬上存入 LocalStorage ✨✨✨
+      localStorage.setItem(getCacheKey(user.uid), JSON.stringify(recipesData));
+
     } catch (error) {
       console.error("讀取食譜失敗:", error);
-      toast.error("無法讀取食譜 😓");
+      toast.error("連線不穩，目前顯示的是舊資料");
     } finally {
       setIsLoaded(true);
       setIsRefreshing(false);
     }
   }, [isLoaded]);
 
-  // 2. 監聽登入狀態
+  // 2. 監聽登入狀態 & 初始載入
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
+        // ✨✨✨ 關鍵 2: 一登入，先從 LocalStorage 拿舊資料顯示 ✨✨✨
+        const cached = localStorage.getItem(getCacheKey(user.uid));
+        if (cached) {
+          try {
+            setRecipes(JSON.parse(cached));
+            setIsLoaded(true); // 有快取就算載入完成，不用等
+          } catch (e) {
+            console.error("快取解析失敗", e);
+          }
+        }
+        // 背景去抓最新的
         fetchRecipes(user);
       } else {
         setRecipes([]);
@@ -62,9 +81,15 @@ export function useRecipes() {
     }
   };
 
-  // ✨✨✨ 4. 新增食譜 (加入登入檢查與提示) ✨✨✨
+  // 🛠️ 輔助函式：同步更新快取 (避免程式碼重複)
+  const updateCache = (newRecipes: Recipe[]) => {
+    if (auth.currentUser) {
+      localStorage.setItem(getCacheKey(auth.currentUser.uid), JSON.stringify(newRecipes));
+    }
+  };
+
+  // 4. 新增食譜
   const addRecipe = async (newItem: Recipe) => {
-    // 🛑 登入檢查
     if (!auth.currentUser) {
       toast.error("請先登入才能新增食譜喔！👨‍🍳");
       return;
@@ -77,11 +102,15 @@ export function useRecipes() {
         createdAt: new Date()
       });
       
-      // 手動更新前端 State
       const savedItem = { ...newItem, id: docRef.id };
-      setRecipes(prev => [savedItem, ...prev]);
       
-      toast.success("食譜新增成功！🎉"); // ✅ 成功提示
+      setRecipes(prev => {
+        const newState = [savedItem, ...prev];
+        updateCache(newState); // ✨ 同步快取
+        return newState;
+      });
+      
+      toast.success("食譜新增成功！🎉");
       
     } catch (error) {
       console.error("Error adding recipe: ", error);
@@ -89,21 +118,24 @@ export function useRecipes() {
     }
   };
 
-  // ✨✨✨ 5. 刪除食譜 ✨✨✨
+  // 5. 刪除食譜
   const deleteRecipe = async (id: string) => {
-    // 🛑 登入檢查
     if (!auth.currentUser) {
        toast.error("請先登入才能操作喔 🚫");
        return;
     }
-
     if (!confirm("確定要刪除這個食譜嗎？")) return;
     
     try {
       await deleteDoc(doc(db, "recipes", id));
-      setRecipes(prev => prev.filter(item => item.id !== id));
       
-      toast.success("食譜已刪除 👋"); // ✅ 成功提示
+      setRecipes(prev => {
+        const newState = prev.filter(item => item.id !== id);
+        updateCache(newState); // ✨ 同步快取
+        return newState;
+      });
+      
+      toast.success("食譜已刪除 👋");
       
     } catch (error) {
       console.error("Error deleting recipe: ", error);
@@ -111,9 +143,8 @@ export function useRecipes() {
     }
   };
 
-  // ✨✨✨ 6. 更新食譜 ✨✨✨
+  // 6. 更新食譜
   const updateRecipe = async (id: string, updatedFields: Partial<Recipe>) => {
-    // 🛑 登入檢查
     if (!auth.currentUser) {
        toast.error("請先登入才能修改食譜 🚫");
        return;
@@ -123,11 +154,15 @@ export function useRecipes() {
       const recipeRef = doc(db, "recipes", id);
       await updateDoc(recipeRef, updatedFields);
       
-      setRecipes(prev => prev.map(item => 
-        item.id === id ? { ...item, ...updatedFields } : item
-      ));
+      setRecipes(prev => {
+        const newState = prev.map(item => 
+          item.id === id ? { ...item, ...updatedFields } : item
+        );
+        updateCache(newState); // ✨ 同步快取
+        return newState;
+      });
       
-      toast.success("食譜更新完成 ✨"); // ✅ 成功提示
+      toast.success("食譜更新完成 ✨");
       
     } catch (error) {
       console.error("Error updating recipe: ", error);

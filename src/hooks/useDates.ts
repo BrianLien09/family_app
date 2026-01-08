@@ -1,3 +1,4 @@
+// src/hooks/useDates.ts
 import { useState, useEffect, useCallback } from 'react';
 import { 
   collection, 
@@ -17,12 +18,14 @@ import toast from 'react-hot-toast';
 export function useDates() {
   const [dates, setDates] = useState<DateItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
-  // ✨ 新增：重新整理的狀態
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // 定義抓取函式
+  // 🛠️ 輔助函式：產生快取 Key (每個使用者要有獨立的 Key，避免跟別人混到)
+  const getCacheKey = (uid: string) => `schedule_cache_${uid}`;
+
+  // 1. 定義抓取函式
   const fetchDates = useCallback(async (user: any) => {
-    // 如果是手動觸發，才顯示 loading 轉圈圈
+    // 只有手動重新整理時，才顯示 Loading 轉圈圈 (因為初始載入我們有快取了)
     if (isLoaded) setIsRefreshing(true);
     
     try {
@@ -35,18 +38,35 @@ export function useDates() {
       })) as DateItem[];
       
       setDates(datesData);
+
+      // ✨✨✨ 關鍵 1: 抓到新資料後，馬上存入 LocalStorage ✨✨✨
+      localStorage.setItem(getCacheKey(user.uid), JSON.stringify(datesData));
+
     } catch (error) {
       console.error("讀取失敗:", error);
+      toast.error("連線不穩，目前顯示的是舊資料");
     } finally {
       setIsLoaded(true);
       setIsRefreshing(false);
     }
   }, [isLoaded]);
 
-  // 初始載入
+  // 2. 初始載入邏輯
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
+        // ✨✨✨ 關鍵 2: 一登入，先從 LocalStorage 拿舊資料顯示 ✨✨✨
+        const cached = localStorage.getItem(getCacheKey(user.uid));
+        if (cached) {
+          try {
+            setDates(JSON.parse(cached));
+            setIsLoaded(true); // 有快取就算載入完成，使用者不用等
+          } catch (e) {
+            console.error("快取解析失敗", e);
+          }
+        }
+
+        // 然後在背景偷偷去抓最新的 (背景更新)
         fetchDates(user);
       } else {
         setDates([]);
@@ -56,16 +76,23 @@ export function useDates() {
     return () => unsubscribeAuth();
   }, [fetchDates]);
 
-  // ✨ 新增：給外部呼叫的 refresh
+  // refresh 保持不變
   const refresh = () => {
     if (auth.currentUser) {
       fetchDates(auth.currentUser);
     }
   };
 
+  // 3. 新增/刪除/修改時，也要同步更新快取，不然重整後會閃爍
+  const updateCache = (newDates: DateItem[]) => {
+    if (auth.currentUser) {
+      localStorage.setItem(getCacheKey(auth.currentUser.uid), JSON.stringify(newDates));
+    }
+  };
+
   const addDate = async (newItem: DateItem) => {
     if (!auth.currentUser) {
-      toast.error("請先登入才能新增喔！");
+      toast.error("請先登入");
       return;
     }
     try {
@@ -74,22 +101,39 @@ export function useDates() {
         ...dataToSave,
         createdAt: new Date()
       });
+
       const savedItem = { ...newItem, id: docRef.id };
-      setDates(prev => [...prev, savedItem].sort((a, b) => 
-        new Date(a.date).getTime() - new Date(b.date).getTime()
-      ));
+      
+      setDates(prev => {
+        const newState = [...prev, savedItem].sort((a, b) => 
+          new Date(a.date).getTime() - new Date(b.date).getTime()
+        );
+        // ✨ 同步寫入快取
+        updateCache(newState);
+        return newState;
+      });
+      
+      toast.success("新增成功！🎉");
     } catch (error) {
       console.error("Error adding: ", error);
-      alert("新增失敗");
+      toast.error("新增失敗");
     }
   };
 
   const deleteDate = async (id: string) => {
     if (!auth.currentUser) return;
     if (!confirm("確定要刪除這個行程嗎？")) return;
+    
     try {
       await deleteDoc(doc(db, "schedules", id));
-      setDates(prev => prev.filter(item => item.id !== id));
+      
+      setDates(prev => {
+        const newState = prev.filter(item => item.id !== id);
+        // ✨ 同步寫入快取
+        updateCache(newState);
+        return newState;
+      });
+      
       toast.success("行程已刪除 👋");
     } catch (error) {
       console.error("Error deleting: ", error);
@@ -102,8 +146,17 @@ export function useDates() {
     try {
       const dateRef = doc(db, "schedules", id);
       await updateDoc(dateRef, { ...updatedData });
-      setDates(prev => prev.map(item => item.id === id ? { ...item, ...updatedData } : item));
-      toast.success("行程已更新 ✨");
+
+      setDates(prev => {
+        const newState = prev.map(item => 
+          item.id === id ? { ...item, ...updatedData } : item
+        );
+        // ✨ 同步寫入快取
+        updateCache(newState);
+        return newState;
+      });
+
+      toast.success("更新完成！✨");
     } catch (error) {
       console.error("Error updating: ", error);
       toast.error("更新失敗");

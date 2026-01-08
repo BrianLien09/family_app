@@ -1,126 +1,99 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   collection, 
   addDoc, 
   deleteDoc, 
-  updateDoc,
   doc, 
-  onSnapshot, 
-  query,
-  orderBy 
+  getDocs, 
+  query, 
+  orderBy,
+  updateDoc 
 } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth'; // 👈 引入監聽器
-import { db, auth } from '@/lib/firebase';         // 👈 記得引入 auth
-import { Recipe } from '@/types';
+import { onAuthStateChanged } from 'firebase/auth';
+import { db, auth } from '@/lib/firebase';
+import { Recipe } from '@/types'; // 請確認你的型別路徑
 
 export function useRecipes() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  // ✨ 新增
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const fetchRecipes = useCallback(async (user: any) => {
+    if (isLoaded) setIsRefreshing(true);
+    try {
+      const q = query(collection(db, "recipes"), orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(q);
+      const recipesData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Recipe[];
+      setRecipes(recipesData);
+    } catch (error) {
+      console.error("讀取食譜失敗:", error);
+    } finally {
+      setIsLoaded(true);
+      setIsRefreshing(false);
+    }
+  }, [isLoaded]);
 
   useEffect(() => {
-    let unsubscribeSnapshot: (() => void) | null = null;
-
-    // 1. 監聽登入狀態
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      
-      // 清理上一次的 snapshot 監聽
-      if (unsubscribeSnapshot) {
-        unsubscribeSnapshot();
-        unsubscribeSnapshot = null;
-      }
-
       if (user) {
-        // ✅ 使用者已登入 -> 開始抓取資料
-        // 這裡我們先不排序，或者你可以加 orderBy("title")
-        const q = query(collection(db, "recipes")); 
-
-        unsubscribeSnapshot = onSnapshot(q, 
-          (snapshot) => {
-            const recipeData = snapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data()
-            })) as Recipe[];
-            
-            setRecipes(recipeData);
-            setIsLoaded(true); // 載入完成
-          },
-          (error) => {
-            console.error("食譜讀取失敗:", error);
-            setIsLoaded(true); // 發生錯誤也要讓 Loading 消失
-          }
-        );
+        fetchRecipes(user);
       } else {
-        // ❌ 使用者未登入 -> 清空資料
         setRecipes([]);
         setIsLoaded(true);
       }
     });
+    return () => unsubscribeAuth();
+  }, [fetchRecipes]);
 
-    // 元件卸載時清理
-    return () => {
-      unsubscribeAuth();
-      if (unsubscribeSnapshot) unsubscribeSnapshot();
-    };
-  }, []);
-
-  // 2. 新增食譜
-  const addRecipe = async (recipe: Recipe) => {
-    if (!auth.currentUser) {
-      alert("請先登入才能新增食譜喔！");
-      return;
-    }
-
-    try {
-      const { id, ...dataToSave } = recipe;
-      
-      await addDoc(collection(db, "recipes"), {
-        ...dataToSave,
-        createdAt: new Date()
-      });
-      
-    } catch (error) {
-      console.error("Error adding recipe: ", error);
-      alert("新增失敗，請檢查權限或網路");
+  // ✨ 新增 refresh
+  const refresh = () => {
+    if (auth.currentUser) {
+      fetchRecipes(auth.currentUser);
     }
   };
 
-  // 3. 刪除食譜
+  const addRecipe = async (newItem: Recipe) => {
+    if (!auth.currentUser) return;
+    try {
+      const { id, ...dataToSave } = newItem;
+      const docRef = await addDoc(collection(db, "recipes"), {
+        ...dataToSave,
+        createdAt: new Date()
+      });
+      const savedItem = { ...newItem, id: docRef.id };
+      setRecipes(prev => [savedItem, ...prev]);
+    } catch (error) {
+      console.error("Error adding recipe: ", error);
+    }
+  };
+
   const deleteRecipe = async (id: string) => {
     if (!auth.currentUser) return;
-    if (!confirm("確定要刪除這道私房食譜嗎？")) return;
-    
+    if (!confirm("確定要刪除這個食譜嗎？")) return;
     try {
       await deleteDoc(doc(db, "recipes", id));
+      setRecipes(prev => prev.filter(item => item.id !== id));
     } catch (error) {
       console.error("Error deleting recipe: ", error);
-      alert("刪除失敗，請稍後再試");
     }
   };
 
   const updateRecipe = async (id: string, updatedFields: Partial<Recipe>) => {
-    if (!auth.currentUser) {
-      alert("請先登入才能修改食譜！");
-      return;
-    }
-
+    if (!auth.currentUser) return;
     try {
-      // 找到該食譜的文件參考
       const recipeRef = doc(db, "recipes", id);
-      
-      // 更新指定的欄位 (Firestore 會只更新你有傳進去的欄位，不會覆蓋整個文件)
-      await updateDoc(recipeRef, {
-        ...updatedFields,
-        // updatedBy: auth.currentUser.email, // 如果你想紀錄最後是誰改的，可以加這行
-        updatedAt: new Date() // 更新修改時間
-      });
-
+      await updateDoc(recipeRef, updatedFields);
+      setRecipes(prev => prev.map(item => 
+        item.id === id ? { ...item, ...updatedFields } : item
+      ));
     } catch (error) {
       console.error("Error updating recipe: ", error);
-      alert("更新失敗，請檢查權限");
     }
   };
 
-  return { recipes, addRecipe, deleteRecipe, updateRecipe, isLoaded }; // 👈 3. 記得把 updateRecipe 匯出
+  return { recipes, addRecipe, updateRecipe, deleteRecipe, isLoaded, refresh, isRefreshing };
 }

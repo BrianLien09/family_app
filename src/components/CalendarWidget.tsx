@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react'; // 1. 引入 useMemo
+import { useState, useMemo } from 'react';
 import { 
   format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, 
   eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday 
 } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RotateCw } from 'lucide-react'; // ✨ 引入 RotateCw
 import clsx from 'clsx';
 import { DateItem } from '@/types';
 import DateCard from '@/components/DateManager/DateCard';
@@ -16,18 +16,26 @@ interface CalendarWidgetProps {
   onSelectDate?: (date: Date) => void;
   onDelete: (id: string) => void;
   onEdit: (item: DateItem) => void;
+  // ✨ 新增這兩個 props
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
-export default function CalendarWidget({ events, onSelectDate, onDelete, onEdit }: CalendarWidgetProps) {
+export default function CalendarWidget({ 
+  events, 
+  onSelectDate, 
+  onDelete, 
+  onEdit, 
+  onRefresh, 
+  isRefreshing 
+}: CalendarWidgetProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  // 設定週一為一週的開始
   const startDate = startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 1 });
   const endDate = endOfWeek(endOfMonth(currentMonth), { weekStartsOn: 1 });
   
   const days = eachDayOfInterval({ start: startDate, end: endDate });
-
   const weekDays = ['一', '二', '三', '四', '五', '六', '日'];
 
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
@@ -38,30 +46,20 @@ export default function CalendarWidget({ events, onSelectDate, onDelete, onEdit 
     if (onSelectDate) onSelectDate(day);
   };
 
-  // ✨✨✨ 優化重點 1: 使用 useMemo 預先分組資料 ✨✨✨
-  // 將陣列轉為物件索引: { "2024-01-01": [EventA, EventB], ... }
-  // 這樣渲染時就不用每一格都跑 filter 迴圈了
+  // 優化：HashMap 索引
   const eventsByDate = useMemo(() => {
     const groups: Record<string, DateItem[]> = {};
-    
     events.forEach(event => {
-      // 統一轉成 yyyy-MM-dd 字串當作 key
       const dateKey = format(new Date(event.date), 'yyyy-MM-dd');
-      
-      if (!groups[dateKey]) {
-        groups[dateKey] = [];
-      }
+      if (!groups[dateKey]) groups[dateKey] = [];
       groups[dateKey].push(event);
     });
-    
     return groups;
-  }, [events]); // 只有當 events 變動時，才重新計算
+  }, [events]);
 
-  // ✨✨✨ 優化重點 2: 選中日期的行程也改用查表法 ✨✨✨
   const selectedDateKey = format(selectedDate, 'yyyy-MM-dd');
   const selectedDayEvents = eventsByDate[selectedDateKey] || [];
 
-  // 輔助函式：取得顏色樣式
   const getEventColor = (category: string) => {
     if (category === '洗牙') return 'bg-blue-500/20 text-blue-200 border-blue-500/30';
     if (category === '剪頭髮') return 'bg-orange-500/20 text-orange-200 border-orange-500/30';
@@ -80,9 +78,27 @@ export default function CalendarWidget({ events, onSelectDate, onDelete, onEdit 
     <div className="glass-card p-4 md:p-6 select-none h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between mb-4 md:mb-6 shrink-0">
-        <h2 className="text-lg md:text-2xl font-bold text-white tracking-wide">
-          {format(currentMonth, 'yyyy年 M月', { locale: zhTW })}
-        </h2>
+        
+        {/* ✨ 修改這裡：將標題和重整按鈕包在一起 */}
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg md:text-2xl font-bold text-white tracking-wide">
+            {format(currentMonth, 'yyyy年 M月', { locale: zhTW })}
+          </h2>
+          {onRefresh && (
+             <button 
+               onClick={onRefresh}
+               disabled={isRefreshing}
+               className="p-1.5 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors disabled:opacity-50"
+               title="重新整理資料"
+             >
+               <RotateCw 
+                 size={18} 
+                 className={clsx("transition-all duration-700", isRefreshing && "animate-spin")} 
+               />
+             </button>
+           )}
+        </div>
+
         <div className="flex gap-2">
            <button onClick={prevMonth} className="p-1.5 md:p-2 hover:bg-white/10 rounded-full text-slate-300 transition-colors">
              <ChevronLeft size={20} />
@@ -105,11 +121,8 @@ export default function CalendarWidget({ events, onSelectDate, onDelete, onEdit 
       {/* Days Grid */}
       <div className="grid grid-cols-7 gap-px md:gap-1 bg-white/5 rounded-lg overflow-hidden border border-white/5 shrink-0">
         {days.map((day) => {
-          // ✨✨✨ 優化重點 3: 直接用 Key 取值 (O(1) 複雜度) ✨✨✨
-          // 取代原本的 events.filter (O(N) 複雜度)
           const dateKey = format(day, 'yyyy-MM-dd');
           const dayEvents = eventsByDate[dateKey] || [];
-
           const isCurrentMonth = isSameMonth(day, currentMonth);
           const isSelected = isSameDay(day, selectedDate);
           const isTodayDate = isToday(day);
@@ -121,7 +134,6 @@ export default function CalendarWidget({ events, onSelectDate, onDelete, onEdit 
               className={clsx(
                 "relative flex flex-col cursor-pointer transition-all duration-200 p-1 md:p-2 group",
                 "aspect-square md:aspect-auto md:min-h-[110px]", 
-                
                 !isCurrentMonth ? "bg-black/20 text-slate-600" : "bg-white/[0.02] hover:bg-white/[0.05]",
                 isSelected && "bg-white/[0.08] ring-1 ring-inset ring-purple-500",
                 isTodayDate && !isSelected && "bg-blue-500/5"
@@ -136,17 +148,14 @@ export default function CalendarWidget({ events, onSelectDate, onDelete, onEdit 
                 {format(day, 'd')}
               </span>
 
-              {/* 手機版顯示 (圓點) */}
+              {/* 手機版顯示 */}
               <div className="flex gap-0.5 justify-center flex-wrap content-start md:hidden">
                 {dayEvents.slice(0, 4).map((event, idx) => (
-                  <div 
-                    key={idx}
-                    className={clsx("rounded-full w-1.5 h-1.5", getDotColor(event.category))}
-                  />
+                  <div key={idx} className={clsx("rounded-full w-1.5 h-1.5", getDotColor(event.category))} />
                 ))}
               </div>
 
-              {/* 電腦版顯示 (文字條) */}
+              {/* 電腦版顯示 */}
               <div className="hidden md:flex flex-col gap-1.5 w-full overflow-hidden">
                 {dayEvents.slice(0, 3).map((event) => (
                    <div 
@@ -160,14 +169,12 @@ export default function CalendarWidget({ events, onSelectDate, onDelete, onEdit 
                      {event.title}
                    </div>
                 ))}
-                
                 {dayEvents.length > 3 && (
                   <span className="text-[11px] font-medium text-slate-400 pl-1">
                     還有 {dayEvents.length - 3} 個...
                   </span>
                 )}
               </div>
-
             </div>
           );
         })}

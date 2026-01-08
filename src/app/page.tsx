@@ -2,14 +2,12 @@
 
 import { useState, useMemo } from 'react';
 import { useDates } from '@/hooks/useDates';
-// 1. 👇 引入剛剛建立的 CalendarWidget (原本的 DateCard 可以拿掉或留著備用)
 import CalendarWidget from '@/components/CalendarWidget'; 
 import AddDateModal from '@/components/DateManager/AddDateModal';
-import { Plus, Calendar, Sparkles, ListChecks, Clock } from 'lucide-react';
+import { Plus, Calendar, Sparkles } from 'lucide-react';
 import { CATEGORIES, DateCategory, DateItem } from '@/types';
 import Login from '@/components/Login';
 import clsx from 'clsx';
-import { useImmersiveMode } from '@/hooks/useImmersiveMode';
 
 export default function Home() {
   const { dates, addDate, deleteDate, updateDate, isLoaded } = useDates();
@@ -17,7 +15,6 @@ export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDate, setEditingDate] = useState<DateItem | null>(null);
   
-  // 雖然月曆會顯示所有日期，但如果你想保留過濾邏輯給其他用途可以留著
   const [filter, setFilter] = useState<DateCategory | '全部'>('全部');
 
   const upcomingDates = useMemo(() => {
@@ -25,9 +22,9 @@ export default function Home() {
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     
     return dates
-      .filter(d => new Date(d.date).getTime() >= todayStart && (filter === '全部' || d.category === filter))
+      .filter(d => new Date(d.date).getTime() >= todayStart)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [dates, filter]);
+  }, [dates]);
 
   const handleOpenAdd = () => {
     setEditingDate(null);
@@ -54,7 +51,7 @@ export default function Home() {
   return (
     <div className="container mx-auto px-4 py-8 pt-20 max-w-5xl">
       
-      {/* --- Hero Header (完全保持不變) --- */}
+      {/* --- Hero Header --- */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div className="space-y-1">
           <h1 className="text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 drop-shadow-sm">
@@ -72,13 +69,15 @@ export default function Home() {
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
         
-        {/* --- Left Column: Summary / Actions (完全保持不變) --- */}
+        {/* --- 左側欄位 (3等份) --- */}
         <div className="md:col-span-3 flex flex-col gap-6">
-           <div className="glass-card flex flex-col items-center justify-center text-center py-10 relative overflow-hidden group">
+           
+           {/* 1. 日期與新增按鈕卡片 */}
+           <div className="glass-card flex flex-col items-center justify-center text-center py-8 relative overflow-hidden group">
              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
              
-             <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center shadow-lg shadow-blue-500/20 mb-6 rotate-3 group-hover:rotate-6 transition-transform">
-                 <Calendar className="text-white w-10 h-10" />
+             <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center shadow-lg shadow-blue-500/20 mb-4 rotate-3 group-hover:rotate-6 transition-transform">
+                 <Calendar className="text-white w-8 h-8" />
              </div>
              
              <h2 className="text-3xl font-bold text-white mb-1">
@@ -90,51 +89,91 @@ export default function Home() {
 
              <button 
                onClick={handleOpenAdd}
-               className="btn-primary w-full max-w-[200px] flex items-center justify-center gap-2"
+               className="btn-primary w-full max-w-[180px] flex items-center justify-center gap-2 text-sm"
              >
-               <Plus size={20} />
+               <Plus size={18} />
                新增行程
              </button>
            </div>
 
-           {/* Quick Stats */}
-           <div className="glass-card p-5 grid grid-cols-2 divide-x divide-white/10">
-              <div className="relative flex flex-col items-center justify-center text-center px-4 py-2 group overflow-hidden">
-                 <Clock className="absolute right-0 -bottom-2 w-16 h-16 text-blue-500/5 -rotate-12 transition-transform group-hover:scale-110 pointer-events-none" />
-                 <p className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-br from-blue-400 to-purple-400 z-10 relative">
-                    {upcomingDates.length}
-                 </p>
-                 <p className="text-slate-400 text-xs font-bold uppercase tracking-widest -mt-1 z-10 relative">即將到來</p>
-              </div>
+           {/* 2. 近期行程快訊 (已改為顯示 4 個) */}
+           <div className="glass-card p-4">
+              <h3 className="text-xs font-bold text-slate-400 mb-4 uppercase tracking-wider flex items-center gap-2">
+                 <div className="w-1 h-3 bg-blue-400 rounded-full"></div>
+                 最近行程
+              </h3>
               
-              <div className="relative flex flex-col items-center justify-center text-center px-4 py-2 group overflow-hidden">
-                 <ListChecks className="absolute right-0 -bottom-2 w-16 h-16 text-pink-500/5 -rotate-12 transition-transform group-hover:scale-110 pointer-events-none" />
-                 <p className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-br from-pink-400 to-orange-400 z-10 relative">
-                    {dates.length}
-                 </p>
-                 <p className="text-slate-400 text-xs font-bold uppercase tracking-widest -mt-1 z-10 relative">總計</p>
+              <div className="space-y-3">
+                 {upcomingDates.length > 0 ? (
+                   // ✨ 修改：slice(0, 5) -> slice(0, 4) 只顯示 4 個
+                   upcomingDates.slice(0, 4).map(item => (
+                     <div key={item.id} className="flex items-center gap-3 group cursor-pointer hover:bg-white/5 p-2 -mx-2 rounded-lg transition-colors" onClick={() => handleOpenEdit(item)}>
+                        
+                        {/* 日期小方塊 */}
+                        <div className="flex flex-col items-center justify-center w-10 h-10 bg-white/5 rounded-lg border border-white/5 shrink-0 group-hover:border-white/20 transition-colors">
+                           <span className="text-[10px] text-slate-400 leading-none mb-0.5">
+                             {new Date(item.date).getMonth() + 1}月
+                           </span>
+                           <span className="text-sm font-bold text-white leading-none">
+                             {new Date(item.date).getDate()}
+                           </span>
+                        </div>
+                        
+                        {/* 文字資訊 */}
+                        <div className="min-w-0 flex-1">
+                           <div className="flex items-center justify-between">
+                              <p className="text-sm font-bold text-slate-200 truncate group-hover:text-white transition-colors">
+                                {item.title}
+                              </p>
+                              {/* 倒數天數 Badge */}
+                              <span className="text-[10px] text-slate-500 bg-white/5 px-1.5 py-0.5 rounded shrink-0 ml-2">
+                                {Math.ceil((new Date(item.date).getTime() - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24))}天
+                              </span>
+                           </div>
+                           
+                           <div className="flex items-center gap-2 mt-0.5">
+                              <span className={clsx("w-1.5 h-1.5 rounded-full shrink-0", 
+                                 item.category === '洗牙' ? 'bg-blue-400' :
+                                 item.category === '剪頭髮' ? 'bg-orange-400' :
+                                 item.category === '阿弟排班' ? 'bg-green-400' : 'bg-pink-500'
+                              )}></span>
+                              <span className="text-xs text-slate-500 truncate">
+                                {item.time} · {item.category}
+                              </span>
+                           </div>
+                        </div>
+                     </div>
+                   ))
+                 ) : (
+                   <div className="flex flex-col items-center justify-center py-8 text-slate-500">
+                     <p className="text-xs">目前無近期行程</p>
+                   </div>
+                 )}
+                 
+                 {/* 提示剩餘數量 (大於 4 個才顯示) */}
+                 {upcomingDates.length > 4 && (
+                    <div className="pt-2 border-t border-white/5 text-center">
+                       <span className="text-[10px] text-slate-600">
+                          還有 {upcomingDates.length - 4} 個行程...
+                       </span>
+                    </div>
+                 )}
               </div>
            </div>
         </div>
 
-        {/* --- Right Column: 改為放置月曆元件 --- */}
+        {/* --- 右側欄位 (9等份)：月曆 --- */}
         <div className="md:col-span-9">
-           {/* 2. 👇 這裡直接使用 CalendarWidget 取代原本的列表 */}
-           {/* 我們傳入完整的 dates，讓月曆自己處理顯示 */}
            <CalendarWidget 
               events={dates} 
-              onSelectDate={(date) => {
-                 // 選填：如果你想在點擊月曆日期時做些什麼，可以在這裡加邏輯
-                 console.log("選擇了日期:", date);
-            }}
-            onDelete={deleteDate}      // 傳入刪除功能
-            onEdit={handleOpenEdit}    // 傳入編輯功能
+              onSelectDate={(date) => console.log("Selected", date)}
+              onDelete={deleteDate}
+              onEdit={handleOpenEdit}
            />
         </div>
 
       </div>
 
-      {/* Modal (保持不變) */}
       <AddDateModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 

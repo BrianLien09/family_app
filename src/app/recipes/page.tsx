@@ -4,18 +4,19 @@ import { useState } from 'react';
 import { useRecipes } from '@/hooks/useRecipes';
 import RecipeCalculator from '@/components/RecipeManager/RecipeCalculator';
 import AddRecipeModal from '@/components/RecipeManager/AddRecipeModal';
-import { ChefHat, Plus, Search, RotateCw } from 'lucide-react'; // ✨ 1. 新增 RotateCw
+import { ChefHat, Plus, Search, RotateCw } from 'lucide-react';
 import { Recipe } from '@/types';
-import clsx from 'clsx'; // ✨ 2. 新增 clsx
+import clsx from 'clsx';
+// ✨ 1. 引入 auth 和 toast
+import { auth } from '@/lib/firebase';
+import toast from 'react-hot-toast';
 
 export default function RecipesPage() {
-  // ✨ 3. 解構出 refresh 和 isRefreshing
   const { recipes, addRecipe, updateRecipe, deleteRecipe, isLoaded, refresh, isRefreshing } = useRecipes();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
 
   const filteredRecipes = recipes.filter(r => 
@@ -33,12 +34,24 @@ export default function RecipesPage() {
     setEditingRecipe(null);
   };
 
+  // ✨✨✨ 2. 修改這裡：在打開視窗前就先擋下來 ✨✨✨
   const openAddModal = () => {
+    // 如果沒登入，直接彈出警告並「return」(不執行下面的打開視窗)
+    if (!auth.currentUser) {
+      toast.error("請先登入才能新增食譜喔！👨‍🍳");
+      return;
+    }
+
     setEditingRecipe(null);
     setIsAddModalOpen(true);
   };
 
   const openEditModal = (recipe: Recipe) => {
+    // 編輯也要檢查比較保險
+    if (!auth.currentUser) {
+        toast.error("請先登入才能編輯食譜 🔒");
+        return;
+    }
     setSelectedRecipe(null);
     setEditingRecipe(recipe);
     setIsAddModalOpen(true);
@@ -49,13 +62,11 @@ export default function RecipesPage() {
   return (
     <div className="container min-h-screen pb-32 pt-28">
       <header className="mb-8 px-4">
-        {/* ✨ 4. 修改標題區塊：加入 Flex 佈局來放按鈕 */}
         <div className="flex items-center gap-3 mb-4">
             <h1 className="text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-amber-400 drop-shadow-sm">
               食譜轉換神器
             </h1>
             
-            {/* ✨ 5. 新增重新整理按鈕 */}
             <button 
                onClick={refresh}
                disabled={isRefreshing}

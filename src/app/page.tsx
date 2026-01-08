@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+// 1. 引入 useEffect
+import { useState, useMemo, useEffect } from 'react';
 import { useDates } from '@/hooks/useDates';
 import CalendarWidget from '@/components/CalendarWidget'; 
 import AddDateModal from '@/components/DateManager/AddDateModal';
@@ -8,14 +9,17 @@ import { Plus, Calendar, Sparkles } from 'lucide-react';
 import { DateItem } from '@/types';
 import Login from '@/components/Login';
 import clsx from 'clsx';
+// 2. 引入 toast 和 auth
+import toast from 'react-hot-toast';
+import { auth } from '@/lib/firebase';
 
 export default function Home() {
-  // ✨ 解構出 refresh 和 isRefreshing
   const { dates, addDate, deleteDate, updateDate, isLoaded, refresh, isRefreshing } = useDates();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDate, setEditingDate] = useState<DateItem | null>(null);
   
+  // ... (upcomingDates 邏輯保持不變) ...
   const upcomingDates = useMemo(() => {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
@@ -24,7 +28,30 @@ export default function Home() {
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [dates]);
 
+  // ✨✨✨ 新增這段 useEffect ✨✨✨
+  useEffect(() => {
+    // 邏輯：當「讀取狀態完成 (isLoaded 為 true)」且「目前沒有登入使用者 (!auth.currentUser)」
+    if (isLoaded && !auth.currentUser) {
+      toast('歡迎！請先登入以儲存行程 🔒', {
+        icon: '👋',
+        duration: 5000, // 顯示 5 秒
+        style: {
+          background: '#333',
+          color: '#fff',
+          borderRadius: '10px',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+        },
+      });
+    }
+  }, [isLoaded]); 
+  // ✨✨✨ 結束 ✨✨✨
+
   const handleOpenAdd = () => {
+    // 這裡也可以加一個防呆：如果沒登入，點擊按鈕也跳警告
+    if (!auth.currentUser) {
+        toast.error("請先登入才能新增行程喔！");
+        return;
+    }
     setEditingDate(null);
     setIsModalOpen(true);
   };
@@ -48,6 +75,7 @@ export default function Home() {
 
   return (
     <div className="container mx-auto px-4 py-8 pt-20 max-w-5xl">
+      {/* ... 下面的 JSX 都不用動 ... */}
       
       {/* Hero Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
@@ -71,7 +99,7 @@ export default function Home() {
         <div className="md:col-span-3 flex flex-col gap-6">
            {/* 日期卡片 */}
            <div className="glass-card flex flex-col items-center justify-center text-center py-8 relative overflow-hidden group">
-             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+             {/* ... */}
              <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center shadow-lg shadow-blue-500/20 mb-4 rotate-3 group-hover:rotate-6 transition-transform">
                  <Calendar className="text-white w-8 h-8" />
              </div>
@@ -79,6 +107,7 @@ export default function Home() {
              <p className="text-blue-200 uppercase tracking-widest text-xs font-semibold mb-6">
                  {new Date().toLocaleString('zh-TW', { month: 'long' })}
              </p>
+             {/* 修改按鈕事件：handleOpenAdd 裡面已經加了登入檢查 */}
              <button onClick={handleOpenAdd} className="btn-primary w-full max-w-[180px] flex items-center justify-center gap-2 text-sm">
                <Plus size={18} /> 新增行程
              </button>
@@ -86,6 +115,7 @@ export default function Home() {
 
            {/* 近期行程 */}
            <div className="glass-card p-4">
+              {/* ... 近期行程內容保持不變 ... */}
               <h3 className="text-xs font-bold text-slate-400 mb-4 uppercase tracking-wider flex items-center gap-2">
                  <div className="w-1 h-3 bg-blue-400 rounded-full"></div>
                  最近行程
@@ -135,7 +165,6 @@ export default function Home() {
               onSelectDate={(date) => console.log("Selected", date)}
               onDelete={deleteDate}
               onEdit={handleOpenEdit}
-              // ✨ 傳入 refresh 功能
               onRefresh={refresh}
               isRefreshing={isRefreshing}
            />

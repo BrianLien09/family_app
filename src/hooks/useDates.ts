@@ -12,6 +12,7 @@ import {
 import { onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from '@/lib/firebase';
 import { DateItem } from '@/types';
+import toast from 'react-hot-toast';
 
 export function useDates() {
   const [dates, setDates] = useState<DateItem[]>([]);
@@ -64,7 +65,7 @@ export function useDates() {
 
   const addDate = async (newItem: DateItem) => {
     if (!auth.currentUser) {
-      alert("請先登入");
+      toast.error("請先登入才能新增喔！");
       return;
     }
     try {
@@ -89,9 +90,10 @@ export function useDates() {
     try {
       await deleteDoc(doc(db, "schedules", id));
       setDates(prev => prev.filter(item => item.id !== id));
+      toast.success("行程已刪除 👋");
     } catch (error) {
       console.error("Error deleting: ", error);
-      alert("刪除失敗");
+      toast.error("刪除失敗");
     }
   };
 
@@ -101,9 +103,10 @@ export function useDates() {
       const dateRef = doc(db, "schedules", id);
       await updateDoc(dateRef, { ...updatedData });
       setDates(prev => prev.map(item => item.id === id ? { ...item, ...updatedData } : item));
+      toast.success("行程已更新 ✨");
     } catch (error) {
       console.error("Error updating: ", error);
-      alert("更新失敗");
+      toast.error("更新失敗");
     }
   };
 

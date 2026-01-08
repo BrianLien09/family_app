@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react'; // 1. 引入 useMemo
 import { 
   format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, 
   eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday 
@@ -22,13 +22,12 @@ export default function CalendarWidget({ events, onSelectDate, onDelete, onEdit 
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  // ✨ 修改 1: 在這裡加上 { weekStartsOn: 1 }，代表週一開始
+  // 設定週一為一週的開始
   const startDate = startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 1 });
   const endDate = endOfWeek(endOfMonth(currentMonth), { weekStartsOn: 1 });
   
   const days = eachDayOfInterval({ start: startDate, end: endDate });
 
-  // ✨ 修改 2: 手動調整顯示的文字順序
   const weekDays = ['一', '二', '三', '四', '五', '六', '日'];
 
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
@@ -39,7 +38,28 @@ export default function CalendarWidget({ events, onSelectDate, onDelete, onEdit 
     if (onSelectDate) onSelectDate(day);
   };
 
-  const selectedDayEvents = events.filter(e => isSameDay(new Date(e.date), selectedDate));
+  // ✨✨✨ 優化重點 1: 使用 useMemo 預先分組資料 ✨✨✨
+  // 將陣列轉為物件索引: { "2024-01-01": [EventA, EventB], ... }
+  // 這樣渲染時就不用每一格都跑 filter 迴圈了
+  const eventsByDate = useMemo(() => {
+    const groups: Record<string, DateItem[]> = {};
+    
+    events.forEach(event => {
+      // 統一轉成 yyyy-MM-dd 字串當作 key
+      const dateKey = format(new Date(event.date), 'yyyy-MM-dd');
+      
+      if (!groups[dateKey]) {
+        groups[dateKey] = [];
+      }
+      groups[dateKey].push(event);
+    });
+    
+    return groups;
+  }, [events]); // 只有當 events 變動時，才重新計算
+
+  // ✨✨✨ 優化重點 2: 選中日期的行程也改用查表法 ✨✨✨
+  const selectedDateKey = format(selectedDate, 'yyyy-MM-dd');
+  const selectedDayEvents = eventsByDate[selectedDateKey] || [];
 
   // 輔助函式：取得顏色樣式
   const getEventColor = (category: string) => {
@@ -85,7 +105,11 @@ export default function CalendarWidget({ events, onSelectDate, onDelete, onEdit 
       {/* Days Grid */}
       <div className="grid grid-cols-7 gap-px md:gap-1 bg-white/5 rounded-lg overflow-hidden border border-white/5 shrink-0">
         {days.map((day) => {
-          const dayEvents = events.filter(e => isSameDay(new Date(e.date), day));
+          // ✨✨✨ 優化重點 3: 直接用 Key 取值 (O(1) 複雜度) ✨✨✨
+          // 取代原本的 events.filter (O(N) 複雜度)
+          const dateKey = format(day, 'yyyy-MM-dd');
+          const dayEvents = eventsByDate[dateKey] || [];
+
           const isCurrentMonth = isSameMonth(day, currentMonth);
           const isSelected = isSameDay(day, selectedDate);
           const isTodayDate = isToday(day);
@@ -123,17 +147,11 @@ export default function CalendarWidget({ events, onSelectDate, onDelete, onEdit 
               </div>
 
               {/* 電腦版顯示 (文字條) */}
-              {/* 2. 電腦版顯示 (文字條) - 只在 md 以上顯示 */}
-              {/* ✨ 修改 A: gap-1 改成 gap-1.5，讓行程之間不要黏太緊 */}
               <div className="hidden md:flex flex-col gap-1.5 w-full overflow-hidden">
                 {dayEvents.slice(0, 3).map((event) => (
                    <div 
                      key={event.id}
                      className={clsx(
-                       // ✨ 修改 B: 
-                       // 1. text-[10px] -> text-xs (12px，比原本大)
-                       // 2. font-medium -> font-bold (加粗，更清楚)
-                       // 3. px-1.5 py-0.5 -> px-2 py-1 (增加留白，卡片看起來更大器)
                        "text-xs font-bold px-2 py-1 rounded border truncate shadow-sm",
                        getEventColor(event.category)
                      )}
@@ -143,7 +161,6 @@ export default function CalendarWidget({ events, onSelectDate, onDelete, onEdit 
                    </div>
                 ))}
                 
-                {/* 剩餘數量的提示文字也稍微放大一點 */}
                 {dayEvents.length > 3 && (
                   <span className="text-[11px] font-medium text-slate-400 pl-1">
                     還有 {dayEvents.length - 3} 個...

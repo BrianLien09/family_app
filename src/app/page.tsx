@@ -139,7 +139,9 @@ export default function Home() {
                               <span className={clsx("w-1.5 h-1.5 rounded-full shrink-0", 
                                  item.category === '洗牙' ? 'bg-blue-400' :
                                  item.category === '剪頭髮' ? 'bg-orange-400' :
-                                 item.category === '阿弟排班' ? 'bg-green-400' : 'bg-pink-500'
+                                 item.category === '阿弟排班' ? 'bg-green-400' : 
+                                 item.category === '孔呆值班' ? 'bg-cyan-400' :
+                                 item.category === '繳費' ? 'bg-yellow-400' : 'bg-pink-500'
                               )}></span>
                               <span className="text-xs text-slate-500 truncate">{item.time} · {item.category}</span>
                            </div>

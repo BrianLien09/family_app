@@ -64,6 +64,8 @@ export default function CalendarWidget({
     if (category === '洗牙') return 'bg-blue-500/20 text-blue-200 border-blue-500/30';
     if (category === '剪頭髮') return 'bg-orange-500/20 text-orange-200 border-orange-500/30';
     if (category === '阿弟排班') return 'bg-green-500/20 text-green-200 border-green-500/30';
+    if (category === '孔呆值班') return 'bg-cyan-500/20 text-cyan-200 border-cyan-500/30';
+    if (category === '繳費') return 'bg-yellow-500/20 text-yellow-200 border-yellow-500/30';
     return 'bg-pink-500/20 text-pink-200 border-pink-500/30';
   };
   
@@ -71,6 +73,8 @@ export default function CalendarWidget({
     if (category === '洗牙') return 'bg-blue-400';
     if (category === '剪頭髮') return 'bg-orange-400';
     if (category === '阿弟排班') return 'bg-green-400';
+    if (category === '孔呆值班') return 'bg-cyan-400';
+    if (category === '繳費') return 'bg-yellow-400';
     return 'bg-pink-500';
   };
 

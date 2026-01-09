@@ -1,6 +1,6 @@
-export type DateCategory = '阿弟排班' | '剪頭髮' | '洗牙' | '聚餐' | '其它';
+export type DateCategory = '阿弟排班' | '孔呆值班' | '剪頭髮' | '洗牙' | '聚餐' | '繳費' | '其它';
 
-export const CATEGORIES: DateCategory[] = ['阿弟排班', '剪頭髮', '洗牙', '聚餐', '其它'];
+export const CATEGORIES: DateCategory[] = ['阿弟排班', '孔呆值班', '剪頭髮', '洗牙', '聚餐', '繳費', '其它'];
 
 export interface DateItem {
   id: string;

@@ -109,48 +109,52 @@ export default function Navbar() {
        </div>
 
        {/* Mobile Nav Dropdown */}
-       {isMobileMenuOpen && (
-         <div className="md:hidden border-t border-[#232942] bg-[#0f111a] animate-fade-in">
-           <div className="flex flex-col p-4 space-y-2">
-             {navItems.map((item) => {
-               const isActive = pathname === item.href;
-               const isExternal = item.href.startsWith('http');
+       {/* Mobile Nav Dropdown */}
+       <div 
+         className={clsx(
+           "md:hidden bg-[#0f111a] border-b border-[#232942] overflow-hidden transition-all duration-500 ease-in-out",
+           isMobileMenuOpen ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0"
+         )}
+       >
+         <div className="flex flex-col p-4 space-y-1">
+           {navItems.map((item) => {
+             const isActive = pathname === item.href;
+             const isExternal = item.href.startsWith('http');
 
-               if (isExternal) {
-                 return (
-                   <a
-                     key={item.href}
-                     href={item.href}
-                     target="_blank"
-                     rel="noopener noreferrer"
-                     className="px-4 py-3 rounded-lg text-base font-bold text-slate-300 hover:text-white hover:bg-white/5 transition-all flex items-center justify-between group"
-                     onClick={() => setIsMobileMenuOpen(false)}
-                   >
-                     {item.name}
-                     <ExternalLink size={16} className="text-slate-500 group-hover:text-white transition-colors" />
-                   </a>
-                 );
-               }
-
+             if (isExternal) {
                return (
-                 <Link
+                 <a
                    key={item.href}
                    href={item.href}
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   className="px-4 py-3 rounded-lg text-base font-bold text-slate-300 hover:text-white hover:bg-white/5 transition-all flex items-center justify-between group"
                    onClick={() => setIsMobileMenuOpen(false)}
-                   className={clsx(
-                     "px-4 py-3 rounded-lg text-base font-bold transition-all",
-                     isActive 
-                       ? "bg-[#6366f1]/10 text-[#818cf8] border border-[#6366f1]/20" 
-                       : "text-slate-300 hover:text-white hover:bg-white/5"
-                   )}
                  >
                    {item.name}
-                 </Link>
+                   <ExternalLink size={16} className="text-slate-500 group-hover:text-white transition-colors" />
+                 </a>
                );
-             })}
-           </div>
+             }
+
+             return (
+               <Link
+                 key={item.href}
+                 href={item.href}
+                 onClick={() => setIsMobileMenuOpen(false)}
+                 className={clsx(
+                   "px-4 py-3 rounded-lg text-base font-bold transition-all",
+                   isActive 
+                     ? "bg-[#6366f1]/10 text-[#818cf8] border border-[#6366f1]/20" 
+                     : "text-slate-300 hover:text-white hover:bg-white/5"
+                 )}
+               >
+                 {item.name}
+               </Link>
+             );
+           })}
          </div>
-       )}
+       </div>
     </nav>
   );
 }

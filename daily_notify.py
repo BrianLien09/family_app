@@ -77,36 +77,33 @@ def get_schedule_from_firebase():
     events_list.sort(key=lambda x: (x['date'], x['sort_time']))
 
     # --- 關鍵修改 3：依照風格分類產生文字 ---
+# --- 關鍵修改 3：極簡幾何風格 ---
     today_msgs = []
     tomorrow_msgs = []
 
     for e in events_list:
-        # 今天的行程 (回顧模式)
+        # 今天的行程 (用實心方塊 ▪️)
         if e['date'] == today_str:
-            # 如果是全天，多加一個月曆符號讓它顯眼一點，否則就只打勾
-            icon = "🗓️" if e['is_all_day'] else "" 
-            today_msgs.append(f"✅ {icon}{e['display_time']} {e['title']}")
+            today_msgs.append(f"▪️ {e['display_time']} {e['title']}")
             
-        # 明天的行程 (預告模式)
+        # 明天的行程 (用空心方塊 ▫️)
         elif e['date'] == tomorrow_str:
-            # 全天用月曆 🗓️，有時間用鬧鐘 ⏰
-            icon = "🗓️" if e['is_all_day'] else "⏰"
-            tomorrow_msgs.append(f"{icon} {e['display_time']} {e['title']}")
+            tomorrow_msgs.append(f"▫️ {e['display_time']} {e['title']}")
 
-    # 組合最終訊息
+    # 組合最終訊息 (標題也改簡單一點)
     final_text = f"🌙 【晚安提醒】 {today_str}\n\n"
     
     if tomorrow_msgs:
-        final_text += f"🟡 明日行程 ({tomorrow_str})\n" + "\n".join(tomorrow_msgs) + "\n\n"
+        # 標題不用 Emoji 了
+        final_text += f"[明天] {tomorrow_str}\n" + "\n".join(tomorrow_msgs) + "\n\n"
     else:
-        final_text += f"🟡 明日無特別行程\n\n"
+        final_text += f"[明天] 無特別行程\n\n"
         
     if today_msgs:
-        final_text += f"🔴 今日回顧 ({today_str})\n" + "\n".join(today_msgs)
+        # 標題不用 Emoji 了
+        final_text += f"[今天] 已完成\n" + "\n".join(today_msgs)
         
     final_text += "\n\n大家早點休息，晚安！😴"
-
-    return final_text
 
 def main():
     if not CHANNEL_ACCESS_TOKEN or not USER_ID:

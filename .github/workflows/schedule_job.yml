@@ -2,8 +2,9 @@ name: Daily Schedule Check
 
 on:
   schedule:
-    # 設定每天台灣時間早上 8:00 執行 (UTC 時間 00:00)
-    - cron: '0 13 * * *'
+    # 台灣 19:50 = UTC 11:50
+    # 提早 10 分鐘去排隊，通常能在 20:00~20:10 之間收到
+    - cron: '50 11 * * *'
   # 允許你手動按按鈕測試
   workflow_dispatch:
 

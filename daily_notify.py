@@ -27,10 +27,11 @@ def get_schedule_from_firebase():
     today = datetime.now().date()
     tomorrow = today + timedelta(days=1)
     
+    # 轉換日期格式 (例如 2026-01-18)
     today_str = str(today)
     tomorrow_str = str(tomorrow)
     
-    # 用來暫存取出的行程物件 (為了之後要排序)
+    # 用來暫存取出的行程物件
     events_list = []
     
     try:
@@ -44,24 +45,19 @@ def get_schedule_from_firebase():
             date_val = event.get('date')
             
             # --- 處理時間 ---
-            # 判斷時間是否為空 (None 或 空字串)
             raw_time = event.get('time')
             
             if not raw_time:  # 如果是空的
                 display_time = "全天"
-                is_all_day = True
-                sort_time = "" # 排序用：空字串會排在最前面
+                sort_time = "" 
             else:
                 display_time = raw_time
-                is_all_day = False
                 sort_time = raw_time
             
-            # 先存成物件，等等排序用
             events_list.append({
                 "date": date_val,
                 "display_time": display_time,
                 "title": title,
-                "is_all_day": is_all_day,
                 "sort_time": sort_time
             })
 
@@ -73,38 +69,42 @@ def get_schedule_from_firebase():
         return None
 
     # --- 排序 ---
-    # 先依照日期排，如果日期一樣，再依照時間排 (全天會排在最上面)
+    # 先依照日期排，再依照時間排
     events_list.sort(key=lambda x: (x['date'], x['sort_time']))
 
-    # --- 極簡幾何風格 ---
+    # --- 溫馨管家風格設定 ---
     today_msgs = []
     tomorrow_msgs = []
 
     for e in events_list:
-        # 今天的行程 (用實心方塊 ▪️)
+        # 統一格式： 🔹 時間｜標題
+        line = f"🔹 {e['display_time']}｜{e['title']}"
+        
         if e['date'] == today_str:
-            today_msgs.append(f"▪️ {e['display_time']} {e['title']}")
-            
-        # 明天的行程 (用空心方塊 ▫️)
+            today_msgs.append(line)
         elif e['date'] == tomorrow_str:
-            tomorrow_msgs.append(f"▫️ {e['display_time']} {e['title']}")
+            tomorrow_msgs.append(line)
 
-    # 組合最終訊息 (標題也改簡單一點)
-    final_text = f"🌙 【晚安提醒】 {today_str}\n\n"
+    # --- 組合最終訊息 ---
     
+    # 1. 開頭問候語
+    final_text = "Hi 大家晚安，我是小管家 🤖\n今天辛苦了！來看看明天的行程吧～\n\n"
+    
+    # 2. 明日行程 (重點顯示)
     if tomorrow_msgs:
-        # 標題不用 Emoji 了
-        final_text += f"[明天] {tomorrow_str}\n" + "\n".join(tomorrow_msgs) + "\n\n"
+        final_text += f"📅 {tomorrow_str} (明天)\n"
+        final_text += "\n".join(tomorrow_msgs) + "\n\n"
     else:
-        final_text += f"[明天] 無特別行程\n\n"
-        
+        final_text += f"📅 {tomorrow_str} (明天)\n🔹 無特別行程，好好休息！\n\n"
+
+    # 3. 今日回顧 (有的話才顯示，不想顯示也可以刪除這段)
     if today_msgs:
-        # 標題不用 Emoji 了
-        final_text += f"[今天] 已完成\n" + "\n".join(today_msgs)
+        final_text += f"📅 {today_str} (今天已完成)\n"
+        final_text += "\n".join(today_msgs) + "\n\n"
         
-    final_text += "\n\n大家早點休息，晚安！😴"
-    
-    # ⚠️ 關鍵修正：必須要把組合好的文字傳回去！
+    # 4. 結尾提醒
+    final_text += "記得設鬧鐘喔！⏰"
+
     return final_text
 
 def main():
@@ -116,7 +116,6 @@ def main():
     
     if msg_text:
         line_bot_api = LineBotApi(CHANNEL_ACCESS_TOKEN)
-        # 注意：這邊原本的 header 我移除了，因為 function 裡面已經有「晚安提醒」的標題了，避免重複
         line_bot_api.push_message(USER_ID, TextSendMessage(text=msg_text))
         print("✅ 訊息發送成功")
     else:

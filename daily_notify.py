@@ -43,7 +43,7 @@ def get_schedule_from_firebase():
             title = event.get('title', '未命名行程')
             date_val = event.get('date')
             
-            # --- 關鍵修改 1：處理時間 ---
+            # --- 處理時間 ---
             # 判斷時間是否為空 (None 或 空字串)
             raw_time = event.get('time')
             
@@ -72,12 +72,11 @@ def get_schedule_from_firebase():
     if not events_list:
         return None
 
-    # --- 關鍵修改 2：排序 ---
+    # --- 排序 ---
     # 先依照日期排，如果日期一樣，再依照時間排 (全天會排在最上面)
     events_list.sort(key=lambda x: (x['date'], x['sort_time']))
 
-    # --- 關鍵修改 3：依照風格分類產生文字 ---
-# --- 關鍵修改 3：極簡幾何風格 ---
+    # --- 極簡幾何風格 ---
     today_msgs = []
     tomorrow_msgs = []
 
@@ -104,6 +103,9 @@ def get_schedule_from_firebase():
         final_text += f"[今天] 已完成\n" + "\n".join(today_msgs)
         
     final_text += "\n\n大家早點休息，晚安！😴"
+    
+    # ⚠️ 關鍵修正：必須要把組合好的文字傳回去！
+    return final_text
 
 def main():
     if not CHANNEL_ACCESS_TOKEN or not USER_ID:

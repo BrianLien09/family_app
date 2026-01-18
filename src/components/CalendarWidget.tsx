@@ -6,24 +6,23 @@ import {
   eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday 
 } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, RotateCw } from 'lucide-react'; // ✨ 引入 RotateCw
+import { ChevronLeft, ChevronRight, RotateCw, Plus } from 'lucide-react';
 import clsx from 'clsx';
 import { DateItem } from '@/types';
 import DateCard from '@/components/DateManager/DateCard';
 
 interface CalendarWidgetProps {
   events: DateItem[];
-  onSelectDate?: (date: Date) => void;
+  onAddEvent?: (date: Date) => void; // 點擊新增按鈕時觸發
   onDelete: (id: string) => void;
   onEdit: (item: DateItem) => void;
-  // ✨ 新增這兩個 props
   onRefresh?: () => void;
   isRefreshing?: boolean;
 }
 
 export default function CalendarWidget({ 
   events, 
-  onSelectDate, 
+  onAddEvent, 
   onDelete, 
   onEdit, 
   onRefresh, 
@@ -43,7 +42,12 @@ export default function CalendarWidget({
 
   const handleDayClick = (day: Date) => {
     setSelectedDate(day);
-    if (onSelectDate) onSelectDate(day);
+  };
+
+  // 點擊新增按鈕
+  const handleAddClick = (e: React.MouseEvent, day: Date) => {
+    e.stopPropagation(); // 防止觸發日期格子的點擊
+    if (onAddEvent) onAddEvent(day);
   };
 
   // 優化：HashMap 索引
@@ -143,21 +147,45 @@ export default function CalendarWidget({
                 isTodayDate && !isSelected && "bg-blue-500/5"
               )}
             >
-              <span className={clsx(
-                "text-xs font-medium mb-1 block text-center md:text-left",
-                isTodayDate ? "text-blue-400 font-bold" : "text-slate-400",
-                isSelected && "text-white",
-                !isCurrentMonth && "opacity-50"
-              )}>
-                {format(day, 'd')}
-              </span>
+              {/* 日期數字和新增按鈕 */}
+              <div className="flex items-center justify-between mb-1">
+                <span className={clsx(
+                  "text-xs font-medium block text-center md:text-left",
+                  isTodayDate ? "text-blue-400 font-bold" : "text-slate-400",
+                  isSelected && "text-white",
+                  !isCurrentMonth && "opacity-50"
+                )}>
+                  {format(day, 'd')}
+                </span>
+                
+                {/* 新增按鈕 - 電腦版 hover 時顯示 */}
+                {onAddEvent && isCurrentMonth && (
+                  <button
+                    onClick={(e) => handleAddClick(e, day)}
+                    className="hidden md:flex opacity-0 group-hover:opacity-100 w-5 h-5 items-center justify-center rounded bg-purple-500/80 hover:bg-purple-500 text-white transition-all duration-200 shadow-sm"
+                    title={`新增 ${format(day, 'M/d')} 的行程`}
+                  >
+                    <Plus size={14} />
+                  </button>
+                )}
+              </div>
 
               {/* 手機版顯示 */}
-              <div className="flex gap-0.5 justify-center flex-wrap content-start md:hidden">
+              <div className="flex gap-0.5 justify-center flex-wrap content-start md:hidden flex-1">
                 {dayEvents.slice(0, 4).map((event, idx) => (
                   <div key={idx} className={clsx("rounded-full w-1.5 h-1.5", getDotColor(event.category))} />
                 ))}
               </div>
+              
+              {/* 手機版新增按鈕 - 點選日期後在底部顯示 */}
+              {onAddEvent && isCurrentMonth && isSelected && (
+                <button
+                  onClick={(e) => handleAddClick(e, day)}
+                  className="md:hidden absolute bottom-1 right-1 w-4 h-4 flex items-center justify-center rounded bg-purple-500 text-white shadow-sm"
+                >
+                  <Plus size={10} />
+                </button>
+              )}
 
               {/* 電腦版顯示 */}
               <div className="hidden md:flex flex-col gap-1.5 w-full overflow-hidden">

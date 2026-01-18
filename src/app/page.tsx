@@ -18,6 +18,7 @@ export default function Home() {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDate, setEditingDate] = useState<DateItem | null>(null);
+  const [selectedDateForNew, setSelectedDateForNew] = useState<string | null>(null);
   
   // ... (upcomingDates 邏輯保持不變) ...
   const upcomingDates = useMemo(() => {
@@ -46,14 +47,25 @@ export default function Home() {
   }, [isLoaded]); 
   // ✨✨✨ 結束 ✨✨✨
 
-  const handleOpenAdd = () => {
+  const handleOpenAdd = (presetDate?: string) => {
     // 這裡也可以加一個防呆：如果沒登入，點擊按鈕也跳警告
     if (!auth.currentUser) {
         toast.error("請先登入才能新增行程喔！");
         return;
     }
     setEditingDate(null);
+    setSelectedDateForNew(presetDate || null);
     setIsModalOpen(true);
+  };
+
+  // 點擊月曆日期格子的新增按鈕時，開啟新增行程 Modal
+  const handleCalendarAddClick = (date: Date) => {
+    // 使用本地時區格式化日期，避免 UTC 時區問題
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
+    handleOpenAdd(dateString);
   };
 
   const handleOpenEdit = (dateItem: DateItem) => {
@@ -108,7 +120,7 @@ export default function Home() {
                  {new Date().toLocaleString('zh-TW', { month: 'long' })}
              </p>
              {/* 修改按鈕事件：handleOpenAdd 裡面已經加了登入檢查 */}
-             <button onClick={handleOpenAdd} className="btn-primary w-full max-w-[180px] flex items-center justify-center gap-2 text-sm">
+              <button onClick={() => handleOpenAdd()} className="btn-primary w-full max-w-[180px] flex items-center justify-center gap-2 text-sm">
                <Plus size={18} /> 新增行程
              </button>
            </div>
@@ -163,22 +175,26 @@ export default function Home() {
         {/* 右側欄位 (月曆) */}
         <div className="md:col-span-9">
            <CalendarWidget 
-              events={dates} 
-              onSelectDate={(date) => console.log("Selected", date)}
-              onDelete={deleteDate}
-              onEdit={handleOpenEdit}
-              onRefresh={refresh}
-              isRefreshing={isRefreshing}
-           />
+               events={dates} 
+               onAddEvent={handleCalendarAddClick}
+               onDelete={deleteDate}
+               onEdit={handleOpenEdit}
+               onRefresh={refresh}
+               isRefreshing={isRefreshing}
+            />
         </div>
 
       </div>
 
       <AddDateModal 
         isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedDateForNew(null);
+        }} 
         onSubmit={handleModalSubmit}
         initialData={editingDate}
+        presetDate={selectedDateForNew}
       />
     </div>
   );

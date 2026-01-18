@@ -11,9 +11,10 @@ interface AddDateModalProps {
   onClose: () => void;
   onSubmit: (data: any) => void;
   initialData?: DateItem | null;
+  presetDate?: string | null; // 從月曆點擊傳入的預設日期 (YYYY-MM-DD)
 }
 
-export default function AddDateModal({ isOpen, onClose, onSubmit, initialData }: AddDateModalProps) {
+export default function AddDateModal({ isOpen, onClose, onSubmit, initialData, presetDate }: AddDateModalProps) {
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
@@ -25,22 +26,24 @@ export default function AddDateModal({ isOpen, onClose, onSubmit, initialData }:
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
+        // 編輯模式：填入現有資料
         setTitle(initialData.title);
         setDate(initialData.date);
         setTime(initialData.time || '');
         setCategory(initialData.category || '其它');
         setDescription(initialData.description || '');
       } else {
-        const today = new Date().toISOString().split('T')[0];
+        // 新增模式：使用預設日期（若有）或今天
+        const defaultDate = presetDate || new Date().toISOString().split('T')[0];
         const now = new Date().toTimeString().slice(0, 5);
         setTitle('');
-        setDate(today);
+        setDate(defaultDate);
         setTime(now);
         setCategory('其它');
         setDescription('');
       }
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, presetDate]);
 
 
 

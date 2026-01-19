@@ -122,22 +122,72 @@ export function useDates() {
 
   const deleteDate = async (id: string) => {
     if (!auth.currentUser) return;
-    if (!confirm("確定要刪除這個行程嗎？")) return;
+    
+    // 找到要刪除的項目，準備給 undo 用
+    const itemToDelete = dates.find(item => item.id === id);
+    if (!itemToDelete) return;
+    
+    // 保存原始狀態
+    const previousDates = [...dates];
+    
+    // 樂觀更新：先從 UI 移除
+    setDates(prev => {
+      const newState = prev.filter(item => item.id !== id);
+      updateCache(newState);
+      return newState;
+    });
     
     try {
+      // 實際刪除 Firebase 資料
       await deleteDoc(doc(db, "schedules", id));
       
-      setDates(prev => {
-        const newState = prev.filter(item => item.id !== id);
-        // ✨ 同步寫入快取
-        updateCache(newState);
-        return newState;
+      // 顯示成功訊息與復原按鈕
+      toast((t) => (
+        <div className="flex items-center gap-3">
+          <span>行程已刪除 👋</span>
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              // 復原：重新新增回 Firebase
+              try {
+                const { id: _, ...dataToRestore } = itemToDelete;
+                const docRef = await addDoc(collection(db, "schedules"), {
+                  ...dataToRestore,
+                  createdAt: new Date()
+                });
+                
+                // 更新本地狀態
+                setDates(prev => {
+                  const restored = { ...itemToDelete, id: docRef.id };
+                  const newState = [...prev, restored].sort((a, b) => 
+                    new Date(a.date).getTime() - new Date(b.date).getTime()
+                  );
+                  updateCache(newState);
+                  return newState;
+                });
+                
+                toast.success("已復原行程 ✨");
+              } catch (error) {
+                console.error("Undo failed:", error);
+                toast.error("復原失敗");
+              }
+            }}
+            className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-md transition-colors"
+          >
+            復原
+          </button>
+        </div>
+      ), {
+        duration: 5000,
+        id: `delete-${id}`,
       });
       
-      toast.success("行程已刪除 👋");
     } catch (error) {
       console.error("Error deleting: ", error);
       toast.error("刪除失敗");
+      // 刪除失敗，回復狀態
+      setDates(previousDates);
+      updateCache(previousDates);
     }
   };
 

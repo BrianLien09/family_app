@@ -45,6 +45,20 @@ export default function AddDateModal({ isOpen, onClose, onSubmit, initialData, p
     }
   }, [isOpen, initialData, presetDate]);
 
+  // 2. ESC 鍵盤快捷鍵
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [isOpen, onClose]);
+
 
 
   if (!isOpen) return null;
@@ -71,17 +85,26 @@ export default function AddDateModal({ isOpen, onClose, onSubmit, initialData, p
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+    <div 
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
       {/* 卡片本體：保持你喜歡的深色實心簡潔風格 */}
       <div className="w-full max-w-md bg-[#161b2c] border border-slate-700 shadow-2xl rounded-xl overflow-hidden flex flex-col animate-scale-in">
         
         {/* Header */}
         <div className="flex items-center justify-between p-6 pb-2">
-           <h2 className="text-xl font-bold text-white flex items-center gap-3">
+           <h2 id="modal-title" className="text-xl font-bold text-white flex items-center gap-3">
              <span className="w-1 h-6 bg-purple-500 rounded-full"></span>
              {initialData ? '編輯行程' : '新增行程'}
            </h2>
-           <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+           <button 
+             onClick={onClose} 
+             className="text-slate-400 hover:text-white transition-colors"
+             aria-label="關閉對話框"
+           >
              <X size={24} />
            </button>
         </div>
@@ -97,10 +120,11 @@ export default function AddDateModal({ isOpen, onClose, onSubmit, initialData, p
              <input 
                required
                autoFocus
-               className="w-full bg-[#1e2336] border border-slate-700 rounded-lg pl-12 pr-4 py-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-purple-500 transition-all text-base"
+               className="w-full bg-[#1e2336] border border-slate-700 rounded-lg pl-12 pr-4 py-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all text-base"
                placeholder="行程標題 (例如：阿弟排班)"
                value={title}
                onChange={e => setTitle(e.target.value)}
+               aria-label="行程標題"
              />
           </div>
 
@@ -113,9 +137,10 @@ export default function AddDateModal({ isOpen, onClose, onSubmit, initialData, p
                 <input 
                   type="date"
                   required
-                  className="w-full bg-[#1e2336] border border-slate-700 rounded-lg pl-12 pr-4 py-3.5 text-white focus:outline-none focus:border-purple-500 transition-all [color-scheme:dark]"
+                  className="w-full bg-[#1e2336] border border-slate-700 rounded-lg pl-12 pr-4 py-3.5 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all [color-scheme:dark]"
                   value={date}
                   onChange={e => setDate(e.target.value)}
+                  aria-label="日期"
                 />
              </div>
              <div className="group relative">
@@ -124,9 +149,10 @@ export default function AddDateModal({ isOpen, onClose, onSubmit, initialData, p
                 </div>
                 <input 
                   type="time"
-                  className="w-full bg-[#1e2336] border border-slate-700 rounded-lg pl-12 pr-4 py-3.5 text-white focus:outline-none focus:border-purple-500 transition-all [color-scheme:dark]"
+                  className="w-full bg-[#1e2336] border border-slate-700 rounded-lg pl-12 pr-4 py-3.5 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all [color-scheme:dark]"
                   value={time}
                   onChange={e => setTime(e.target.value)}
+                  aria-label="時間"
                 />
              </div>
           </div>
@@ -137,7 +163,7 @@ export default function AddDateModal({ isOpen, onClose, onSubmit, initialData, p
                 <Hash size={14} />
                 <span className="text-xs font-bold uppercase tracking-wider">選擇分類</span>
              </div>
-             <div className="flex flex-wrap gap-2">
+             <div className="flex flex-wrap gap-2" role="group" aria-label="行程分類">
                 {CATEGORIES.map(cat => (
                    <button
                      key={cat}
@@ -149,6 +175,8 @@ export default function AddDateModal({ isOpen, onClose, onSubmit, initialData, p
                          ? "bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-500/20" 
                          : "bg-[#1e2336] border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200"
                      )}
+                     aria-label={`分類: ${cat}`}
+                     aria-pressed={category === cat}
                    >
                      {cat}
                    </button>
@@ -162,10 +190,11 @@ export default function AddDateModal({ isOpen, onClose, onSubmit, initialData, p
                 <AlignLeft size={18} />
              </div>
              <textarea 
-               className="w-full bg-[#1e2336] border border-slate-700 rounded-lg pl-12 pr-4 py-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-purple-500 transition-all resize-none h-24"
+               className="w-full bg-[#1e2336] border border-slate-700 rounded-lg pl-12 pr-4 py-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all resize-none h-24"
                placeholder="備註 (選填)"
                value={description}
                onChange={e => setDescription(e.target.value)}
+               aria-label="備註"
              />
           </div>
 
@@ -175,12 +204,14 @@ export default function AddDateModal({ isOpen, onClose, onSubmit, initialData, p
                type="button" 
                onClick={onClose} 
                className="px-6 py-3 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors font-medium"
+               aria-label="取消"
              >
                 取消
              </button>
              <button 
                type="submit" 
                className="px-8 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-lg shadow-purple-500/20 transition-all font-bold flex items-center gap-2"
+               aria-label={initialData ? '確認修改' : '確認新增'}
              >
                 <Check size={18} />
                 {initialData ? '確認修改' : '確認新增'}

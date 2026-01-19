@@ -24,6 +24,25 @@
         transparent 40%
       );
   }
+
+  /* 增強焦點指示器 - 無障礙改善 */
+  *:focus-visible {
+    outline: 2px solid rgba(168, 85, 247, 0.8);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  button:focus-visible {
+    outline: 2px solid rgba(168, 85, 247, 0.8);
+    outline-offset: 2px;
+  }
+
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: 2px solid rgba(168, 85, 247, 0.8);
+    outline-offset: -2px;
+  }
 }
 
 /* Glass Utilities */

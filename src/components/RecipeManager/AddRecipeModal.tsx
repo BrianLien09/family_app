@@ -47,6 +47,20 @@ export default function AddRecipeModal({ isOpen, onClose, onSubmit, initialData 
     }
   }, [isOpen, initialData]);
 
+  // ESC 鍵盤快捷鍵
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleAddIngredient = () => {
@@ -94,7 +108,12 @@ export default function AddRecipeModal({ isOpen, onClose, onSubmit, initialData 
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div 
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="recipe-modal-title"
+    >
       <div className="glass-panel w-full max-w-lg p-0 bg-[#1a1f3c] dark:bg-slate-900/95 border border-white/10 shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh] rounded-2xl overflow-hidden text-white">
         
         {/* Header */}
@@ -102,9 +121,13 @@ export default function AddRecipeModal({ isOpen, onClose, onSubmit, initialData 
            <div className="flex items-center gap-2 text-orange-400">
              <ChefHat size={24} />
              {/* 動態顯示標題 */}
-             <h2 className="text-xl font-bold">{initialData ? '編輯私房食譜' : '新增私房食譜'}</h2>
+             <h2 id="recipe-modal-title" className="text-xl font-bold">{initialData ? '編輯私房食譜' : '新增私房食譜'}</h2>
            </div>
-           <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+           <button 
+             onClick={onClose} 
+             className="text-slate-400 hover:text-white transition-colors"
+             aria-label="關閉對話框"
+           >
              <X size={24} />
            </button>
         </div>
@@ -115,10 +138,11 @@ export default function AddRecipeModal({ isOpen, onClose, onSubmit, initialData 
                <label className="block text-sm font-medium mb-1 pl-1 text-slate-300">食譜名稱</label>
                <input 
                  required
-                 className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-orange-500/50 transition-all hover:bg-black/30"
+                 className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/30 transition-all hover:bg-black/30"
                  placeholder="例如：阿嬤的滷肉" 
                  value={title}
                  onChange={e => setTitle(e.target.value)}
+                 aria-label="食譜名稱"
                />
              </div>
              

@@ -5,8 +5,8 @@ import { useState, useMemo, useEffect } from 'react';
 import { useDates } from '@/hooks/useDates';
 import CalendarWidget from '@/components/CalendarWidget'; 
 import AddDateModal from '@/components/DateManager/AddDateModal';
-import { Plus, Calendar, Sparkles } from 'lucide-react';
-import { DateItem } from '@/types';
+import { Plus, Calendar, Sparkles, Search, Filter, X } from 'lucide-react';
+import { DateItem, DateCategory, CATEGORIES } from '@/types';
 import Login from '@/components/Login';
 import clsx from 'clsx';
 // 2. 引入 toast 和 auth
@@ -20,14 +20,63 @@ export default function Home() {
   const [editingDate, setEditingDate] = useState<DateItem | null>(null);
   const [selectedDateForNew, setSelectedDateForNew] = useState<string | null>(null);
   
-  // ... (upcomingDates 邏輯保持不變) ...
+  // 新增：搜尋與篩選狀態
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState<DateCategory[]>([]);
+  const [dateRangeStart, setDateRangeStart] = useState('');
+  const [dateRangeEnd, setDateRangeEnd] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // 篩選後的行程
+  const filteredDates = useMemo(() => {
+    return dates.filter(item => {
+      // 搜尋關鍵字
+      const matchesSearch = searchTerm === '' || 
+        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.description?.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      // 分類篩選
+      const matchesCategory = selectedCategories.length === 0 || 
+        selectedCategories.includes(item.category);
+      
+      // 日期區間篩選
+      let matchesDateRange = true;
+      if (dateRangeStart && dateRangeEnd) {
+        const itemDate = new Date(item.date).getTime();
+        const startDate = new Date(dateRangeStart).getTime();
+        const endDate = new Date(dateRangeEnd).getTime();
+        matchesDateRange = itemDate >= startDate && itemDate <= endDate;
+      }
+      
+      return matchesSearch && matchesCategory && matchesDateRange;
+    });
+  }, [dates, searchTerm, selectedCategories, dateRangeStart, dateRangeEnd]);
+  
+  // 切換分類選擇
+  const toggleCategory = (category: DateCategory) => {
+    setSelectedCategories(prev => 
+      prev.includes(category) 
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
+    );
+  };
+  
+  // 清除所有篩選
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedCategories([]);
+    setDateRangeStart('');
+    setDateRangeEnd('');
+  };
+  
+  // 計算即將到來的行程（使用篩選後的資料）
   const upcomingDates = useMemo(() => {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    return dates
+    return filteredDates
       .filter(d => new Date(d.date).getTime() >= todayStart)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [dates]);
+  }, [filteredDates]);
 
   // ✨✨✨ 新增這段 useEffect ✨✨✨
   useEffect(() => {
@@ -87,8 +136,6 @@ export default function Home() {
 
   return (
     <div className="container mx-auto px-4 py-8 pt-20 max-w-5xl">
-      {/* ... 下面的 JSX 都不用動 ... */}
-      
       {/* Hero Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div className="space-y-1">
@@ -103,6 +150,109 @@ export default function Home() {
         <div className="shrink-0">
           <Login />
         </div>
+      </div>
+
+      {/* 搜尋與篩選區 */}
+      <div className="glass-card p-4 mb-6">
+        {/* 搜尋欄 */}
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+          <input
+            type="text"
+            placeholder="搜尋行程標題或描述..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-10 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-purple-500/50 transition-all"
+            aria-label="搜尋行程"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+              aria-label="清除搜尋"
+            >
+              <X size={20} />
+            </button>
+          )}
+        </div>
+
+        {/* 篩選按鈕 */}
+        <div className="flex items-center justify-between mb-3">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm text-slate-300 transition-colors"
+            aria-label="切換篩選器"
+          >
+            <Filter size={16} />
+            篩選 {(selectedCategories.length > 0 || dateRangeStart || dateRangeEnd) && `(${selectedCategories.length + (dateRangeStart ? 1 : 0)})`}
+          </button>
+          
+          {(searchTerm || selectedCategories.length > 0 || dateRangeStart || dateRangeEnd) && (
+            <button
+              onClick={clearFilters}
+              className="text-xs text-slate-400 hover:text-white transition-colors"
+            >
+              清除所有篩選
+            </button>
+          )}
+        </div>
+
+        {/* 篩選選項 */}
+        {showFilters && (
+          <div className="space-y-4 pt-4 border-t border-white/10">
+            {/* 分類多選 */}
+            <div>
+              <label className="text-xs font-bold text-slate-400 mb-2 block">分類</label>
+              <div className="flex flex-wrap gap-2">
+                {CATEGORIES.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => toggleCategory(category)}
+                    className={clsx(
+                      "px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
+                      selectedCategories.includes(category)
+                        ? "bg-purple-500 text-white shadow-lg shadow-purple-500/30"
+                        : "bg-white/5 text-slate-300 hover:bg-white/10"
+                    )}
+                    aria-label={`篩選 ${category}`}
+                    aria-pressed={selectedCategories.includes(category)}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 日期區間 */}
+            <div>
+              <label className="text-xs font-bold text-slate-400 mb-2 block">日期區間</label>
+              <div className="flex gap-3 items-center">
+                <input
+                  type="date"
+                  value={dateRangeStart}
+                  onChange={(e) => setDateRangeStart(e.target.value)}
+                  className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500/50 transition-all"
+                  aria-label="開始日期"
+                />
+                <span className="text-slate-500">至</span>
+                <input
+                  type="date"
+                  value={dateRangeEnd}
+                  onChange={(e) => setDateRangeEnd(e.target.value)}
+                  className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500/50 transition-all"
+                  aria-label="結束日期"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 篩選結果提示 */}
+        {(searchTerm || selectedCategories.length > 0 || dateRangeStart || dateRangeEnd) && (
+          <div className="mt-4 text-xs text-slate-400">
+            找到 <span className="text-purple-400 font-bold">{filteredDates.length}</span> 個符合條件的行程
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
@@ -172,10 +322,10 @@ export default function Home() {
            </div>
         </div>
 
-        {/* 右側欄位 (月曆) */}
+        {/* 右側欄位 (月曆) - 使用篩選後的資料 */}
         <div className="md:col-span-9">
            <CalendarWidget 
-               events={dates} 
+               events={filteredDates} 
                onAddEvent={handleCalendarAddClick}
                onDelete={deleteDate}
                onEdit={handleOpenEdit}

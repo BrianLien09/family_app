@@ -118,28 +118,76 @@ export function useRecipes() {
     }
   };
 
-  // 5. 刪除食譜
+  // 5. 刪除食譜 (含復原功能)
   const deleteRecipe = async (id: string) => {
     if (!auth.currentUser) {
        toast.error("請先登入才能操作喔 🚫");
        return;
     }
-    if (!confirm("確定要刪除這個食譜嗎？")) return;
+    
+    // 找到要刪除的食譜
+    const itemToDelete = recipes.find(item => item.id === id);
+    if (!itemToDelete) return;
+    
+    // 保存原始狀態
+    const previousRecipes = [...recipes];
+    
+    // 樂觀更新：先從 UI 移除
+    setRecipes(prev => {
+      const newState = prev.filter(item => item.id !== id);
+      updateCache(newState);
+      return newState;
+    });
     
     try {
+      // 實際刪除 Firebase 資料
       await deleteDoc(doc(db, "recipes", id));
       
-      setRecipes(prev => {
-        const newState = prev.filter(item => item.id !== id);
-        updateCache(newState); // ✨ 同步快取
-        return newState;
+      // 顯示成功訊息與復原按鈕
+      toast((t) => (
+        <div className="flex items-center gap-3">
+          <span>食譜已刪除 👋</span>
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              // 復原：重新新增回 Firebase
+              try {
+                const { id: _, ...dataToRestore } = itemToDelete;
+                const docRef = await addDoc(collection(db, "recipes"), {
+                  ...dataToRestore,
+                  createdAt: new Date()
+                });
+                
+                // 更新本地狀態
+                setRecipes(prev => {
+                  const restored = { ...itemToDelete, id: docRef.id };
+                  const newState = [restored, ...prev];
+                  updateCache(newState);
+                  return newState;
+                });
+                
+                toast.success("已復原食譜 ✨");
+              } catch (error) {
+                console.error("Undo failed:", error);
+                toast.error("復原失敗");
+              }
+            }}
+            className="px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-md transition-colors"
+          >
+            復原
+          </button>
+        </div>
+      ), {
+        duration: 5000,
+        id: `delete-recipe-${id}`,
       });
-      
-      toast.success("食譜已刪除 👋");
       
     } catch (error) {
       console.error("Error deleting recipe: ", error);
       toast.error("刪除失敗");
+      // 刪除失敗，回復狀態
+      setRecipes(previousRecipes);
+      updateCache(previousRecipes);
     }
   };
 

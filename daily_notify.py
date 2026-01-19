@@ -44,15 +44,28 @@ def get_schedule_from_firebase():
             title = event.get('title', '未命名行程')
             date_val = event.get('date')
             
-            # --- 處理時間 ---
-            raw_time = event.get('time')
+            # --- 處理時間 (支援新舊格式) ---
+            start_time = event.get('startTime')
+            end_time = event.get('endTime')
+            old_time = event.get('time')
             
-            if not raw_time:  # 如果是空的
-                display_time = "全天"
-                sort_time = "" 
-            else:
-                display_time = raw_time
-                sort_time = raw_time
+            # 決定顯示的時間字串與排序時間
+            display_time = "全天"
+            sort_time = ""
+
+            if start_time:
+                # 新格式：有 startTime
+                sort_time = start_time
+                if end_time:
+                    display_time = f"{start_time} ~ {end_time}"
+                else:
+                    display_time = start_time
+            elif old_time:
+                # 舊格式：只有 time
+                sort_time = old_time
+                display_time = old_time
+            
+            # 如果都沒抓到，維持預設的 "全天" 與空字串排序
             
             events_list.append({
                 "date": date_val,

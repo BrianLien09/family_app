@@ -6,7 +6,8 @@ import { useDates } from '@/hooks/useDates';
 import CalendarWidget from '@/components/CalendarWidget'; 
 import AddDateModal from '@/components/DateManager/AddDateModal';
 import { Plus, Calendar, Sparkles, Search, Filter, X, CheckSquare, Square, Trash2, CalendarClock, History, ChevronDown } from 'lucide-react';
-import { DateItem, DateCategory, CATEGORIES } from '@/types';
+import { DateItem, DateCategory } from '@/types';
+import { useCategories } from '@/hooks/useCategories';
 import Login from '@/components/Login';
 import clsx from 'clsx';
 // 2. 引入 toast 和 auth
@@ -15,6 +16,7 @@ import { auth } from '@/lib/firebase';
 
 export default function Home() {
   const { dates, addDate, deleteDate, deleteDates, updateDate, isLoaded, refresh, isRefreshing } = useDates();
+  const { categories } = useCategories();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDate, setEditingDate] = useState<DateItem | null>(null);
@@ -318,7 +320,7 @@ export default function Home() {
             <div>
               <label className="text-xs font-bold text-slate-400 mb-2 block">分類</label>
               <div className="flex flex-wrap gap-2">
-                {CATEGORIES.map((category) => (
+                {categories.map((category: string) => (
                   <button
                     key={category}
                     onClick={() => toggleCategory(category)}
@@ -437,7 +439,7 @@ export default function Home() {
                       });
                       return (
                         <option key={event.id} value={index} className="bg-slate-800">
-                          {formattedDate} - {event.title} ({event.time})
+                          {formattedDate} - {event.title} {event.startTime && `(${event.startTime})`}
                         </option>
                       );
                     })}
@@ -472,7 +474,12 @@ export default function Home() {
                   </div>
                   
                   <p className="text-sm text-slate-400 mb-2">
-                    <span className="text-blue-300 font-medium">{currentEvent.time}</span>
+                    {currentEvent.startTime && (
+                      <span className="text-blue-300 font-medium">
+                        {currentEvent.startTime}
+                        {currentEvent.endTime && ` ~ ${currentEvent.endTime}`}
+                      </span>
+                    )}
                   </p>
                   
                   {currentEvent.description && (
@@ -565,7 +572,9 @@ export default function Home() {
                                  item.category === '孔呆值班' ? 'bg-cyan-400' :
                                  item.category === '繳費' ? 'bg-yellow-400' : 'bg-pink-500'
                               )}></span>
-                              <span className="text-xs text-slate-500 truncate">{item.time} · {item.category}</span>
+                              <span className="text-xs text-slate-500 truncate">
+                                {item.startTime && `${item.startTime} · `}{item.category}
+                              </span>
                            </div>
                         </div>
                      </div>

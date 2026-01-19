@@ -32,10 +32,19 @@ export function useDates() {
       const q = query(collection(db, "schedules"), orderBy("date", "asc"));
       const snapshot = await getDocs(q);
       
-      const datesData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as DateItem[];
+      const datesData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        // 🔄 相容性處理：
+        // 舊資料只有 time 欄位，新資料使用 startTime
+        // 如果沒有 startTime 但有 time，就拿 time 來當作 startTime 顯示
+        const finalStartTime = data.startTime || data.time;
+        
+        return {
+          id: doc.id,
+          ...data,
+          startTime: finalStartTime,
+        };
+      }) as DateItem[];
       
       setDates(datesData);
 

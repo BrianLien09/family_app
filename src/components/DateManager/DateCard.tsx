@@ -72,33 +72,38 @@ export default function DateCard({ item, onDelete, onEdit, batchMode = false, is
              )}
           </div>
           
-          {/* ✨ 這裡使用了 flex-wrap，讓標籤在空間不夠時自動掉到下一行 */}
-          <div className="flex flex-wrap items-center gap-2 mt-1.5">
-            
-            {/* 1. 日期與時間 (綁在一起，不換行) */}
-            <span className="flex items-center gap-1.5 text-blue-200 font-medium text-sm bg-blue-500/10 px-2 py-0.5 rounded-md whitespace-nowrap">
-              <Clock size={14} />
-              {item.date} 
-              {item.time && <span className="text-white border-l border-blue-400/30 pl-1.5 ml-0.5">{item.time}</span>}
-            </span>
+           {/* ✨ 這裡使用了 flex-wrap，讓標籤在空間不夠時自動掉到下一行 */}
+           <div className="flex flex-wrap items-center gap-2 mt-1.5">
+             
+             {/* 1. 日期與時間區段 (綁在一起，不換行) */}
+             <span className="flex items-center gap-1.5 text-blue-200 font-medium text-sm bg-blue-500/10 px-2 py-0.5 rounded-md whitespace-nowrap">
+               <Clock size={14} />
+               {item.date} 
+               {item.startTime && (
+                 <span className="text-white border-l border-blue-400/30 pl-1.5 ml-0.5">
+                   {item.startTime}
+                   {item.endTime && ` ~ ${item.endTime}`}
+                 </span>
+               )}
+             </span>
 
-            {/* 2. 倒數天數 (獨立出來) */}
-            <span className={clsx(
-              "text-sm font-medium px-2 py-0.5 rounded-md whitespace-nowrap",
-              isUrgent 
-                ? "text-pink-300 bg-pink-500/10 border border-pink-500/20" 
-                : "text-slate-400 bg-slate-700/30 border border-white/5"
-            )}>
-               {daysText}
-            </span>
+             {/* 2. 倒數天數 (獨立出來) */}
+             <span className={clsx(
+               "text-sm font-medium px-2 py-0.5 rounded-md whitespace-nowrap",
+               isUrgent 
+                 ? "text-pink-300 bg-pink-500/10 border border-pink-500/20" 
+                 : "text-slate-400 bg-slate-700/30 border border-white/5"
+             )}>
+                {daysText}
+             </span>
 
-            {/* 3. 分類 */}
-            <span className="flex items-center gap-1.5 text-purple-300 font-medium text-sm bg-purple-500/10 px-2 py-0.5 rounded-md whitespace-nowrap">
-              <Tag size={14} />
-              {item.category}
-            </span>
+             {/* 3. 分類 */}
+             <span className="flex items-center gap-1.5 text-purple-300 font-medium text-sm bg-purple-500/10 px-2 py-0.5 rounded-md whitespace-nowrap">
+               <Tag size={14} />
+               {item.category}
+             </span>
 
-          </div>
+           </div>
 
           {item.description && (
              <p className="text-slate-500 text-sm mt-2 line-clamp-2 border-l-2 border-slate-700 pl-2">

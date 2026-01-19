@@ -1,12 +1,14 @@
-export type DateCategory = '阿弟排班' | '孔呆值班' | '剪頭髮' | '洗牙' | '聚餐' | '繳費' | '其它';
+// 預設類別（使用者可自行新增更多）
+export type DateCategory = string;
 
-export const CATEGORIES: DateCategory[] = ['阿弟排班', '孔呆值班', '剪頭髮', '洗牙', '聚餐', '繳費', '其它'];
+export const DEFAULT_CATEGORIES: string[] = ['阿弟排班', '孔呆值班', '剪頭髮', '洗牙', '聚餐', '繳費', '其它'];
 
 export interface DateItem {
   id: string;
   title: string;
   date: string; // YYYY-MM-DD
-  time?: string; // HH:mm
+  startTime?: string; // HH:mm (選填 - 開始時間)
+  endTime?: string; // HH:mm (選填 - 結束時間)
   category: DateCategory;
   description?: string;
 }

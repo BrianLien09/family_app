@@ -5,7 +5,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useDates } from '@/hooks/useDates';
 import CalendarWidget from '@/components/CalendarWidget'; 
 import AddDateModal from '@/components/DateManager/AddDateModal';
-import { Plus, Calendar, Sparkles, Search, Filter, X } from 'lucide-react';
+import { Plus, Calendar, Sparkles, Search, Filter, X, CheckSquare, Square, Trash2, CalendarClock, History, ChevronDown } from 'lucide-react';
 import { DateItem, DateCategory, CATEGORIES } from '@/types';
 import Login from '@/components/Login';
 import clsx from 'clsx';
@@ -14,7 +14,7 @@ import toast from 'react-hot-toast';
 import { auth } from '@/lib/firebase';
 
 export default function Home() {
-  const { dates, addDate, deleteDate, updateDate, isLoaded, refresh, isRefreshing } = useDates();
+  const { dates, addDate, deleteDate, deleteDates, updateDate, isLoaded, refresh, isRefreshing } = useDates();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDate, setEditingDate] = useState<DateItem | null>(null);
@@ -26,6 +26,15 @@ export default function Home() {
   const [dateRangeStart, setDateRangeStart] = useState('');
   const [dateRangeEnd, setDateRangeEnd] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  
+  // 新增：快速預覽狀態
+  const [quickPreviewDate, setQuickPreviewDate] = useState<string | null>(null);
+  const [previewMode, setPreviewMode] = useState<'upcoming' | 'past' | null>(null);
+  const [previewIndex, setPreviewIndex] = useState(0);
+  
+  // 新增：批次選擇狀態
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [batchMode, setBatchMode] = useState(false);
   
   // 篩選後的行程
   const filteredDates = useMemo(() => {
@@ -69,6 +78,78 @@ export default function Home() {
     setDateRangeEnd('');
   };
   
+  // 快速跳到最近的行程
+  const jumpToUpcoming = () => {
+    if (upcomingDates.length === 0) {
+      toast('目前沒有即將到來的行程', { icon: '📅' });
+      return;
+    }
+    
+    // 設定為預覽即將到來的行程
+    setPreviewMode('upcoming');
+    setPreviewIndex(0);
+    setQuickPreviewDate('upcoming');
+    
+    // 顯示提示
+    const nextEvent = upcomingDates[0];
+    const displayDate = new Date(nextEvent.date).toLocaleDateString('zh-TW', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    toast.success(`最近的行程：${displayDate} - ${nextEvent.title}`, { duration: 4000 });
+  };
+  
+  // 快速回顧過往行程
+  const jumpToPast = () => {
+    if (pastDates.length === 0) {
+      toast('目前沒有過往行程', { icon: '📚' });
+      return;
+    }
+    
+    // 設定為預覽過往行程
+    setPreviewMode('past');
+    setPreviewIndex(0);
+    setQuickPreviewDate('past');
+    
+    // 顯示提示
+    const lastEvent = pastDates[0];
+    const displayDate = new Date(lastEvent.date).toLocaleDateString('zh-TW', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    toast.success(`最近完成的行程：${displayDate} - ${lastEvent.title}`, { duration: 4000 });
+  };
+  
+  // 批次操作函式
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredDates.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredDates.map(d => d.id));
+    }
+  };
+  
+  const toggleSelectItem = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+  
+  const handleBatchDelete = () => {
+    if (selectedIds.length === 0) {
+      toast.error('請先選擇要刪除的行程');
+      return;
+    }
+    
+    if (confirm(`確定要刪除 ${selectedIds.length} 個行程嗎？`)) {
+      deleteDates(selectedIds);
+      setSelectedIds([]);
+      setBatchMode(false);
+    }
+  };
+  
   // 計算即將到來的行程（使用篩選後的資料）
   const upcomingDates = useMemo(() => {
     const now = new Date();
@@ -76,6 +157,15 @@ export default function Home() {
     return filteredDates
       .filter(d => new Date(d.date).getTime() >= todayStart)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [filteredDates]);
+  
+  // 計算過往的行程（使用篩選後的資料）
+  const pastDates = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    return filteredDates
+      .filter(d => new Date(d.date).getTime() < todayStart)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // 由近到遠排序
   }, [filteredDates]);
 
   // ✨✨✨ 新增這段 useEffect ✨✨✨
@@ -177,20 +267,44 @@ export default function Home() {
         </div>
 
         {/* 篩選按鈕 */}
-        <div className="flex items-center justify-between mb-3">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm text-slate-300 transition-colors"
-            aria-label="切換篩選器"
-          >
-            <Filter size={16} />
-            篩選 {(selectedCategories.length > 0 || dateRangeStart || dateRangeEnd) && `(${selectedCategories.length + (dateRangeStart ? 1 : 0)})`}
-          </button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm text-slate-300 transition-colors"
+              aria-label="切換篩選器"
+            >
+              <Filter size={16} />
+              篩選 {(selectedCategories.length > 0 || dateRangeStart || dateRangeEnd) && `(${selectedCategories.length + (dateRangeStart ? 1 : 0)})`}
+            </button>
+            
+            <button
+              onClick={jumpToUpcoming}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 border border-blue-500/30 rounded-lg text-sm text-blue-300 font-medium transition-all hover:shadow-lg hover:shadow-blue-500/20"
+              aria-label="跳到最近行程"
+              title="快速找到最接近今天的行程"
+            >
+              <CalendarClock size={16} />
+              <span className="hidden sm:inline">即將到來</span>
+              <span className="sm:hidden">最近</span>
+            </button>
+            
+            <button
+              onClick={jumpToPast}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500/20 to-pink-500/20 hover:from-orange-500/30 hover:to-pink-500/30 border border-orange-500/30 rounded-lg text-sm text-orange-300 font-medium transition-all hover:shadow-lg hover:shadow-orange-500/20"
+              aria-label="回顧過往行程"
+              title="快速查看最近完成的行程"
+            >
+              <History size={16} />
+              <span className="hidden sm:inline">回顧過往</span>
+              <span className="sm:hidden">過往</span>
+            </button>
+          </div>
           
           {(searchTerm || selectedCategories.length > 0 || dateRangeStart || dateRangeEnd) && (
             <button
               onClick={clearFilters}
-              className="text-xs text-slate-400 hover:text-white transition-colors"
+              className="text-xs text-slate-400 hover:text-white transition-colors self-end sm:self-auto"
             >
               清除所有篩選
             </button>
@@ -254,6 +368,152 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* 快速預覽卡片 */}
+      {quickPreviewDate && previewMode && (() => {
+        const eventsList = previewMode === 'upcoming' ? upcomingDates : pastDates;
+        const currentEvent = eventsList[previewIndex];
+        
+        if (!currentEvent) return null;
+        
+        const previewDate = new Date(currentEvent.date);
+        const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+        
+        return (
+          <div className="glass-card p-5 mb-6 animate-scale-in">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={clsx(
+                    "px-2 py-1 rounded text-xs font-medium",
+                    previewMode === 'upcoming' 
+                      ? "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                      : "bg-orange-500/20 text-orange-300 border border-orange-500/30"
+                  )}>
+                    {previewMode === 'upcoming' ? '即將到來' : '回顧過往'}
+                  </span>
+                  {eventsList.length > 1 && (
+                    <span className="text-xs text-slate-500">
+                      ({previewIndex + 1}/{eventsList.length})
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-lg font-bold text-white mb-1">
+                  {previewDate.toLocaleDateString('zh-TW', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })} {weekdays[previewDate.getDay()]}
+                </h3>
+              </div>
+              <button
+                onClick={() => {
+                  setQuickPreviewDate(null);
+                  setPreviewMode(null);
+                  setPreviewIndex(0);
+                }}
+                className="text-slate-400 hover:text-white transition-colors"
+                aria-label="關閉預覽"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            {/* 下拉選單 - 選擇要查看的行程 */}
+            {eventsList.length > 1 && (
+              <div className="mb-4">
+                <label className="text-xs text-slate-400 mb-2 block">選擇行程</label>
+                <div className="relative">
+                  <select
+                    value={previewIndex}
+                    onChange={(e) => setPreviewIndex(Number(e.target.value))}
+                    className="w-full px-3 py-2 pr-8 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500/50 transition-all appearance-none cursor-pointer"
+                  >
+                    {eventsList.map((event, index) => {
+                      const eventDate = new Date(event.date);
+                      const formattedDate = eventDate.toLocaleDateString('zh-TW', { 
+                        month: 'numeric', 
+                        day: 'numeric' 
+                      });
+                      return (
+                        <option key={event.id} value={index} className="bg-slate-800">
+                          {formattedDate} - {event.title} ({event.time})
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                </div>
+              </div>
+            )}
+            
+            {/* 當前行程詳情 */}
+            <div className="mb-4">
+              <div className="flex items-start gap-3 p-4 bg-white/5 rounded-lg">
+                <div className="flex flex-col items-center justify-center min-w-[56px] h-14 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-lg border border-blue-500/30">
+                  <span className="text-xs text-blue-300 leading-none mb-1">{previewDate.getMonth() + 1}月</span>
+                  <span className="text-xl font-bold text-white leading-none">{previewDate.getDate()}</span>
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h4 className="text-base font-bold text-white">{currentEvent.title}</h4>
+                    <span className={clsx(
+                      "px-2 py-0.5 rounded text-[10px] font-medium shrink-0",
+                      currentEvent.category === '洗牙' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
+                      currentEvent.category === '剪頭髮' ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30' :
+                      currentEvent.category === '阿弟排班' ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 
+                      currentEvent.category === '孔呆值班' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' :
+                      currentEvent.category === '繳費' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' : 
+                      'bg-pink-500/20 text-pink-300 border border-pink-500/30'
+                    )}>
+                      {currentEvent.category}
+                    </span>
+                  </div>
+                  
+                  <p className="text-sm text-slate-400 mb-2">
+                    <span className="text-blue-300 font-medium">{currentEvent.time}</span>
+                  </p>
+                  
+                  {currentEvent.description && (
+                    <p className="text-sm text-slate-300 bg-white/5 p-2 rounded border border-white/5">
+                      {currentEvent.description}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setQuickPreviewDate(null);
+                  setPreviewMode(null);
+                  setPreviewIndex(0);
+                  // 滾動到月曆區域
+                  const calendarSection = document.querySelector('.md\\:col-span-9');
+                  if (calendarSection) {
+                    calendarSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 border border-blue-500/30 rounded-lg text-sm text-blue-300 font-medium transition-all hover:shadow-lg hover:shadow-blue-500/20"
+              >
+                在月曆中查看
+              </button>
+              <button
+                onClick={() => {
+                  setQuickPreviewDate(null);
+                  setPreviewMode(null);
+                  setPreviewIndex(0);
+                }}
+                className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm text-slate-300 transition-colors"
+              >
+                關閉
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
         
@@ -331,6 +591,16 @@ export default function Home() {
                onEdit={handleOpenEdit}
                onRefresh={refresh}
                isRefreshing={isRefreshing}
+               batchMode={batchMode}
+               selectedIds={selectedIds}
+               onToggleSelect={toggleSelectItem}
+               onBatchModeToggle={() => {
+                 setBatchMode(!batchMode);
+                 setSelectedIds([]);
+               }}
+               onBatchDelete={handleBatchDelete}
+               onSelectAll={toggleSelectAll}
+               allSelected={selectedIds.length === filteredDates.length && filteredDates.length > 0}
             />
         </div>
 

@@ -213,5 +213,40 @@ export function useDates() {
     }
   };
 
-  return { dates, addDate, deleteDate, updateDate, isLoaded, refresh, isRefreshing };
+  // 批次刪除
+  const deleteDates = async (ids: string[]) => {
+    if (!auth.currentUser) return;
+    if (ids.length === 0) return;
+
+    // 找到要刪除的項目
+    const itemsToDelete = dates.filter(item => ids.includes(item.id));
+    if (itemsToDelete.length === 0) return;
+
+    // 保存原始狀態
+    const previousDates = [...dates];
+
+    // 樂觀更新：先從 UI 移除
+    setDates(prev => {
+      const newState = prev.filter(item => !ids.includes(item.id));
+      updateCache(newState);
+      return newState;
+    });
+
+    try {
+      // 批次刪除 Firebase 資料
+      await Promise.all(ids.map(id => deleteDoc(doc(db, "schedules", id))));
+
+      // 顯示成功訊息
+      toast.success(`已刪除 ${ids.length} 個行程 👋`);
+
+    } catch (error) {
+      console.error("Error batch deleting: ", error);
+      toast.error("批次刪除失敗");
+      // 刪除失敗，回復狀態
+      setDates(previousDates);
+      updateCache(previousDates);
+    }
+  };
+
+  return { dates, addDate, deleteDate, deleteDates, updateDate, isLoaded, refresh, isRefreshing };
 }

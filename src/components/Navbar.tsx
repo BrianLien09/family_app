@@ -44,7 +44,8 @@ export default function Navbar() {
     <nav 
       id="navbar" // 👈 重要：一定要有這個 ID
       className={clsx(
-        "fixed top-0 left-0 w-full z-[40] bg-[#0f111a]/95 backdrop-blur-md border-b border-[#232942] transition-transform duration-500 ease-in-out",
+        "fixed top-0 left-0 w-full z-[40] backdrop-blur-md border-b transition-all duration-500 ease-in-out",
+        "bg-[#0f111a]/95 border-[#232942]",
         !isVisible && "-translate-y-full" // 控制顯示/隱藏
       )}
     >
@@ -63,7 +64,7 @@ export default function Navbar() {
           </div>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-3">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               const isExternal = item.href.startsWith('http');
@@ -101,19 +102,20 @@ export default function Navbar() {
 
           {/* Mobile Menu Button */}
           <button 
-            className="md:hidden p-2 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+            className="md:hidden p-2 rounded-lg transition-colors text-slate-300 hover:text-white hover:bg-white/10"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="選單"
           >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
        </div>
 
        {/* Mobile Nav Dropdown */}
-       {/* Mobile Nav Dropdown */}
        <div 
          className={clsx(
-           "md:hidden bg-[#0f111a] border-b border-[#232942] overflow-hidden transition-all duration-500 ease-in-out",
-           isMobileMenuOpen ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0"
+           "md:hidden border-b overflow-hidden transition-all duration-500 ease-in-out",
+           "bg-[#0f111a] border-[#232942]",
+           isMobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
          )}
        >
          <div className="flex flex-col p-4 space-y-1">
@@ -128,7 +130,7 @@ export default function Navbar() {
                    href={item.href}
                    target="_blank"
                    rel="noopener noreferrer"
-                   className="px-4 py-3 rounded-lg text-base font-bold text-slate-300 hover:text-white hover:bg-white/5 transition-all flex items-center justify-between group"
+                   className="px-4 py-3 rounded-lg text-base font-bold transition-all flex items-center justify-between group text-slate-300 hover:text-white hover:bg-white/5"
                    onClick={() => setIsMobileMenuOpen(false)}
                  >
                    {item.name}

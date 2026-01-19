@@ -6,7 +6,7 @@ import {
   eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday 
 } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, RotateCw, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RotateCw, Plus, CheckSquare, Square, Trash2 } from 'lucide-react';
 import clsx from 'clsx';
 import { DateItem } from '@/types';
 import DateCard from '@/components/DateManager/DateCard';
@@ -18,6 +18,13 @@ interface CalendarWidgetProps {
   onEdit: (item: DateItem) => void;
   onRefresh?: () => void;
   isRefreshing?: boolean;
+  batchMode?: boolean;
+  selectedIds?: string[];
+  onToggleSelect?: (id: string) => void;
+  onBatchModeToggle?: () => void;
+  onBatchDelete?: () => void;
+  onSelectAll?: () => void;
+  allSelected?: boolean;
 }
 
 export default function CalendarWidget({ 
@@ -26,10 +33,19 @@ export default function CalendarWidget({
   onDelete, 
   onEdit, 
   onRefresh, 
-  isRefreshing 
+  isRefreshing,
+  batchMode = false,
+  selectedIds = [],
+  onToggleSelect,
+  onBatchModeToggle,
+  onBatchDelete,
+  onSelectAll,
+  allSelected = false
 }: CalendarWidgetProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const startDate = startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 1 });
   const endDate = endOfWeek(endOfMonth(currentMonth), { weekStartsOn: 1 });
@@ -42,6 +58,7 @@ export default function CalendarWidget({
 
   const handleDayClick = (day: Date) => {
     setSelectedDate(day);
+    setCurrentPage(1); // Reset to first page when changing date
   };
 
   // 點擊新增按鈕
@@ -63,6 +80,13 @@ export default function CalendarWidget({
 
   const selectedDateKey = format(selectedDate, 'yyyy-MM-dd');
   const selectedDayEvents = eventsByDate[selectedDateKey] || [];
+  
+  // Pagination for selected day events
+  const totalPages = Math.ceil(selectedDayEvents.length / itemsPerPage);
+  const paginatedEvents = selectedDayEvents.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const getEventColor = (category: string) => {
     if (category === '洗牙') return 'bg-blue-500/20 text-blue-200 border-blue-500/30';
@@ -116,6 +140,51 @@ export default function CalendarWidget({
            </button>
         </div>
       </div>
+
+      {/* 批次操作工具列 */}
+      {onBatchModeToggle && (
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/10 shrink-0">
+          <button
+            onClick={onBatchModeToggle}
+            className={clsx(
+              "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
+              batchMode 
+                ? "bg-purple-500 text-white shadow-lg shadow-purple-500/30" 
+                : "bg-white/5 hover:bg-white/10 text-slate-300"
+            )}
+            aria-label="批次選擇模式"
+            aria-pressed={batchMode}
+          >
+            {batchMode ? <CheckSquare size={14} /> : <Square size={14} />}
+            {batchMode ? '離開批次' : '批次操作'}
+          </button>
+          
+          {batchMode && (
+            <div className="flex items-center gap-2">
+              {onSelectAll && (
+                <button
+                  onClick={onSelectAll}
+                  className="px-2 py-1 text-[10px] bg-white/5 hover:bg-white/10 rounded text-slate-300 transition-colors"
+                  aria-label="全選/取消全選"
+                >
+                  {allSelected ? '取消全選' : '全選'}
+                </button>
+              )}
+              
+              {selectedIds.length > 0 && onBatchDelete && (
+                <button
+                  onClick={onBatchDelete}
+                  className="flex items-center gap-1 px-2 py-1 text-[10px] bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded transition-colors"
+                  aria-label={`刪除選取的 ${selectedIds.length} 個項目`}
+                >
+                  <Trash2 size={12} />
+                  刪除 ({selectedIds.length})
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Week Days */}
       <div className="grid grid-cols-7 mb-2 text-center shrink-0 border-b border-white/5 pb-2">
@@ -221,12 +290,15 @@ export default function CalendarWidget({
          
          <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
             {selectedDayEvents.length > 0 ? (
-              selectedDayEvents.map(event => (
+              paginatedEvents.map(event => (
                 <DateCard 
                   key={event.id}
                   item={event}
                   onDelete={onDelete}
-                  onEdit={() => onEdit(event)} 
+                  onEdit={() => onEdit(event)}
+                  batchMode={batchMode}
+                  isSelected={selectedIds.includes(event.id)}
+                  onToggleSelect={onToggleSelect}
                 />
               ))
             ) : (
@@ -235,6 +307,35 @@ export default function CalendarWidget({
               </div>
             )}
          </div>
+         
+         {/* Pagination Controls */}
+         {totalPages > 1 && (
+           <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between shrink-0">
+             <button
+               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+               disabled={currentPage === 1}
+               className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg text-slate-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
+               aria-label="上一頁"
+             >
+               <ChevronLeft size={14} />
+               上一頁
+             </button>
+             
+             <span className="text-xs text-slate-400">
+               第 <span className="text-purple-400 font-bold">{currentPage}</span> / {totalPages} 頁
+             </span>
+             
+             <button
+               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+               disabled={currentPage === totalPages}
+               className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg text-slate-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
+               aria-label="下一頁"
+             >
+               下一頁
+               <ChevronRight size={14} />
+             </button>
+           </div>
+         )}
       </div>
     </div>
   );

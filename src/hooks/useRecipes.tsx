@@ -218,5 +218,40 @@ export function useRecipes() {
     }
   };
 
-  return { recipes, addRecipe, updateRecipe, deleteRecipe, isLoaded, refresh, isRefreshing };
+  // 7. 批次刪除食譜
+  const deleteRecipes = async (ids: string[]) => {
+    if (!auth.currentUser) return;
+    if (ids.length === 0) return;
+
+    // 找到要刪除的項目
+    const itemsToDelete = recipes.filter(item => ids.includes(item.id));
+    if (itemsToDelete.length === 0) return;
+
+    // 保存原始狀態
+    const previousRecipes = [...recipes];
+
+    // 樂觀更新：先從 UI 移除
+    setRecipes(prev => {
+      const newState = prev.filter(item => !ids.includes(item.id));
+      updateCache(newState);
+      return newState;
+    });
+
+    try {
+      // 批次刪除 Firebase 資料
+      await Promise.all(ids.map(id => deleteDoc(doc(db, "recipes", id))));
+
+      // 顯示成功訊息
+      toast.success(`已刪除 ${ids.length} 個食譜 👋`);
+
+    } catch (error) {
+      console.error("Error batch deleting recipes: ", error);
+      toast.error("批次刪除失敗");
+      // 刪除失敗，回復狀態
+      setRecipes(previousRecipes);
+      updateCache(previousRecipes);
+    }
+  };
+
+  return { recipes, addRecipe, updateRecipe, deleteRecipe, deleteRecipes, isLoaded, refresh, isRefreshing };
 }

@@ -1,16 +1,19 @@
 'use client';
 
 import { DateItem } from '@/types';
-import { Trash2, Clock, Tag, Edit } from 'lucide-react';
+import { Trash2, Clock, Tag, Edit, Check } from 'lucide-react';
 import clsx from 'clsx';
 
 interface DateCardProps {
   item: DateItem;
   onDelete: (id: string) => void;
   onEdit: () => void;
+  batchMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
-export default function DateCard({ item, onDelete, onEdit }: DateCardProps) {
+export default function DateCard({ item, onDelete, onEdit, batchMode = false, isSelected = false, onToggleSelect }: DateCardProps) {
   const dateObj = new Date(item.date);
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -28,9 +31,34 @@ export default function DateCard({ item, onDelete, onEdit }: DateCardProps) {
   else daysText = `${diffDays} 天後`;
 
   return (
-    <div className="group relative flex items-start gap-4 p-3 rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 hover:border-white/20 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300">
-       {/* Bullet Point */}
-       <div className="mt-1.5 w-2 h-2 rounded-full shrink-0 bg-pink-500"></div>
+    <div 
+      className={clsx(
+        "group relative flex items-start gap-4 p-3 rounded-lg border backdrop-blur-sm transition-all duration-300",
+        batchMode ? "cursor-pointer" : "",
+        isSelected 
+          ? "bg-purple-500/20 border-purple-500 shadow-lg shadow-purple-500/20" 
+          : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 hover:-translate-y-0.5 hover:shadow-lg"
+      )}
+      onClick={() => batchMode && onToggleSelect && onToggleSelect(item.id)}
+    >
+       {/* Batch Mode Checkbox */}
+       {batchMode && (
+         <div 
+           className={clsx(
+             "mt-1.5 w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all",
+             isSelected 
+               ? "bg-purple-500 border-purple-500" 
+               : "border-slate-500 bg-white/5"
+           )}
+         >
+           {isSelected && <Check size={14} className="text-white" />}
+         </div>
+       )}
+       
+       {/* Bullet Point (only when not in batch mode) */}
+       {!batchMode && (
+         <div className="mt-1.5 w-2 h-2 rounded-full shrink-0 bg-pink-500"></div>
+       )}
 
        <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
@@ -80,23 +108,25 @@ export default function DateCard({ item, onDelete, onEdit }: DateCardProps) {
        </div>
 
        {/* Actions */}
-       <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
-         <button 
-           onClick={onEdit}
-           className="p-2 text-gray-400 hover:text-blue-400 bg-[#161b2c] shadow-lg rounded-full border border-white/5 transition-colors"
-           title="編輯"
-         >
-           <Edit size={14} />
-         </button>
+       {!batchMode && (
+         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+           <button 
+             onClick={onEdit}
+             className="p-2 text-gray-400 hover:text-blue-400 bg-[#161b2c] shadow-lg rounded-full border border-white/5 transition-colors"
+             title="編輯"
+           >
+             <Edit size={14} />
+           </button>
 
-         <button 
-           onClick={() => onDelete(item.id)}
-           className="p-2 text-gray-400 hover:text-red-400 bg-[#161b2c] shadow-lg rounded-full border border-white/5 transition-colors"
-           title="刪除"
-         >
-           <Trash2 size={14} />
-         </button>
-       </div>
+           <button 
+             onClick={() => onDelete(item.id)}
+             className="p-2 text-gray-400 hover:text-red-400 bg-[#161b2c] shadow-lg rounded-full border border-white/5 transition-colors"
+             title="刪除"
+           >
+             <Trash2 size={14} />
+           </button>
+         </div>
+       )}
     </div>
   );
 }

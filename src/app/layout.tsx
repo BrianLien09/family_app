@@ -29,10 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-TW">
-      <head>
-        <link rel="icon" type="image/png" href="/family_app/icon-192x192.png" />
-        <link rel="apple-touch-icon" href="/family_app/icon-192x192.png" />
-      </head>
+
       <body className={`${outfit.className} pb-24 antialiased selection:bg-orange-200 selection:text-orange-900`}>
         <main className="min-h-screen relative z-10">
           {children}

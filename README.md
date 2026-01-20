@@ -35,6 +35,15 @@
 - **🆕 PDF 匯出**：可將食譜匯出為 PDF 格式，方便列印或分享。
 - **🆕 智慧分頁**：每頁顯示 12 個食譜，快速瀏覽不卡頓。
 
+### 📱 PWA 漸進式網頁應用 (Progressive Web App)
+讓網頁 App 像原生應用一樣好用！
+
+- **安裝到主畫面**：可以將應用安裝到手機或桌面主畫面，一鍵開啟，體驗更接近原生 App。
+- **離線瀏覽**：支援離線訪問已載入的資料，透過 LocalStorage 快取機制，即使沒有網路也能查看行程與食譜。
+- **自動快取靜態資源**：Service Worker 自動快取 CSS、JavaScript、圖片等靜態檔案，加速後續訪問。
+- **智慧更新提示**：當應用有新版本時，會自動顯示更新提示，點擊即可重新載入最新版本。
+- **全平台支援**：支援 iOS、Android、Windows、macOS 等所有主流平台。
+
 ## 🛠️ 技術棧 (Tech Stack)
 
 本專案採用 **Vibe Coding** 模式開發，強調快速迭代與極致的 UI/UX 體驗。
@@ -44,6 +53,7 @@
 - **Styling**: Tailwind CSS (Glassmorphism 視覺風格)
 - **Backend / Database**: Google Firebase (Firestore)
 - **Authentication**: Firebase Auth (Google 登入)
+- **PWA**: [@ducanh2912/next-pwa](https://github.com/DuCanhGH/next-pwa) (Service Worker 自動生成)
 - **Deployment**: GitHub Pages
 - **Notifications**: LINE Bot API (定時推送)
 
@@ -96,6 +106,12 @@
    - 顯示行程計數器（第 X 個，共 Y 個）
    - 一鍵跳轉到月曆詳細檢視
 
+10. **🆕 PWA 漸進式網頁應用**
+    - Service Worker 自動快取靜態資源，加速載入
+    - 支援離線訪問與安裝到主畫面
+    - 智慧更新偵測與提示機制
+    - 全平台相容（iOS、Android、Desktop）
+
 ## 🚀 快速開始 (Local Development)
 
 如果你想在本地端運行此專案：
@@ -112,42 +128,92 @@ NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
 ...
-
 ```
 
 
 3. **啟動開發伺服器**
 ```bash
 npm run dev
-
 ```
 
 
 打開瀏覽器輸入 `http://localhost:3000` 即可預覽。
+
+**注意**: 開發模式下 PWA 功能會自動停用，僅在 Production 建置時啟用。
 
 ## 🌐 部署 (Deployment)
 
 本專案已設定好 GitHub Pages 自動部署流程。
 
 1. **編譯與輸出**
-```bash
-npm run build
-
-```
-
+   ```bash
+   npm run build
+   ```
+   
+   此指令會使用 `--webpack` 旗標進行建置，並自動生成 Service Worker 檔案（位於 `public/sw.js`）。
+   
+   **重要**: PWA 套件需要使用 Webpack 建置器，不支援 Turbopack。
 
 2. **部署至 GitHub Pages**
-```bash
-npm run deploy
-
-```
-
+   ```bash
+   npm run deploy
+   ```
 
 *(需確保 `next.config.ts` 中的 `basePath` 與 `gh-pages` 套件已設定正確)*
+
+## 📂 PWA 相關檔案說明
+
+本專案整合了 PWA 功能，以下是相關檔案的說明：
+
+| 檔案路徑 | 功能說明 |
+|---------|---------|
+| `public/manifest.json` | PWA 應用配置檔（名稱、圖示、主題色等） |
+| `public/icon-192.png` | PWA 圖示（192x192，用於主畫面） |
+| `public/icon-512.png` | PWA 圖示（512x512，用於啟動畫面） |
+| `public/sw.js` | Service Worker 檔案（自動生成，已加入 `.gitignore`） |
+| `src/hooks/useServiceWorker.ts` | Service Worker 更新偵測 Hook |
+| `src/components/UpdatePrompt.tsx` | 更新提示 UI 元件 |
+| `src/components/PWAUpdateProvider.tsx` | PWA 更新功能整合元件 |
+| `next.config.ts` | Next.js 配置（整合 PWA 插件） |
+
+**自動生成檔案**: `public/sw.js`、`public/workbox-*.js` 等 Service Worker 相關檔案會在建置時自動產生，無需手動編輯。
 
 ---
 
 ## 🎯 最新更新
+
+### v3.2 (2026/01) - PWA 漸進式網頁應用
+
+#### ✅ 新增功能
+- **PWA 支援**：應用現在可以安裝到手機或桌面主畫面，體驗更接近原生 App。
+- **離線瀏覽**：支援離線訪問已載入的資料，透過 Service Worker 快取靜態資源。
+- **自動更新提示**：當有新版本時，會自動顯示更新提示，讓使用者隨時保持最新狀態。
+- **跨平台安裝**：支援 iOS、Android、Windows、macOS 等所有主流平台。
+
+#### 🔧 技術改進
+- **整合 @ducanh2912/next-pwa**：自動生成 Service Worker 並管理快取策略。
+- **useServiceWorker Hook**：封裝 Service Worker 註冊與更新偵測邏輯。
+- **PWAUpdateProvider**：提供全域更新提示功能，無需在每個頁面重複實作。
+- **Webpack 建置**：使用 `--webpack` 旗標確保 PWA 功能正常運作。
+- **Manifest 配置**：定義應用名稱、圖示、主題色等 PWA 元資料。
+
+#### 📊 使用範例
+```bash
+# 安裝到主畫面（以 Chrome 為例）
+1. 開啟應用網址
+2. 點擊瀏覽器的「安裝」按鈕
+3. 應用會出現在主畫面，點擊即可開啟
+
+# 體驗離線功能
+1. 正常訪問應用並載入資料
+2. 關閉網路連線
+3. 重新開啟應用，仍可查看已快取的資料
+
+# 更新應用
+1. 當有新版本時，會自動顯示更新提示
+2. 點擊「立即更新」按鈕
+3. 頁面重新載入，套用最新版本
+```
 
 ### v3.1 (2026/01) - 自訂類別與時間優化
 
@@ -192,6 +258,9 @@ npm run deploy
 
 ## 📝 更新歷史
 
+### v3.2 (2026/01) - PWA 漸進式網頁應用
+- 整合 PWA 功能、支援離線瀏覽、安裝到主畫面、自動更新提示
+
 ### v3.1 (2026/01) - 自訂類別與時間優化
 - 新增自訂類別系統、支援行程結束時間、資料向下相容
 
@@ -210,4 +279,3 @@ npm run deploy
 
 Created by **Brian** | 2026
 *Built with passion, coffee, and AI.*
-

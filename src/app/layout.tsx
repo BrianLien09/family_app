@@ -10,7 +10,7 @@ const outfit = Outfit({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "我們家的小助手",
   description: "紀錄重要日期與食譜轉換",
-  manifest: "/manifest.json",
+  manifest: "/family_app/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#a855f7",
+  themeColor: "#0f111a",
 };
 
 export default function RootLayout({
@@ -30,8 +30,8 @@ export default function RootLayout({
   return (
     <html lang="zh-TW">
       <head>
-        <link rel="icon" type="image/png" href="/icon-192x192.png" />
-        <link rel="apple-touch-icon" href="/icon-192x192.png" />
+        <link rel="icon" type="image/png" href="/family_app/icon-192x192.png" />
+        <link rel="apple-touch-icon" href="/family_app/icon-192x192.png" />
       </head>
       <body className={`${outfit.className} pb-24 antialiased selection:bg-orange-200 selection:text-orange-900`}>
         <main className="min-h-screen relative z-10">

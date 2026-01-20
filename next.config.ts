@@ -9,9 +9,8 @@ const nextConfig: NextConfig = {
   // 添加空的 turbopack 配置以抑制警告
   // 實際建置時會使用 --webpack 旗標
   turbopack: {},
-  // If deploying to a subpath (e.g. username.github.io/repo-name),
-  // uncomment and set the repo name here:
-  // basePath: '/family-site',
+  // 部署到 GitHub Pages 子路徑時需要設定 basePath
+  basePath: '/family_app',
 };
 
 export default withPWA({

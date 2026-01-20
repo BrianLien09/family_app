@@ -2,23 +2,24 @@
   "name": "我們家的小助手",
   "short_name": "家庭助手",
   "description": "紀錄重要日期與食譜轉換的家庭工具",
-  "start_url": "/",
+  "start_url": "/family_app/",
+  "scope": "/family_app/",
   "display": "standalone",
   "background_color": "#0f111a",
-  "theme_color": "#a855f7",
+  "theme_color": "#0f111a",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/icon-192x192.png",
+      "src": "/family_app/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/icon-512x512.png",
+      "src": "/family_app/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }

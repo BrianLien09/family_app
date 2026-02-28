@@ -2,8 +2,9 @@
 
 // 1. 引入 useEffect
 import { useState, useMemo, useEffect } from 'react';
+import { format } from 'date-fns';
 import { useDates } from '@/hooks/useDates';
-import CalendarWidget from '@/components/CalendarWidget'; 
+import CalendarWidget from '@/components/CalendarWidget';
 import AddDateModal from '@/components/DateManager/AddDateModal';
 import { Plus, Calendar, Search, Filter, X, CalendarClock, History, ChevronDown } from 'lucide-react';
 import { DateItem, DateCategory } from '@/types';
@@ -14,7 +15,7 @@ import toast from 'react-hot-toast';
 import { auth } from '@/lib/firebase';
 
 export default function Home() {
-  const { dates, addDate, deleteDate, deleteDates, updateDate, isLoaded, refresh, isRefreshing } = useDates();
+  const { dates, addDate, deleteDate, deleteDates, updateDate, duplicateDate, addDateToMultipleDates, isLoaded, refresh, isRefreshing } = useDates();
   const { categories } = useCategories();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,6 +37,9 @@ export default function Home() {
   // 新增：批次選擇狀態
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [batchMode, setBatchMode] = useState(false);
+  
+  // 新增：批次新增到多個日期的狀態
+  const [batchAddDates, setBatchAddDates] = useState<string[]>([]);
   
   // 篩選後的行程
   const filteredDates = useMemo(() => {
@@ -216,11 +220,27 @@ export default function Home() {
   const handleModalSubmit = (data: any) => {
     if (editingDate) {
       updateDate(editingDate.id, data);
+    } else if (batchAddDates.length > 0) {
+      // 批次新增模式
+      addDateToMultipleDates(batchAddDates, data);
+      setBatchAddDates([]);
     } else {
       addDate(data);
     }
     setIsModalOpen(false);
     setEditingDate(null);
+  };
+
+  // 拖曳複製行程處理
+  const handleDuplicateDate = (sourceId: string, targetDate: string) => {
+    duplicateDate(sourceId, targetDate);
+  };
+
+  // 批次新增請求處理
+  const handleBatchAddRequest = (dates: Date[]) => {
+    const dateStrings = dates.map(d => format(d, 'yyyy-MM-dd'));
+    setBatchAddDates(dateStrings);
+    setIsModalOpen(true);
   };
 
   if (!isLoaded) return <div className="min-h-screen flex items-center justify-center text-slate-500">載入中...</div>;
@@ -593,6 +613,8 @@ export default function Home() {
                onBatchDelete={handleBatchDelete}
                onSelectAll={toggleSelectAll}
                allSelected={selectedIds.length === filteredDates.length && filteredDates.length > 0}
+               onDuplicateDate={handleDuplicateDate}
+               onBatchAddRequest={handleBatchAddRequest}
             />
         </div>
 
@@ -603,6 +625,7 @@ export default function Home() {
         onClose={() => {
           setIsModalOpen(false);
           setSelectedDateForNew(null);
+          setBatchAddDates([]);
         }} 
         onSubmit={handleModalSubmit}
         initialData={editingDate}

@@ -257,5 +257,98 @@ export function useDates() {
     }
   };
 
-  return { dates, addDate, deleteDate, deleteDates, updateDate, isLoaded, refresh, isRefreshing };
+  // 複製行程到其他日期
+  const duplicateDate = async (sourceId: string, targetDateString: string) => {
+    if (!auth.currentUser) {
+      toast.error("請先登入");
+      return;
+    }
+    
+    const sourceEvent = dates.find(d => d.id === sourceId);
+    if (!sourceEvent) {
+      toast.error("找不到原始行程");
+      return;
+    }
+    
+    try {
+      const { id, ...dataToCopy } = sourceEvent;
+      const docRef = await addDoc(collection(db, "schedules"), {
+        ...dataToCopy,
+        date: targetDateString, // 只改變日期
+        createdAt: new Date()
+      });
+      
+      const duplicatedItem = { ...dataToCopy, id: docRef.id, date: targetDateString } as DateItem;
+      
+      setDates(prev => {
+        const newState = [...prev, duplicatedItem].sort((a, b) => 
+          new Date(a.date).getTime() - new Date(b.date).getTime()
+        );
+        updateCache(newState);
+        return newState;
+      });
+      
+      toast.success(`已複製到 ${targetDateString} 🎉`);
+    } catch (error) {
+      console.error("Error duplicating: ", error);
+      toast.error("複製失敗");
+    }
+  };
+
+  // 批次新增行程到多個日期
+  const addDateToMultipleDates = async (dateStrings: string[], eventData: Omit<DateItem, 'id'>) => {
+    if (!auth.currentUser) {
+      toast.error("請先登入");
+      return;
+    }
+    
+    if (dateStrings.length === 0) {
+      toast.error("請先選擇日期");
+      return;
+    }
+    
+    try {
+      const promises = dateStrings.map(dateString => 
+        addDoc(collection(db, "schedules"), {
+          ...eventData,
+          date: dateString,
+          createdAt: new Date()
+        })
+      );
+      
+      const docRefs = await Promise.all(promises);
+      
+      const newItems = docRefs.map((ref, idx) => ({
+        ...eventData,
+        id: ref.id,
+        date: dateStrings[idx]
+      })) as DateItem[];
+      
+      setDates(prev => {
+        const newState = [...prev, ...newItems].sort((a, b) => 
+          new Date(a.date).getTime() - new Date(b.date).getTime()
+        );
+        updateCache(newState);
+        return newState;
+      });
+      
+      toast.success(`已新增 ${dateStrings.length} 個行程 🎉`);
+    } catch (error) {
+      console.error("Error batch adding: ", error);
+      toast.error("批次新增失敗");
+    }
+  };
+
+  return { 
+    dates, 
+    addDate, 
+    deleteDate, 
+    deleteDates, 
+    updateDate, 
+    duplicateDate, 
+    addDateToMultipleDates, 
+    isLoaded, 
+    refresh, 
+    isRefreshing 
+  };
 }

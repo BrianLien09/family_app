@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, 
   eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday 
 } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, RotateCw, Plus, CheckSquare, Square, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RotateCw, Plus, CheckSquare, Square, Trash2, X } from 'lucide-react';
 import clsx from 'clsx';
 import { DateItem } from '@/types';
 import DateCard from '@/components/DateManager/DateCard';
@@ -25,6 +25,8 @@ interface CalendarWidgetProps {
   onBatchDelete?: () => void;
   onSelectAll?: () => void;
   allSelected?: boolean;
+  onDuplicateDate?: (sourceId: string, targetDate: string) => void;
+  onBatchAddRequest?: (dates: Date[]) => void;
 }
 
 export default function CalendarWidget({ 
@@ -40,12 +42,48 @@ export default function CalendarWidget({
   onBatchModeToggle,
   onBatchDelete,
   onSelectAll,
-  allSelected = false
+  allSelected = false,
+  onDuplicateDate,
+  onBatchAddRequest
 }: CalendarWidgetProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+  
+  // 拖曳相關狀態
+  const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
+  
+  // Ctrl+多選相關狀態
+  const [selectedEmptyDates, setSelectedEmptyDates] = useState<Date[]>([]);
+  const [isCtrlPressed, setIsCtrlPressed] = useState(false);
+
+  // 鍵盤事件監聽（Ctrl 鍵和 Esc 鍵）
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Control' || e.key === 'Meta') {
+        setIsCtrlPressed(true);
+      }
+      if (e.key === 'Escape') {
+        setSelectedEmptyDates([]);
+        setIsCtrlPressed(false);
+      }
+    };
+    
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Control' || e.key === 'Meta') {
+        setIsCtrlPressed(false);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
 
   const startDate = startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 1 });
   const endDate = endOfWeek(endOfMonth(currentMonth), { weekStartsOn: 1 });
@@ -57,14 +95,80 @@ export default function CalendarWidget({
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
 
   const handleDayClick = (day: Date) => {
-    setSelectedDate(day);
-    setCurrentPage(1); // Reset to first page when changing date
+    const dateKey = format(day, 'yyyy-MM-dd');
+    const dayEvents = eventsByDate[dateKey] || [];
+    
+    // 如果按住 Ctrl 且該日期無行程，加入/移除多選
+    if (isCtrlPressed && dayEvents.length === 0) {
+      setSelectedEmptyDates(prev => {
+        const exists = prev.some(d => format(d, 'yyyy-MM-dd') === dateKey);
+        if (exists) {
+          // 取消選擇
+          return prev.filter(d => format(d, 'yyyy-MM-dd') !== dateKey);
+        } else {
+          // 加入選擇
+          return [...prev, day];
+        }
+      });
+    } else {
+      // 原有邏輯：切換選定日期
+      setSelectedDate(day);
+      setCurrentPage(1); // Reset to first page when changing date
+    }
   };
 
   // 點擊新增按鈕
   const handleAddClick = (e: React.MouseEvent, day: Date) => {
     e.stopPropagation(); // 防止觸發日期格子的點擊
     if (onAddEvent) onAddEvent(day);
+  };
+
+  // 拖曳處理函式
+  const handleDragStart = (e: React.DragEvent, eventId: string) => {
+    setDraggedEventId(eventId);
+    e.dataTransfer.effectAllowed = 'copy';
+    
+    // 設定拖曳預覽文字
+    const dragEvent = events.find(ev => ev.id === eventId);
+    if (dragEvent) {
+      e.dataTransfer.setData('text/plain', dragEvent.title);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  };
+
+  const handleDrop = (e: React.DragEvent, targetDay: Date) => {
+    e.preventDefault();
+    
+    if (!draggedEventId || !onDuplicateDate) return;
+    
+    // 格式化目標日期（使用本地時區）
+    const year = targetDay.getFullYear();
+    const month = String(targetDay.getMonth() + 1).padStart(2, '0');
+    const day = String(targetDay.getDate()).padStart(2, '0');
+    const targetDateString = `${year}-${month}-${day}`;
+    
+    onDuplicateDate(draggedEventId, targetDateString);
+    setDraggedEventId(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedEventId(null);
+  };
+
+  // 批次新增處理
+  const handleBatchAdd = () => {
+    if (selectedEmptyDates.length === 0) return;
+    if (onBatchAddRequest) {
+      onBatchAddRequest(selectedEmptyDates);
+    }
+  };
+
+  const handleCancelBatchSelect = () => {
+    setSelectedEmptyDates([]);
   };
 
   // 優化：HashMap 索引
@@ -186,6 +290,30 @@ export default function CalendarWidget({
         </div>
       )}
 
+      {/* Ctrl+多選批次新增工具列 */}
+      {selectedEmptyDates.length > 0 && (
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/10 bg-purple-500/10 px-4 py-2 rounded-lg shrink-0 animate-scale-in">
+          <span className="text-sm text-purple-300 font-medium">
+            已選擇 {selectedEmptyDates.length} 個日期
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={handleBatchAdd}
+              className="px-3 py-1.5 bg-purple-500 hover:bg-purple-600 text-white text-sm font-medium rounded-lg transition-colors shadow-lg shadow-purple-500/30"
+            >
+              執行批次新增
+            </button>
+            <button
+              onClick={handleCancelBatchSelect}
+              className="p-1.5 hover:bg-white/10 text-slate-300 hover:text-white rounded-lg transition-colors"
+              aria-label="取消多選"
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Week Days */}
       <div className="grid grid-cols-7 mb-2 text-center shrink-0 border-b border-white/5 pb-2">
         {weekDays.map(day => (
@@ -203,17 +331,22 @@ export default function CalendarWidget({
           const isCurrentMonth = isSameMonth(day, currentMonth);
           const isSelected = isSameDay(day, selectedDate);
           const isTodayDate = isToday(day);
+          const isMultiSelected = selectedEmptyDates.some(d => format(d, 'yyyy-MM-dd') === dateKey);
 
           return (
             <div 
               key={day.toString()} 
               onClick={() => handleDayClick(day)}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, day)}
               className={clsx(
                 "relative flex flex-col cursor-pointer transition-all duration-200 p-1 md:p-2 group",
                 "aspect-square md:aspect-auto md:min-h-[110px]", 
                 !isCurrentMonth ? "bg-black/20 text-slate-600" : "bg-white/[0.02] hover:bg-white/[0.05]",
                 isSelected && "bg-white/[0.08] ring-1 ring-inset ring-purple-500",
-                isTodayDate && !isSelected && "bg-blue-500/5"
+                isTodayDate && !isSelected && "bg-blue-500/5",
+                isMultiSelected && "ring-2 ring-purple-500 bg-purple-500/10",
+                draggedEventId && "hover:ring-2 hover:ring-blue-400 hover:bg-blue-500/5"
               )}
             >
               {/* 日期數字和新增按鈕 */}
@@ -261,11 +394,16 @@ export default function CalendarWidget({
                 {dayEvents.slice(0, 3).map((event) => (
                    <div 
                      key={event.id}
+                     draggable={true}
+                     onDragStart={(e) => handleDragStart(e, event.id)}
+                     onDragEnd={handleDragEnd}
                      className={clsx(
-                       "text-xs font-bold px-2 py-1 rounded border truncate shadow-sm",
-                       getEventColor(event.category)
+                       "text-xs font-bold px-2 py-1 rounded border truncate shadow-sm cursor-move",
+                       getEventColor(event.category),
+                       "hover:opacity-80 active:opacity-60 transition-opacity"
                      )}
-                     title={event.title} 
+                     title={`${event.title} - 拖曳以複製到其他日期`} 
+                     aria-label={`拖曳 ${event.title} 以複製到其他日期`}
                    >
                      {event.title}
                    </div>

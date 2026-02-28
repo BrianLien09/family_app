@@ -47,7 +47,8 @@ export default function Login() {
   return (
     <button 
       onClick={handleLogin}
-      className="px-4 py-2 bg-white text-black font-bold rounded-full hover:bg-slate-200 transition"
+      className="px-3 py-1.5 bg-white/5 backdrop-blur-md border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 rounded-full font-medium text-sm transition-all"
+      aria-label="Google 登入"
     >
       G 登入
     </button>

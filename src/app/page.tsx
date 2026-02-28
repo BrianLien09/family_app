@@ -5,10 +5,9 @@ import { useState, useMemo, useEffect } from 'react';
 import { useDates } from '@/hooks/useDates';
 import CalendarWidget from '@/components/CalendarWidget'; 
 import AddDateModal from '@/components/DateManager/AddDateModal';
-import { Plus, Calendar, Sparkles, Search, Filter, X, CheckSquare, Square, Trash2, CalendarClock, History, ChevronDown } from 'lucide-react';
+import { Plus, Calendar, Search, Filter, X, CalendarClock, History, ChevronDown } from 'lucide-react';
 import { DateItem, DateCategory } from '@/types';
 import { useCategories } from '@/hooks/useCategories';
-import Login from '@/components/Login';
 import clsx from 'clsx';
 // 2. 引入 toast 和 auth
 import toast from 'react-hot-toast';
@@ -228,22 +227,6 @@ export default function Home() {
 
   return (
     <div className="container mx-auto px-4 py-8 pt-20 max-w-5xl">
-      {/* Hero Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-        <div className="space-y-1">
-          <h1 className="text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 drop-shadow-sm">
-             歡迎回來，饅頭perfect！
-          </h1>
-          <p className="text-slate-400 text-lg flex items-center gap-2">
-             <Sparkles size={18} className="text-yellow-400" />
-             今天也是充滿活力的一天
-          </p>
-        </div>
-        <div className="shrink-0">
-          <Login />
-        </div>
-      </div>
-
       {/* 搜尋與篩選區 */}
       <div className="glass-card p-4 mb-6">
         {/* 搜尋欄 */}

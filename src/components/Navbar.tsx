@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 import { Menu, X, ExternalLink } from 'lucide-react';
+import Login from '@/components/Login';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -63,51 +64,67 @@ export default function Navbar() {
              </span>
           </div>
 
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-3">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href;
-              const isExternal = item.href.startsWith('http');
+          {/* Desktop Nav + Login */}
+          <div className="flex items-center gap-4">
+            {/* 導航項目（桌面版） */}
+            <div className="hidden md:flex items-center gap-3">
+              {navItems.map((item) => {
+                const isActive = pathname === item.href;
+                const isExternal = item.href.startsWith('http');
 
-              if (isExternal) {
+                if (isExternal) {
+                  return (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap text-gray-400 hover:text-white hover:bg-white/5"
+                    >
+                      {item.name}
+                    </a>
+                  );
+                }
+
                 return (
-                  <a
+                  <Link
                     key={item.href}
                     href={item.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap text-gray-400 hover:text-white hover:bg-white/5"
+                    className={clsx(
+                      "px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap",
+                      isActive 
+                        ? "bg-[#6366f1] text-white shadow-lg shadow-indigo-500/20" 
+                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                    )}
                   >
                     {item.name}
-                  </a>
+                  </Link>
                 );
-              }
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={clsx(
-                    "px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap",
-                    isActive 
-                      ? "bg-[#6366f1] text-white shadow-lg shadow-indigo-500/20" 
-                      : "text-gray-400 hover:text-white hover:bg-white/5"
-                  )}
-                >
-                  {item.name}
-                </Link>
-              );
-            })}
+              })}
+            </div>
+            
+            {/* 登入按鈕（桌面版） */}
+            <div className="hidden md:block shrink-0">
+              <Login />
+            </div>
           </div>
 
-          {/* Mobile Menu Button */}
-          <button 
-            className="md:hidden p-2 rounded-lg transition-colors text-slate-300 hover:text-white hover:bg-white/10"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label="選單"
-          >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          {/* Mobile Menu Button + Login */}
+          <div className="flex items-center gap-3 md:hidden">
+            {/* 登入按鈕（移動版） */}
+            <div className="shrink-0">
+              <Login />
+            </div>
+            
+            {/* 漢堡選單按鈕 */}
+            <button 
+              className="p-2 rounded-lg transition-colors text-slate-300 hover:text-white hover:bg-white/10"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="選單"
+            >
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
        </div>
 
        {/* Mobile Nav Dropdown */}

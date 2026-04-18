@@ -16,6 +16,12 @@ export default function AddRecipeModal({ isOpen, onClose, onSubmit, initialData 
   const [title, setTitle] = useState('');
   const [baseServings, setBaseServings] = useState(1);
   const [description, setDescription] = useState('');
+  
+  // 烹飪時間 state
+  const [cookingTimeValue, setCookingTimeValue] = useState<string>('');
+  const [cookingTimeUnit, setCookingTimeUnit] = useState<string>('度');
+  const [cookingTimeMinutes, setCookingTimeMinutes] = useState<string>('');
+
   useImmersiveMode(isOpen);
   
   const [ingredients, setIngredients] = useState<Omit<RecipeIngredient, 'id'>[]>([
@@ -31,6 +37,16 @@ export default function AddRecipeModal({ isOpen, onClose, onSubmit, initialData 
         setBaseServings(initialData.baseServings);
         setDescription(initialData.description || '');
         
+        if (initialData.cookingTime) {
+          setCookingTimeValue(String(initialData.cookingTime.value));
+          setCookingTimeUnit(initialData.cookingTime.unit);
+          setCookingTimeMinutes(String(initialData.cookingTime.minutes));
+        } else {
+          setCookingTimeValue('');
+          setCookingTimeUnit('度');
+          setCookingTimeMinutes('');
+        }
+        
         // 把舊的食材資料填進去 (只要名、量、單位)
         setIngredients(initialData.ingredients.map(i => ({
           name: i.name,
@@ -42,6 +58,9 @@ export default function AddRecipeModal({ isOpen, onClose, onSubmit, initialData 
         setTitle('');
         setBaseServings(1);
         setDescription('');
+        setCookingTimeValue('');
+        setCookingTimeUnit('度');
+        setCookingTimeMinutes('');
         setIngredients([{ name: '', amount: 0, unit: 'g' }]);
       }
     }
@@ -94,13 +113,23 @@ export default function AddRecipeModal({ isOpen, onClose, onSubmit, initialData 
         return;
     }
 
+    let cookingTime: Recipe['cookingTime'] = null;
+    if (cookingTimeValue && cookingTimeMinutes) {
+      cookingTime = {
+        value: Number(cookingTimeValue),
+        unit: cookingTimeUnit || '度',
+        minutes: Number(cookingTimeMinutes)
+      };
+    }
+
     const newRecipe: Recipe = {
       // ✨ ID 處理：如果是編輯，沿用舊 ID；如果是新增，產生新 ID
       id: initialData ? initialData.id : crypto.randomUUID(),
       title,
       description,
       baseServings: Number(baseServings),
-      ingredients: validIngredients
+      ingredients: validIngredients,
+      cookingTime
     };
 
     onSubmit(newRecipe);
@@ -132,7 +161,7 @@ export default function AddRecipeModal({ isOpen, onClose, onSubmit, initialData 
            </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
           <div className="space-y-4">
              <div>
                <label className="block text-sm font-medium mb-1 pl-1 text-slate-300">食譜名稱</label>
@@ -146,6 +175,41 @@ export default function AddRecipeModal({ isOpen, onClose, onSubmit, initialData 
                />
              </div>
              
+             {/* 烹飪時間區塊 */}
+             <div>
+                <label className="block text-sm font-medium mb-2 pl-1 text-slate-300">烹飪時間 (選填)</label>
+                <div className="flex flex-col gap-3">
+                  <div className="flex gap-2 items-center">
+                    <input 
+                      type="number"
+                      className="flex-1 bg-black/20 border border-white/10 rounded-xl p-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-orange-500/50 transition-all hover:bg-black/30"
+                      placeholder="溫度/功率數值 (例: 105)"
+                      value={cookingTimeValue}
+                      onChange={e => setCookingTimeValue(e.target.value)}
+                    />
+                    <input 
+                      type="text"
+                      className="w-[80px] bg-black/20 border border-white/10 rounded-xl p-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-orange-500/50 transition-all hover:bg-black/30 text-center"
+                      placeholder="度"
+                      value={cookingTimeUnit}
+                      onChange={e => setCookingTimeUnit(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <input 
+                      type="number"
+                      className="flex-1 bg-black/20 border border-white/10 rounded-xl p-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-orange-500/50 transition-all hover:bg-black/30"
+                      placeholder="時間分鐘數 (例: 30)"
+                      value={cookingTimeMinutes}
+                      onChange={e => setCookingTimeMinutes(e.target.value)}
+                    />
+                    <div className="w-[80px] text-center">
+                      <span className="text-slate-400 font-medium whitespace-nowrap">分鐘</span>
+                    </div>
+                  </div>
+                </div>
+             </div>
+
              <div className="grid grid-cols-2 gap-4">
                <div>
                   <label className="block text-sm font-medium mb-1 pl-1 text-slate-300">預設份數</label>

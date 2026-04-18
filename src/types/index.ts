@@ -26,4 +26,9 @@ export interface Recipe {
   description?: string;
   baseServings: number; 
   ingredients: RecipeIngredient[];
+  cookingTime?: {
+    value: number;
+    unit: string;
+    minutes: number;
+  } | null;
 }

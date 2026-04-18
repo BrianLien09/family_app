@@ -137,10 +137,15 @@ export default function RecipeCalculator({ recipe, onClose, onDelete, onAdd, onE
                 <span className="text-sm font-bold tracking-wider uppercase">智慧換算</span>
             </div>
             <h2 className="text-2xl font-bold text-white pr-24 line-clamp-1">{recipe.title}</h2>
+            {recipe.cookingTime && (
+              <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/20 text-orange-300 text-xs font-medium border border-orange-500/20 w-fit">
+                <span>⏱️</span> {recipe.cookingTime.value}{recipe.cookingTime.unit} {recipe.cookingTime.minutes}分鐘
+              </div>
+            )}
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent">
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
             {/* Mode Switcher */}
             <div className="p-4 bg-slate-800/50 flex gap-2 border-b border-slate-700">
                 <button onClick={() => setMode('servings')} className={clsx("flex-1 py-2 text-sm font-bold rounded-lg transition-colors flex items-center justify-center gap-2", mode === 'servings' ? "bg-orange-600 text-white" : "bg-slate-700 text-slate-400 hover:bg-slate-600")}>
@@ -227,7 +232,14 @@ export default function RecipeCalculator({ recipe, onClose, onDelete, onAdd, onE
                <Calculator size={18} />
                <span className="text-xs font-bold tracking-[0.2em] uppercase">Smart Kitchen AI</span>
              </div>
-             <h2 className="text-3xl font-bold text-white tracking-tight line-clamp-1">{recipe.title}</h2>
+             <div className="flex items-center gap-4 flex-wrap">
+               <h2 className="text-3xl font-bold text-white tracking-tight line-clamp-1">{recipe.title}</h2>
+               {recipe.cookingTime && (
+                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/20 text-orange-300 text-sm font-medium border border-orange-500/20 whitespace-nowrap h-fit">
+                   <span>⏱️</span> {recipe.cookingTime.value}{recipe.cookingTime.unit} {recipe.cookingTime.minutes}分鐘
+                 </div>
+               )}
+             </div>
            </div>
 
            <div className="flex gap-3">
@@ -238,7 +250,7 @@ export default function RecipeCalculator({ recipe, onClose, onDelete, onAdd, onE
         </div>
 
         {/* Content - Two Columns */}
-        <div className="flex-1 overflow-y-auto scrollbar-hide relative">
+        <div className="flex-1 overflow-y-auto custom-scrollbar relative">
            <div className="grid grid-cols-12 min-h-full">
               {/* Left: Sticky Controls */}
               <div className="col-span-4 sticky top-0 z-30 h-fit bg-[#161b2c]/95 backdrop-blur-xl p-8 flex flex-col gap-8 border-r border-white/5 shadow-2xl">
@@ -349,6 +361,9 @@ export default function RecipeCalculator({ recipe, onClose, onDelete, onAdd, onE
             <span>📊 目標份數: <strong>{customServings} 人份</strong></span>
             <span>🔢 縮放倍率: <strong>{scale.toFixed(2)}x</strong></span>
             <span>📋 基準份數: {recipe.baseServings} 人份</span>
+            {recipe.cookingTime && (
+              <span style={{ color: '#ea580c' }}>⏱️ 烹飪時間: <strong>{recipe.cookingTime.value}{recipe.cookingTime.unit} {recipe.cookingTime.minutes}分鐘</strong></span>
+            )}
           </div>
           {recipe.description && (
             <p style={{ marginTop: '12px', fontSize: '13px', color: '#4b5563', lineHeight: '1.6' }}>

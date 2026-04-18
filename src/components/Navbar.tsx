@@ -18,9 +18,9 @@ export default function Navbar() {
 
     const controlNavbar = () => {
       if (typeof window === 'undefined') return;
-      
+
       const currentScrollY = window.scrollY;
-      
+
       // 往下滑超過 100px 就隱藏，往上滑就顯示
       if (currentScrollY > lastScrollY && currentScrollY > 100) {
         setIsVisible(false);
@@ -42,7 +42,7 @@ export default function Navbar() {
   ];
 
   return (
-    <nav 
+    <nav
       id="navbar" // 👈 重要：一定要有這個 ID
       className={clsx(
         "fixed top-0 left-0 w-full z-[40] backdrop-blur-md border-b transition-all duration-500 ease-in-out",
@@ -50,7 +50,7 @@ export default function Navbar() {
         !isVisible && "-translate-y-full" // 控制顯示/隱藏
       )}
     >
-       <div className="container flex items-center justify-between !max-w-7xl pl-1 pr-4 h-[70px]">
+       <div className="container flex items-center justify-between !max-w-7xl px-4 h-[70px]">
           {/* Logo Section */}
           <div className="flex items-center gap-3">
              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden shrink-0">
@@ -92,8 +92,8 @@ export default function Navbar() {
                     href={item.href}
                     className={clsx(
                       "px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap",
-                      isActive 
-                        ? "bg-[#6366f1] text-white shadow-lg shadow-indigo-500/20" 
+                      isActive
+                        ? "bg-[#6366f1] text-white shadow-lg shadow-indigo-500/20"
                         : "text-gray-400 hover:text-white hover:bg-white/5"
                     )}
                   >
@@ -102,7 +102,7 @@ export default function Navbar() {
                 );
               })}
             </div>
-            
+
             {/* 登入按鈕（桌面版） */}
             <div className="hidden md:block shrink-0">
               <Login />
@@ -115,9 +115,9 @@ export default function Navbar() {
             <div className="shrink-0">
               <Login />
             </div>
-            
+
             {/* 漢堡選單按鈕 */}
-            <button 
+            <button
               className="p-2 rounded-lg transition-colors text-slate-300 hover:text-white hover:bg-white/10"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label="選單"
@@ -128,7 +128,7 @@ export default function Navbar() {
        </div>
 
        {/* Mobile Nav Dropdown */}
-       <div 
+       <div
          className={clsx(
            "md:hidden border-b overflow-hidden transition-all duration-500 ease-in-out",
            "bg-[#0f111a] border-[#232942]",
@@ -163,8 +163,8 @@ export default function Navbar() {
                  onClick={() => setIsMobileMenuOpen(false)}
                  className={clsx(
                    "px-4 py-3 rounded-lg text-base font-bold transition-all",
-                   isActive 
-                     ? "bg-[#6366f1]/10 text-[#818cf8] border border-[#6366f1]/20" 
+                   isActive
+                     ? "bg-[#6366f1]/10 text-[#818cf8] border border-[#6366f1]/20"
                      : "text-slate-300 hover:text-white hover:bg-white/5"
                  )}
                >

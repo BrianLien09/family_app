@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, memo, useCallback } from 'react';
 import { 
   format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, 
   eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday 
@@ -28,6 +28,150 @@ interface CalendarWidgetProps {
   onDuplicateDate?: (sourceId: string, targetDate: string) => void;
   onBatchAddRequest?: (dates: Date[]) => void;
 }
+
+// ====================================================================
+// DayCell：月曆中的單一日期格子
+//
+// 為何獨立成元件 + React.memo？
+// - 月曆有 35~42 個格子，每次父元件 re-render（例如：選擇日期、
+//   切換 Ctrl 鍵狀態）都會重算所有格子的 clsx/isSameDay 等邏輯
+// - 用 memo + 自訂比較函式，只在真正影響外觀的 props 改變時才重繪
+// ====================================================================
+interface DayCellProps {
+  day: Date;
+  events: DateItem[];
+  isCurrentMonth: boolean;
+  isSelected: boolean;
+  isTodayDate: boolean;
+  isMultiSelected: boolean;
+  isDragActive: boolean;
+  showAddButton: boolean;
+  onDayClick: (day: Date) => void;
+  onAddClick: (e: React.MouseEvent, day: Date) => void;
+  onDragStart: (e: React.DragEvent, eventId: string) => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDrop: (e: React.DragEvent, day: Date) => void;
+  onDragEnd: () => void;
+  getEventColor: (category: string) => string;
+  getDotColor: (category: string) => string;
+}
+
+const DayCell = memo(function DayCell({
+  day,
+  events,
+  isCurrentMonth,
+  isSelected,
+  isTodayDate,
+  isMultiSelected,
+  isDragActive,
+  showAddButton,
+  onDayClick,
+  onAddClick,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  getEventColor,
+  getDotColor,
+}: DayCellProps) {
+  const dateLabel = format(day, 'd');
+
+  return (
+    <div
+      onClick={() => onDayClick(day)}
+      onDragOver={onDragOver}
+      onDrop={(e) => onDrop(e, day)}
+      className={clsx(
+        'relative flex flex-col cursor-pointer transition-all duration-200 p-1 md:p-2 group',
+        'aspect-square md:aspect-auto md:min-h-[110px]',
+        !isCurrentMonth ? 'bg-black/20 text-slate-600' : 'bg-white/[0.02] hover:bg-white/[0.05]',
+        isSelected && 'bg-white/[0.08] ring-1 ring-inset ring-purple-500',
+        isTodayDate && !isSelected && 'bg-blue-500/5',
+        isMultiSelected && 'ring-2 ring-purple-500 bg-purple-500/10',
+        isDragActive && 'hover:ring-2 hover:ring-blue-400 hover:bg-blue-500/5',
+      )}
+    >
+      {/* 日期數字 + 桌面版新增按鈕 */}
+      <div className="flex items-center justify-between mb-1">
+        <span
+          className={clsx(
+            'text-xs font-medium block text-center md:text-left',
+            isTodayDate ? 'text-blue-400 font-bold' : 'text-slate-400',
+            isSelected && 'text-white',
+            !isCurrentMonth && 'opacity-50',
+          )}
+        >
+          {dateLabel}
+        </span>
+
+        {/* 新增按鈕 - 桌面版 hover 時才顯示 */}
+        {showAddButton && isCurrentMonth && (
+          <button
+            onClick={(e) => onAddClick(e, day)}
+            className="hidden md:flex opacity-0 group-hover:opacity-100 w-5 h-5 items-center justify-center rounded bg-purple-500/80 hover:bg-purple-500 text-white transition-all duration-200 shadow-sm"
+            title={`新增 ${format(day, 'M/d')} 的行程`}
+          >
+            <Plus size={14} />
+          </button>
+        )}
+      </div>
+
+      {/* 手機版：圓點指示器 */}
+      <div className="flex gap-0.5 justify-center flex-wrap content-start md:hidden flex-1">
+        {events.slice(0, 4).map((event, idx) => (
+          <div key={idx} className={clsx('rounded-full w-1.5 h-1.5', getDotColor(event.category))} />
+        ))}
+      </div>
+
+      {/* 手機版：選中日期後顯示新增按鈕 */}
+      {showAddButton && isCurrentMonth && isSelected && (
+        <button
+          onClick={(e) => onAddClick(e, day)}
+          className="md:hidden absolute bottom-1 right-1 w-4 h-4 flex items-center justify-center rounded bg-purple-500 text-white shadow-sm"
+        >
+          <Plus size={10} />
+        </button>
+      )}
+
+      {/* 桌面版：行程標籤（最多 3 個，可拖曳複製） */}
+      <div className="hidden md:flex flex-col gap-1.5 w-full overflow-hidden">
+        {events.slice(0, 3).map((event) => (
+          <div
+            key={event.id}
+            draggable
+            onDragStart={(e) => onDragStart(e, event.id)}
+            onDragEnd={onDragEnd}
+            className={clsx(
+              'text-xs font-bold px-2 py-1 rounded border truncate shadow-sm cursor-move',
+              getEventColor(event.category),
+              'hover:opacity-80 active:opacity-60 transition-opacity',
+            )}
+            title={`${event.title} - 拖曳以複製到其他日期`}
+            aria-label={`拖曳 ${event.title} 以複製到其他日期`}
+          >
+            {event.title}
+          </div>
+        ))}
+        {events.length > 3 && (
+          <span className="text-[11px] font-medium text-slate-400 pl-1">
+            還有 {events.length - 3} 個...
+          </span>
+        )}
+      </div>
+    </div>
+  );
+},
+// 自訂比較函式：只有真正影響外觀的 props 改變時才重繪
+// 這讓「選擇其他日期」時只更新前後兩個格子，而非全部 35+ 個
+(prev, next) =>
+  prev.isSelected === next.isSelected &&
+  prev.isTodayDate === next.isTodayDate &&
+  prev.isMultiSelected === next.isMultiSelected &&
+  prev.isDragActive === next.isDragActive &&
+  prev.isCurrentMonth === next.isCurrentMonth &&
+  prev.events.length === next.events.length &&
+  prev.events === next.events
+);
 
 export default function CalendarWidget({ 
   events, 
@@ -94,7 +238,19 @@ export default function CalendarWidget({
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
 
-  const handleDayClick = (day: Date) => {
+  // eventsByDate 必須在 handleDayClick 之前定義，因為後者依賴它
+  // 使用 HashMap 做 O(1) 查詢，避免在每個格子 render 時都 filter 整個 events 陣列
+  const eventsByDate = useMemo(() => {
+    const groups: Record<string, DateItem[]> = {};
+    events.forEach(event => {
+      const dateKey = format(new Date(event.date), 'yyyy-MM-dd');
+      if (!groups[dateKey]) groups[dateKey] = [];
+      groups[dateKey].push(event);
+    });
+    return groups;
+  }, [events]);
+
+  const handleDayClick = useCallback((day: Date) => {
     const dateKey = format(day, 'yyyy-MM-dd');
     const dayEvents = eventsByDate[dateKey] || [];
     
@@ -113,18 +269,18 @@ export default function CalendarWidget({
     } else {
       // 原有邏輯：切換選定日期
       setSelectedDate(day);
-      setCurrentPage(1); // Reset to first page when changing date
+      setCurrentPage(1); // 切換日期時重置到第一頁
     }
-  };
+  }, [eventsByDate, isCtrlPressed]);
 
-  // 點擊新增按鈕
-  const handleAddClick = (e: React.MouseEvent, day: Date) => {
+  // 點擊新增按鈕（useCallback 確保傳入 DayCell 的引用穩定，避免 memo 失效）
+  const handleAddClick = useCallback((e: React.MouseEvent, day: Date) => {
     e.stopPropagation(); // 防止觸發日期格子的點擊
     if (onAddEvent) onAddEvent(day);
-  };
+  }, [onAddEvent]);
 
-  // 拖曳處理函式
-  const handleDragStart = (e: React.DragEvent, eventId: string) => {
+  // 拖曳處理函式（全部 useCallback，避免 DayCell memo 失效）
+  const handleDragStart = useCallback((e: React.DragEvent, eventId: string) => {
     setDraggedEventId(eventId);
     e.dataTransfer.effectAllowed = 'copy';
     
@@ -133,19 +289,19 @@ export default function CalendarWidget({
     if (dragEvent) {
       e.dataTransfer.setData('text/plain', dragEvent.title);
     }
-  };
+  }, [events]);
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
-  };
+  }, []);
 
-  const handleDrop = (e: React.DragEvent, targetDay: Date) => {
+  const handleDrop = useCallback((e: React.DragEvent, targetDay: Date) => {
     e.preventDefault();
     
     if (!draggedEventId || !onDuplicateDate) return;
     
-    // 格式化目標日期（使用本地時區）
+    // 格式化目標日期（使用本地時區避免 UTC 偏移）
     const year = targetDay.getFullYear();
     const month = String(targetDay.getMonth() + 1).padStart(2, '0');
     const day = String(targetDay.getDate()).padStart(2, '0');
@@ -153,11 +309,11 @@ export default function CalendarWidget({
     
     onDuplicateDate(draggedEventId, targetDateString);
     setDraggedEventId(null);
-  };
+  }, [draggedEventId, onDuplicateDate]);
 
-  const handleDragEnd = () => {
+  const handleDragEnd = useCallback(() => {
     setDraggedEventId(null);
-  };
+  }, []);
 
   // 批次新增處理
   const handleBatchAdd = () => {
@@ -171,44 +327,35 @@ export default function CalendarWidget({
     setSelectedEmptyDates([]);
   };
 
-  // 優化：HashMap 索引
-  const eventsByDate = useMemo(() => {
-    const groups: Record<string, DateItem[]> = {};
-    events.forEach(event => {
-      const dateKey = format(new Date(event.date), 'yyyy-MM-dd');
-      if (!groups[dateKey]) groups[dateKey] = [];
-      groups[dateKey].push(event);
-    });
-    return groups;
-  }, [events]);
-
   const selectedDateKey = format(selectedDate, 'yyyy-MM-dd');
   const selectedDayEvents = eventsByDate[selectedDateKey] || [];
-  
-  // Pagination for selected day events
+
+  // 分頁計算
   const totalPages = Math.ceil(selectedDayEvents.length / itemsPerPage);
   const paginatedEvents = selectedDayEvents.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const getEventColor = (category: string) => {
+  // getEventColor / getDotColor 是純函式（無外部依賴），用 useCallback 穩定引用，
+  // 確保傳入 DayCell 時不會因為新函式實例讓 memo 比較失效
+  const getEventColor = useCallback((category: string) => {
     if (category === '洗牙') return 'bg-blue-500/20 text-blue-200 border-blue-500/30';
     if (category === '剪頭髮') return 'bg-orange-500/20 text-orange-200 border-orange-500/30';
     if (category === '阿弟排班') return 'bg-green-500/20 text-green-200 border-green-500/30';
     if (category === '孔呆值班') return 'bg-cyan-500/20 text-cyan-200 border-cyan-500/30';
     if (category === '繳費') return 'bg-yellow-500/20 text-yellow-200 border-yellow-500/30';
     return 'bg-pink-500/20 text-pink-200 border-pink-500/30';
-  };
+  }, []);
   
-  const getDotColor = (category: string) => {
+  const getDotColor = useCallback((category: string) => {
     if (category === '洗牙') return 'bg-blue-400';
     if (category === '剪頭髮') return 'bg-orange-400';
     if (category === '阿弟排班') return 'bg-green-400';
     if (category === '孔呆值班') return 'bg-cyan-400';
     if (category === '繳費') return 'bg-yellow-400';
     return 'bg-pink-500';
-  };
+  }, []);
 
   return (
     <div className="glass-card p-4 md:p-6 select-none h-full flex flex-col">
@@ -328,93 +475,27 @@ export default function CalendarWidget({
         {days.map((day) => {
           const dateKey = format(day, 'yyyy-MM-dd');
           const dayEvents = eventsByDate[dateKey] || [];
-          const isCurrentMonth = isSameMonth(day, currentMonth);
-          const isSelected = isSameDay(day, selectedDate);
-          const isTodayDate = isToday(day);
-          const isMultiSelected = selectedEmptyDates.some(d => format(d, 'yyyy-MM-dd') === dateKey);
 
           return (
-            <div 
-              key={day.toString()} 
-              onClick={() => handleDayClick(day)}
+            <DayCell
+              key={dateKey}
+              day={day}
+              events={dayEvents}
+              isCurrentMonth={isSameMonth(day, currentMonth)}
+              isSelected={isSameDay(day, selectedDate)}
+              isTodayDate={isToday(day)}
+              isMultiSelected={selectedEmptyDates.some(d => format(d, 'yyyy-MM-dd') === dateKey)}
+              isDragActive={!!draggedEventId}
+              showAddButton={!!onAddEvent}
+              onDayClick={handleDayClick}
+              onAddClick={handleAddClick}
+              onDragStart={handleDragStart}
               onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, day)}
-              className={clsx(
-                "relative flex flex-col cursor-pointer transition-all duration-200 p-1 md:p-2 group",
-                "aspect-square md:aspect-auto md:min-h-[110px]", 
-                !isCurrentMonth ? "bg-black/20 text-slate-600" : "bg-white/[0.02] hover:bg-white/[0.05]",
-                isSelected && "bg-white/[0.08] ring-1 ring-inset ring-purple-500",
-                isTodayDate && !isSelected && "bg-blue-500/5",
-                isMultiSelected && "ring-2 ring-purple-500 bg-purple-500/10",
-                draggedEventId && "hover:ring-2 hover:ring-blue-400 hover:bg-blue-500/5"
-              )}
-            >
-              {/* 日期數字和新增按鈕 */}
-              <div className="flex items-center justify-between mb-1">
-                <span className={clsx(
-                  "text-xs font-medium block text-center md:text-left",
-                  isTodayDate ? "text-blue-400 font-bold" : "text-slate-400",
-                  isSelected && "text-white",
-                  !isCurrentMonth && "opacity-50"
-                )}>
-                  {format(day, 'd')}
-                </span>
-                
-                {/* 新增按鈕 - 電腦版 hover 時顯示 */}
-                {onAddEvent && isCurrentMonth && (
-                  <button
-                    onClick={(e) => handleAddClick(e, day)}
-                    className="hidden md:flex opacity-0 group-hover:opacity-100 w-5 h-5 items-center justify-center rounded bg-purple-500/80 hover:bg-purple-500 text-white transition-all duration-200 shadow-sm"
-                    title={`新增 ${format(day, 'M/d')} 的行程`}
-                  >
-                    <Plus size={14} />
-                  </button>
-                )}
-              </div>
-
-              {/* 手機版顯示 */}
-              <div className="flex gap-0.5 justify-center flex-wrap content-start md:hidden flex-1">
-                {dayEvents.slice(0, 4).map((event, idx) => (
-                  <div key={idx} className={clsx("rounded-full w-1.5 h-1.5", getDotColor(event.category))} />
-                ))}
-              </div>
-              
-              {/* 手機版新增按鈕 - 點選日期後在底部顯示 */}
-              {onAddEvent && isCurrentMonth && isSelected && (
-                <button
-                  onClick={(e) => handleAddClick(e, day)}
-                  className="md:hidden absolute bottom-1 right-1 w-4 h-4 flex items-center justify-center rounded bg-purple-500 text-white shadow-sm"
-                >
-                  <Plus size={10} />
-                </button>
-              )}
-
-              {/* 電腦版顯示 */}
-              <div className="hidden md:flex flex-col gap-1.5 w-full overflow-hidden">
-                {dayEvents.slice(0, 3).map((event) => (
-                   <div 
-                     key={event.id}
-                     draggable={true}
-                     onDragStart={(e) => handleDragStart(e, event.id)}
-                     onDragEnd={handleDragEnd}
-                     className={clsx(
-                       "text-xs font-bold px-2 py-1 rounded border truncate shadow-sm cursor-move",
-                       getEventColor(event.category),
-                       "hover:opacity-80 active:opacity-60 transition-opacity"
-                     )}
-                     title={`${event.title} - 拖曳以複製到其他日期`} 
-                     aria-label={`拖曳 ${event.title} 以複製到其他日期`}
-                   >
-                     {event.title}
-                   </div>
-                ))}
-                {dayEvents.length > 3 && (
-                  <span className="text-[11px] font-medium text-slate-400 pl-1">
-                    還有 {dayEvents.length - 3} 個...
-                  </span>
-                )}
-              </div>
-            </div>
+              onDrop={handleDrop}
+              onDragEnd={handleDragEnd}
+              getEventColor={getEventColor}
+              getDotColor={getDotColor}
+            />
           );
         })}
       </div>

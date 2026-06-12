@@ -217,7 +217,7 @@ export default function Home() {
     setIsModalOpen(true);
   };
 
-  const handleModalSubmit = (data: any) => {
+  const handleModalSubmit = (data: Omit<DateItem, 'id'>) => {
     if (editingDate) {
       updateDate(editingDate.id, data);
     } else if (batchAddDates.length > 0) {

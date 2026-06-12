@@ -1,5 +1,5 @@
 // src/hooks/useDates.ts
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   collection, 
   addDoc, 
@@ -20,13 +20,19 @@ export function useDates() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // 🛠️ 輔助函式：產生快取 Key (每個使用者要有獨立的 Key，避免跟別人混到)
-  const getCacheKey = (uid: string) => `schedule_cache_${uid}`;
+  // 用 ref 追蹤載入狀態，避免把 isLoaded 列入 useCallback 依賴
+  // 若把 isLoaded 列入依賴，每次 isLoaded 改變都會重建 fetchDates，
+  // 進而觸發下方 useEffect 重跑，造成初次載入後多 fetch 一次 Firebase
+  const isLoadedRef = useRef(false);
 
-  // 1. 定義抓取函式
-  const fetchDates = useCallback(async (user: any) => {
-    // 只有手動重新整理時，才顯示 Loading 轉圈圈 (因為初始載入我們有快取了)
-    if (isLoaded) setIsRefreshing(true);
+  // 🛠️ 輔助函式：產生快取 Key (每個使用者要有獨立的 Key，避免跟別人混到)
+  // 加入版本號，未來資料結構升版時可安全清除舊快取
+  const getCacheKey = (uid: string) => `schedule_cache_v2_${uid}`;
+
+  // 1. 定義抓取函式（空依賴：callback 永遠穩定，不會意外觸發 useEffect）
+  const fetchDates = useCallback(async (user: { uid: string }) => {
+    // 只有手動重新整理時（已載入完成），才顯示轉圈圈
+    if (isLoadedRef.current) setIsRefreshing(true);
     
     try {
       const q = query(collection(db, "schedules"), orderBy("date", "asc"));
@@ -48,17 +54,18 @@ export function useDates() {
       
       setDates(datesData);
 
-      // ✨✨✨ 關鍵 1: 抓到新資料後，馬上存入 LocalStorage ✨✨✨
+      // 抓到新資料後，馬上存入 LocalStorage 供下次快速載入
       localStorage.setItem(getCacheKey(user.uid), JSON.stringify(datesData));
 
     } catch (error) {
       console.error("讀取失敗:", error);
       toast.error("連線不穩，目前顯示的是舊資料");
     } finally {
+      isLoadedRef.current = true;
       setIsLoaded(true);
       setIsRefreshing(false);
     }
-  }, [isLoaded]);
+  }, []); // 空依賴：getCacheKey 是 pure function，不需要列入
 
   // 2. 初始載入邏輯
   useEffect(() => {

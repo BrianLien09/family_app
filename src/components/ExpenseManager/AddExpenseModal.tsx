@@ -77,17 +77,17 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, initialData
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-[#1a1d2d] rounded-2xl shadow-2xl border border-white/10 overflow-hidden animate-scale-in">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-          <h2 className="text-xl font-bold text-white">{initialData ? '編輯紀錄' : '新增紀錄'}</h2>
-          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors">
+      <div className="relative w-full max-w-md bg-[#f0ece1] rounded-2xl shadow-2xl border-2 border-dashed border-dashed border-[#dcd0c2]/50 overflow-hidden animate-scale-in">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-dashed border-[#dcd0c2]/50">
+          <h2 className="text-xl font-bold text-[#3d3a36]">{initialData ? '編輯紀錄' : '新增紀錄'}</h2>
+          <button onClick={onClose} className="p-1.5 text-[#3d3a36] hover:text-[#b87e6b] rounded-lg hover:bg-[#dcd0c2]/50 transition-all duration-200">
             <X size={20} />
           </button>
         </div>
         
         <form onSubmit={handleSubmit} className="p-4 sm:px-6 sm:py-4 space-y-3">
           {/* 收支切換 */}
-          <div className="flex bg-white/5 rounded-xl p-1">
+          <div className="flex bg-[#dcd0c2]/30 rounded-xl p-1">
             <button
               type="button"
               onClick={() => {
@@ -98,7 +98,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, initialData
               }}
               className={clsx(
                 "flex-1 py-1.5 text-sm font-bold rounded-lg transition-all",
-                type === 'expense' ? "bg-rose-500 text-white shadow-md" : "text-slate-400 hover:text-white"
+                type === 'expense' ? "bg-[#b87e6b] text-[#f0ece1] shadow-[0_4px_12px_rgba(139,121,101,0.06)]" : "text-[#3d3a36] hover:text-[#b87e6b]"
               )}
             >
               支出
@@ -113,7 +113,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, initialData
               }}
               className={clsx(
                 "flex-1 py-1.5 text-sm font-bold rounded-lg transition-all",
-                type === 'income' ? "bg-emerald-500 text-white shadow-md" : "text-slate-400 hover:text-white"
+                type === 'income' ? "bg-[#5f7186] text-[#f0ece1] shadow-[0_4px_12px_rgba(139,121,101,0.06)]" : "text-[#3d3a36] hover:text-[#b87e6b]"
               )}
             >
               收入
@@ -122,14 +122,14 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, initialData
 
           {/* 金額 */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">金額</label>
+            <label className="block text-sm font-medium text-[#3d3a36] mb-1">金額</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#3d3a36]">$</span>
               <input
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full pl-8 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-colors"
+                className="w-full pl-8 pr-4 py-2.5 bg-[#dcd0c2]/30 border-2 border-dashed border-dashed border-[#dcd0c2]/50 rounded-xl text-[#3d3a36] placeholder-slate-500 focus:outline-none focus:border-[#b87e6b] transition-all duration-200"
                 placeholder="0"
                 required
                 min="1"
@@ -139,7 +139,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, initialData
 
           {/* 誰的消費 */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">成員</label>
+            <label className="block text-sm font-medium text-[#3d3a36] mb-1">成員</label>
             <div className="flex flex-wrap gap-2">
               {FAMILY_MEMBERS.map(m => (
                 <button
@@ -148,7 +148,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, initialData
                   onClick={() => setMember(m)}
                   className={clsx(
                     "px-3 py-1.5 rounded-lg text-sm font-medium transition-all border",
-                    member === m ? "text-white" : "bg-white/5 text-slate-300 border-transparent hover:bg-white/10"
+                    member === m ? "text-[#f0ece1]" : "bg-[#dcd0c2]/30 text-[#3d3a36] border-transparent hover:bg-[#dcd0c2]/50"
                   )}
                   style={{
                     backgroundColor: member === m ? MEMBER_COLORS[m] : undefined,
@@ -163,45 +163,45 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, initialData
 
           {/* 分類 */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">分類</label>
+            <label className="block text-sm font-medium text-[#3d3a36] mb-1">分類</label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-purple-500 transition-colors appearance-none"
+              className="w-full px-4 py-2.5 bg-[#dcd0c2]/30 border-2 border-dashed border-dashed border-[#dcd0c2]/50 rounded-xl text-[#3d3a36] focus:outline-none focus:border-[#b87e6b] transition-all duration-200 appearance-none"
             >
               {(type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES).map(c => (
-                <option key={c} value={c} className="bg-[#1a1d2d]">{c}</option>
+                <option key={c} value={c} className="bg-[#f0ece1]">{c}</option>
               ))}
             </select>
           </div>
 
           {/* 日期 */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">日期</label>
+            <label className="block text-sm font-medium text-[#3d3a36] mb-1">日期</label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-purple-500 transition-colors"
+              className="w-full px-4 py-2.5 bg-[#dcd0c2]/30 border-2 border-dashed border-dashed border-[#dcd0c2]/50 rounded-xl text-[#3d3a36] focus:outline-none focus:border-[#b87e6b] transition-all duration-200"
               required
             />
           </div>
 
           {/* 備註 */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">備註 (選填)</label>
+            <label className="block text-sm font-medium text-[#3d3a36] mb-1">備註 (選填)</label>
             <input
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-colors"
+              className="w-full px-4 py-2.5 bg-[#dcd0c2]/30 border-2 border-dashed border-dashed border-[#dcd0c2]/50 rounded-xl text-[#3d3a36] placeholder-slate-500 focus:outline-none focus:border-[#b87e6b] transition-all duration-200"
               placeholder="例如：午餐買便當"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full py-2.5 mt-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold rounded-xl shadow-lg shadow-purple-500/25 transition-all active:scale-[0.98]"
+            className="w-full py-2.5 mt-2 bg-[#b87e6b] hover:bg-[#a66a58] text-[#f0ece1] font-bold rounded-xl shadow-[0_8px_20px_rgba(139,121,101,0.08)] shadow-[#b87e6b]/20 transition-all active:scale-[0.98]"
           >
             {initialData ? '儲存修改' : '儲存紀錄'}
           </button>

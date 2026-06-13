@@ -77,16 +77,16 @@ export default function ExpenseSummary({ expenses, selectedMember }: ExpenseSumm
       {/* 數字卡片 */}
       <div className="grid grid-cols-3 gap-4">
         <div className="glass-card p-4 sm:p-6 flex flex-col justify-center items-center text-center">
-          <span className="text-xs sm:text-sm text-slate-400 mb-1">總收入</span>
-          <span className="text-lg sm:text-2xl font-bold text-emerald-400">${totalIncome.toLocaleString()}</span>
+          <span className="text-xs sm:text-sm text-[#3d3a36] mb-1">總收入</span>
+          <span className="text-lg sm:text-2xl font-bold text-[#5f7186]">${totalIncome.toLocaleString()}</span>
         </div>
         <div className="glass-card p-4 sm:p-6 flex flex-col justify-center items-center text-center">
-          <span className="text-xs sm:text-sm text-slate-400 mb-1">總支出</span>
-          <span className="text-lg sm:text-2xl font-bold text-rose-400">${totalExpense.toLocaleString()}</span>
+          <span className="text-xs sm:text-sm text-[#3d3a36] mb-1">總支出</span>
+          <span className="text-lg sm:text-2xl font-bold text-[#b87e6b]">${totalExpense.toLocaleString()}</span>
         </div>
         <div className="glass-card p-4 sm:p-6 flex flex-col justify-center items-center text-center">
-          <span className="text-xs sm:text-sm text-slate-400 mb-1">結餘</span>
-          <span className={`text-lg sm:text-2xl font-bold ${balance >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>
+          <span className="text-xs sm:text-sm text-[#3d3a36] mb-1">結餘</span>
+          <span className={`text-lg sm:text-2xl font-bold ${balance >= 0 ? 'text-blue-400' : 'text-[#b87e6b]'}`}>
             ${balance.toLocaleString()}
           </span>
         </div>
@@ -96,7 +96,7 @@ export default function ExpenseSummary({ expenses, selectedMember }: ExpenseSumm
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* 圓餅圖 */}
         <div className="glass-card p-4 h-[300px] flex flex-col">
-          <h3 className="text-sm font-bold text-slate-300 mb-4">
+          <h3 className="text-sm font-bold text-[#3d3a36] mb-4">
             {selectedMember === '全體' ? '各成員支出佔比' : '支出分類分佈'}
           </h3>
           <div className="flex-1 relative">
@@ -118,13 +118,13 @@ export default function ExpenseSummary({ expenses, selectedMember }: ExpenseSumm
                   </Pie>
                   <Tooltip 
                     formatter={(value: any) => `$${Number(value).toLocaleString()}`}
-                    contentStyle={{ backgroundColor: '#1a1d2d', borderColor: '#232942', borderRadius: '8px' }}
-                    itemStyle={{ color: '#fff' }}
+                    contentStyle={{ backgroundColor: '#ffffff', border: '2px dashed #b87e6b', borderRadius: '12px', boxShadow: '0 8px 24px rgba(61, 58, 54, 0.12)' }}
+                    itemStyle={{ color: '#3d3a36', fontWeight: 'bold' }}
                   />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-slate-500 text-sm">
+              <div className="absolute inset-0 flex items-center justify-center text-[#3d3a36] text-sm">
                 尚無支出紀錄
               </div>
             )}
@@ -133,7 +133,7 @@ export default function ExpenseSummary({ expenses, selectedMember }: ExpenseSumm
 
         {/* 折線圖 */}
         <div className="glass-card p-4 h-[300px] flex flex-col">
-          <h3 className="text-sm font-bold text-slate-300 mb-4">每日收支趨勢</h3>
+          <h3 className="text-sm font-bold text-[#3d3a36] mb-4">每日收支趨勢</h3>
           <div className="flex-1 relative">
             {lineData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -141,15 +141,16 @@ export default function ExpenseSummary({ expenses, selectedMember }: ExpenseSumm
                   <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
                   <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: '#1a1d2d', borderColor: '#232942', borderRadius: '8px' }}
-                    labelStyle={{ color: '#94a3b8', marginBottom: '4px' }}
+                    contentStyle={{ backgroundColor: '#ffffff', border: '2px dashed #b87e6b', borderRadius: '12px', boxShadow: '0 8px 24px rgba(61, 58, 54, 0.12)' }}
+                    labelStyle={{ color: '#3d3a36', fontWeight: 'bold', marginBottom: '4px' }}
+                    itemStyle={{ color: '#3d3a36' }}
                   />
                   <Line type="monotone" dataKey="expense" name="支出" stroke="#fb7185" strokeWidth={2} dot={{ r: 3, fill: '#fb7185' }} />
                   <Line type="monotone" dataKey="income" name="收入" stroke="#34d399" strokeWidth={2} dot={{ r: 3, fill: '#34d399' }} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-slate-500 text-sm">
+              <div className="absolute inset-0 flex items-center justify-center text-[#3d3a36] text-sm">
                 尚無紀錄
               </div>
             )}

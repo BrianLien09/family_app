@@ -55,20 +55,20 @@ export default function Navbar() {
       id="navbar" // 👈 重要：一定要有這個 ID
       className={clsx(
         "fixed top-0 left-0 w-full z-[40] backdrop-blur-md border-b transition-all duration-500 ease-in-out",
-        "bg-[#0f111a]/95 border-[#232942]",
+        "bg-[#e6e2d8]/90 backdrop-blur-md border-dashed border-[#dcd0c2]",
         !isVisible && "-translate-y-full" // 控制顯示/隱藏
       )}
     >
        <div className="container flex items-center justify-between !max-w-7xl px-4 h-[70px]">
           {/* Logo Section */}
           <div className="flex items-center gap-3">
-             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden shrink-0">
-                <span className="text-white text-xs font-bold">B</span>
+             <div className="w-8 h-8 rounded-full bg-[#b87e6b] flex items-center justify-center overflow-hidden shrink-0">
+                <span className="text-[#f0ece1] text-xs font-bold">B</span>
              </div>
-             <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400 hidden sm:block">
+             <span className="text-lg font-bold text-[#3d3a36] hidden sm:block">
                 我們家的小助手
              </span>
-             <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400 sm:hidden">
+             <span className="text-lg font-bold text-[#3d3a36] sm:hidden">
                 小助手
              </span>
           </div>
@@ -88,7 +88,7 @@ export default function Navbar() {
                       href={item.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap text-gray-400 hover:text-white hover:bg-white/5"
+                      className="px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap text-[#3d3a36] hover:text-[#b87e6b] hover:bg-[#dcd0c2]/30"
                     >
                       {item.name}
                     </a>
@@ -102,8 +102,8 @@ export default function Navbar() {
                     className={clsx(
                       "px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap",
                       isActive
-                        ? "bg-[#6366f1] text-white shadow-lg shadow-indigo-500/20"
-                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                        ? "bg-[#b87e6b] text-[#f0ece1] shadow-[0_4px_12px_rgba(184,126,107,0.2)]"
+                        : "text-[#3d3a36] hover:text-[#b87e6b] hover:bg-[#dcd0c2]/30"
                     )}
                   >
                     {item.name}
@@ -127,7 +127,7 @@ export default function Navbar() {
 
             {/* 漢堡選單按鈕 */}
             <button
-              className="p-2 rounded-lg transition-colors text-slate-300 hover:text-white hover:bg-white/10"
+              className="p-2 rounded-lg transition-all duration-200 text-[#3d3a36] hover:text-[#b87e6b] hover:bg-[#dcd0c2]/50"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label="選單"
             >
@@ -145,7 +145,7 @@ export default function Navbar() {
        <div
          className={clsx(
            "md:hidden border-b grid transition-[grid-template-rows] duration-400 ease-[cubic-bezier(0.16,1,0.3,1)]",
-           "bg-[#0f111a] border-[#232942]",
+           "bg-[#e6e2d8] border-dashed border-[#dcd0c2]",
            isMobileMenuOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
          )}
        >
@@ -163,11 +163,11 @@ export default function Navbar() {
                      href={item.href}
                      target="_blank"
                      rel="noopener noreferrer"
-                     className="px-4 py-3 rounded-lg text-base font-bold transition-all flex items-center justify-between group text-slate-300 hover:text-white hover:bg-white/5"
+                     className="px-4 py-3 rounded-lg text-base font-bold transition-all flex items-center justify-between group text-[#3d3a36] hover:text-[#b87e6b] hover:bg-[#dcd0c2]/30"
                      onClick={() => setIsMobileMenuOpen(false)}
                    >
                      {item.name}
-                     <ExternalLink size={16} className="text-slate-500 group-hover:text-white transition-colors" />
+                     <ExternalLink size={16} className="text-[#3d3a36] group-hover:text-[#b87e6b] transition-all duration-200" />
                    </a>
                  );
                }
@@ -180,8 +180,8 @@ export default function Navbar() {
                    className={clsx(
                      "px-4 py-3 rounded-lg text-base font-bold transition-all",
                      isActive
-                       ? "bg-[#6366f1]/10 text-[#818cf8] border border-[#6366f1]/20"
-                       : "text-slate-300 hover:text-white hover:bg-white/5"
+                       ? "bg-[#b87e6b]/10 text-[#b87e6b] border-2 border-dashed border-[#b87e6b]/30"
+                       : "text-[#3d3a36] hover:text-[#b87e6b] hover:bg-[#dcd0c2]/30"
                    )}
                  >
                    {item.name}

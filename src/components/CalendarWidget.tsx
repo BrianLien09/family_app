@@ -87,7 +87,7 @@ const DayCell = memo(function DayCell({
         !isCurrentMonth ? 'bg-black/20 text-slate-600' : 'bg-white/[0.02] hover:bg-white/[0.05]',
         isSelected && 'bg-white/[0.08] ring-1 ring-inset ring-purple-500',
         isTodayDate && !isSelected && 'bg-blue-500/5',
-        isMultiSelected && 'ring-2 ring-purple-500 bg-purple-500/10',
+        isMultiSelected && 'ring-2 ring-purple-500 bg-[#5f7186]/10',
         isDragActive && 'hover:ring-2 hover:ring-blue-400 hover:bg-blue-500/5',
       )}
     >
@@ -96,8 +96,8 @@ const DayCell = memo(function DayCell({
         <span
           className={clsx(
             'text-xs font-medium block text-center md:text-left',
-            isTodayDate ? 'text-blue-400 font-bold' : 'text-slate-400',
-            isSelected && 'text-white',
+            isTodayDate ? 'text-blue-400 font-bold' : 'text-[#3d3a36]',
+            isSelected && 'text-[#f0ece1]',
             !isCurrentMonth && 'opacity-50',
           )}
         >
@@ -108,7 +108,7 @@ const DayCell = memo(function DayCell({
         {showAddButton && isCurrentMonth && (
           <button
             onClick={(e) => onAddClick(e, day)}
-            className="hidden md:flex opacity-0 group-hover:opacity-100 w-5 h-5 items-center justify-center rounded bg-purple-500/80 hover:bg-purple-500 text-white transition-all duration-200 shadow-sm"
+            className="hidden md:flex opacity-0 group-hover:opacity-100 w-5 h-5 items-center justify-center rounded bg-[#5f7186] hover:bg-[#47576b] text-[#f0ece1] transition-all duration-200 shadow-[0_2px_8px_rgba(139,121,101,0.04)]"
             title={`新增 ${format(day, 'M/d')} 的行程`}
           >
             <Plus size={14} />
@@ -127,7 +127,7 @@ const DayCell = memo(function DayCell({
       {showAddButton && isCurrentMonth && isSelected && (
         <button
           onClick={(e) => onAddClick(e, day)}
-          className="md:hidden absolute bottom-1 right-1 w-4 h-4 flex items-center justify-center rounded bg-purple-500 text-white shadow-sm"
+          className="md:hidden absolute bottom-1 right-1 w-4 h-4 flex items-center justify-center rounded bg-[#5f7186] text-[#f0ece1] shadow-[0_2px_8px_rgba(139,121,101,0.04)]"
         >
           <Plus size={10} />
         </button>
@@ -142,7 +142,7 @@ const DayCell = memo(function DayCell({
             onDragStart={(e) => onDragStart(e, event.id)}
             onDragEnd={onDragEnd}
             className={clsx(
-              'text-xs font-bold px-2 py-1 rounded border truncate shadow-sm cursor-move',
+              'text-xs font-bold px-2 py-1 rounded border-2 border-dashed truncate shadow-[0_2px_8px_rgba(139,121,101,0.04)] cursor-move',
               getEventColor(event.category),
               'hover:opacity-80 active:opacity-60 transition-opacity',
             )}
@@ -153,7 +153,7 @@ const DayCell = memo(function DayCell({
           </div>
         ))}
         {events.length > 3 && (
-          <span className="text-[11px] font-medium text-slate-400 pl-1">
+          <span className="text-[11px] font-medium text-[#3d3a36] pl-1">
             還有 {events.length - 3} 個...
           </span>
         )}
@@ -340,21 +340,21 @@ export default function CalendarWidget({
   // getEventColor / getDotColor 是純函式（無外部依賴），用 useCallback 穩定引用，
   // 確保傳入 DayCell 時不會因為新函式實例讓 memo 比較失效
   const getEventColor = useCallback((category: string) => {
-    if (category === '洗牙') return 'bg-blue-500/20 text-blue-200 border-blue-500/30';
-    if (category === '剪頭髮') return 'bg-orange-500/20 text-orange-200 border-orange-500/30';
-    if (category === '阿弟排班') return 'bg-green-500/20 text-green-200 border-green-500/30';
-    if (category === '孔呆值班') return 'bg-cyan-500/20 text-cyan-200 border-cyan-500/30';
-    if (category === '繳費') return 'bg-yellow-500/20 text-yellow-200 border-yellow-500/30';
-    return 'bg-pink-500/20 text-pink-200 border-pink-500/30';
+    if (category === '洗牙') return 'bg-[#5f7186]/15 text-[#5f7186] border-dashed border-[#5f7186]/30';
+    if (category === '剪頭髮') return 'bg-[#b87e6b]/15 text-[#b87e6b] border-dashed border-[#b87e6b]/30';
+    if (category === '阿弟排班') return 'bg-[#6e8568]/15 text-[#4e5f48] border-dashed border-[#6e8568]/30';
+    if (category === '孔呆值班') return 'bg-[#b8956b]/15 text-[#8c653d] border-dashed border-[#b8956b]/30';
+    if (category === '繳費') return 'bg-[#cbb573]/15 text-[#917937] border-dashed border-[#cbb573]/30';
+    return 'bg-[#8f7d95]/15 text-[#6c5972] border-dashed border-[#8f7d95]/30';
   }, []);
   
   const getDotColor = useCallback((category: string) => {
-    if (category === '洗牙') return 'bg-blue-400';
-    if (category === '剪頭髮') return 'bg-orange-400';
-    if (category === '阿弟排班') return 'bg-green-400';
-    if (category === '孔呆值班') return 'bg-cyan-400';
-    if (category === '繳費') return 'bg-yellow-400';
-    return 'bg-pink-500';
+    if (category === '洗牙') return 'bg-[#5f7186]';
+    if (category === '剪頭髮') return 'bg-[#b87e6b]';
+    if (category === '阿弟排班') return 'bg-[#6e8568]';
+    if (category === '孔呆值班') return 'bg-[#b8956b]';
+    if (category === '繳費') return 'bg-[#cbb573]';
+    return 'bg-[#8f7d95]';
   }, []);
 
   return (
@@ -364,14 +364,14 @@ export default function CalendarWidget({
         
         {/* ✨ 修改這裡：將標題和重整按鈕包在一起 */}
         <div className="flex items-center gap-3">
-          <h2 className="text-lg md:text-2xl font-bold text-white tracking-wide">
+          <h2 className="text-lg md:text-2xl font-bold text-[#3d3a36] tracking-wide">
             {format(currentMonth, 'yyyy年 M月', { locale: zhTW })}
           </h2>
           {onRefresh && (
              <button 
                onClick={onRefresh}
                disabled={isRefreshing}
-               className="p-1.5 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors disabled:opacity-50"
+               className="p-1.5 rounded-full hover:bg-[#dcd0c2]/50 text-[#3d3a36] hover:text-[#b87e6b] transition-all duration-200 disabled:opacity-50"
                title="重新整理資料"
              >
                <RotateCw 
@@ -383,10 +383,10 @@ export default function CalendarWidget({
         </div>
 
         <div className="flex gap-2">
-           <button onClick={prevMonth} className="p-1.5 md:p-2 hover:bg-white/10 rounded-full text-slate-300 transition-colors">
+           <button onClick={prevMonth} className="p-1.5 md:p-2 hover:bg-[#dcd0c2]/50 rounded-full text-[#3d3a36] transition-all duration-200">
              <ChevronLeft size={20} />
            </button>
-           <button onClick={nextMonth} className="p-1.5 md:p-2 hover:bg-white/10 rounded-full text-slate-300 transition-colors">
+           <button onClick={nextMonth} className="p-1.5 md:p-2 hover:bg-[#dcd0c2]/50 rounded-full text-[#3d3a36] transition-all duration-200">
              <ChevronRight size={20} />
            </button>
         </div>
@@ -394,14 +394,14 @@ export default function CalendarWidget({
 
       {/* 批次操作工具列 */}
       {onBatchModeToggle && (
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/10 shrink-0">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-dashed border-[#dcd0c2]/50 shrink-0">
           <button
             onClick={onBatchModeToggle}
             className={clsx(
               "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
               batchMode 
-                ? "bg-purple-500 text-white shadow-lg shadow-purple-500/30" 
-                : "bg-white/5 hover:bg-white/10 text-slate-300"
+                ? "bg-[#5f7186] text-[#f0ece1] shadow-[0_8px_20px_rgba(139,121,101,0.08)] shadow-purple-500/30" 
+                : "bg-[#dcd0c2]/30 hover:bg-[#dcd0c2]/50 text-[#3d3a36]"
             )}
             aria-label="批次選擇模式"
             aria-pressed={batchMode}
@@ -415,7 +415,7 @@ export default function CalendarWidget({
               {onSelectAll && (
                 <button
                   onClick={onSelectAll}
-                  className="px-2 py-1 text-[10px] bg-white/5 hover:bg-white/10 rounded text-slate-300 transition-colors"
+                  className="px-2 py-1 text-[10px] bg-[#dcd0c2]/30 hover:bg-[#dcd0c2]/50 rounded text-[#3d3a36] transition-all duration-200"
                   aria-label="全選/取消全選"
                 >
                   {allSelected ? '取消全選' : '全選'}
@@ -425,7 +425,7 @@ export default function CalendarWidget({
               {selectedIds.length > 0 && onBatchDelete && (
                 <button
                   onClick={onBatchDelete}
-                  className="flex items-center gap-1 px-2 py-1 text-[10px] bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded transition-colors"
+                  className="flex items-center gap-1 px-2 py-1 text-[10px] bg-[#b87e6b]/20 hover:bg-[#b87e6b]/20 text-[#b87e6b] rounded transition-all duration-200"
                   aria-label={`刪除選取的 ${selectedIds.length} 個項目`}
                 >
                   <Trash2 size={12} />
@@ -439,20 +439,20 @@ export default function CalendarWidget({
 
       {/* Ctrl+多選批次新增工具列 */}
       {selectedEmptyDates.length > 0 && (
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/10 bg-purple-500/10 px-4 py-2 rounded-lg shrink-0 animate-scale-in">
-          <span className="text-sm text-purple-300 font-medium">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-dashed border-[#dcd0c2]/50 bg-[#5f7186]/10 px-4 py-2 rounded-lg shrink-0 animate-scale-in">
+          <span className="text-sm text-[#5f7186] font-medium">
             已選擇 {selectedEmptyDates.length} 個日期
           </span>
           <div className="flex gap-2">
             <button
               onClick={handleBatchAdd}
-              className="px-3 py-1.5 bg-purple-500 hover:bg-purple-600 text-white text-sm font-medium rounded-lg transition-colors shadow-lg shadow-purple-500/30"
+              className="px-3 py-1.5 bg-[#5f7186] hover:bg-[#5f7186] text-[#f0ece1] text-sm font-medium rounded-lg transition-all duration-200 shadow-[0_8px_20px_rgba(139,121,101,0.08)] shadow-purple-500/30"
             >
               執行批次新增
             </button>
             <button
               onClick={handleCancelBatchSelect}
-              className="p-1.5 hover:bg-white/10 text-slate-300 hover:text-white rounded-lg transition-colors"
+              className="p-1.5 hover:bg-[#dcd0c2]/50 text-[#3d3a36] hover:text-[#b87e6b] rounded-lg transition-all duration-200"
               aria-label="取消多選"
             >
               <X size={18} />
@@ -462,16 +462,16 @@ export default function CalendarWidget({
       )}
 
       {/* Week Days */}
-      <div className="grid grid-cols-7 mb-2 text-center shrink-0 border-b border-white/5 pb-2">
+      <div className="grid grid-cols-7 mb-2 text-center shrink-0 border-b border-dashed border-[#dcd0c2]/50 pb-2">
         {weekDays.map(day => (
-          <div key={day} className="text-xs md:text-sm font-bold text-slate-500">
+          <div key={day} className="text-xs md:text-sm font-bold text-[#3d3a36]">
             {day}
           </div>
         ))}
       </div>
 
       {/* Days Grid */}
-      <div className="grid grid-cols-7 gap-px md:gap-1 bg-white/5 rounded-lg overflow-hidden border border-white/5 shrink-0">
+      <div className="grid grid-cols-7 gap-px md:gap-1 bg-[#dcd0c2]/30 rounded-lg overflow-hidden border-2 border-dashed border-dashed border-[#dcd0c2]/50 shrink-0">
         {days.map((day) => {
           const dateKey = format(day, 'yyyy-MM-dd');
           const dayEvents = eventsByDate[dateKey] || [];
@@ -501,9 +501,9 @@ export default function CalendarWidget({
       </div>
 
       {/* Selected Date Details */}
-      <div className="mt-4 pt-4 border-t border-white/10 flex-1 flex flex-col min-h-0">
-         <h3 className="text-sm font-bold text-slate-400 mb-3 flex items-center gap-2 shrink-0">
-            <span className="w-1 h-4 bg-purple-500 rounded-full"></span>
+      <div className="mt-4 pt-4 border-t border-dashed border-[#dcd0c2]/50 flex-1 flex flex-col min-h-0">
+         <h3 className="text-sm font-bold text-[#3d3a36] mb-3 flex items-center gap-2 shrink-0">
+            <span className="w-1 h-4 bg-[#5f7186] rounded-full"></span>
             {format(selectedDate, 'M月d日')} 的行程 ({selectedDayEvents.length})
          </h3>
          
@@ -521,33 +521,33 @@ export default function CalendarWidget({
                 />
               ))
             ) : (
-              <div className="h-full max-h-32 flex items-center justify-center border border-dashed border-white/10 rounded-xl bg-white/[0.02]">
-                <p className="text-slate-500 text-sm">本日無行程，好好休息吧！😴</p>
+              <div className="h-full max-h-32 flex items-center justify-center border-2 border-dashed border-dashed border-dashed border-[#dcd0c2]/50 rounded-xl bg-white/[0.02]">
+                <p className="text-[#3d3a36] text-sm">本日無行程，好好休息吧！😴</p>
               </div>
             )}
          </div>
          
          {/* Pagination Controls */}
          {totalPages > 1 && (
-           <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between shrink-0">
+           <div className="mt-4 pt-3 border-t border-dashed border-[#dcd0c2]/50 flex items-center justify-between shrink-0">
              <button
                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                disabled={currentPage === 1}
-               className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg text-slate-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
+               className="px-3 py-1.5 text-xs bg-[#dcd0c2]/30 hover:bg-[#dcd0c2]/50 rounded-lg text-[#3d3a36] transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
                aria-label="上一頁"
              >
                <ChevronLeft size={14} />
                上一頁
              </button>
              
-             <span className="text-xs text-slate-400">
-               第 <span className="text-purple-400 font-bold">{currentPage}</span> / {totalPages} 頁
+             <span className="text-xs text-[#3d3a36]">
+               第 <span className="text-[#5f7186] font-bold">{currentPage}</span> / {totalPages} 頁
              </span>
              
              <button
                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                disabled={currentPage === totalPages}
-               className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg text-slate-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
+               className="px-3 py-1.5 text-xs bg-[#dcd0c2]/30 hover:bg-[#dcd0c2]/50 rounded-lg text-[#3d3a36] transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
                aria-label="下一頁"
              >
                下一頁

@@ -35,9 +35,9 @@ export default function Login() {
         <img 
           src={user.photoURL || ''} 
           alt="Avatar" 
-          className="w-8 h-8 rounded-full border border-white/20"
+          className="w-8 h-8 rounded-full border-2 border-dashed border-dashed border-[#dcd0c2]/50"
         />
-        <button onClick={handleLogout} className="text-sm text-slate-400 hover:text-white">
+        <button onClick={handleLogout} className="text-sm text-[#3d3a36] hover:text-[#b87e6b]">
           登出
         </button>
       </div>
@@ -47,7 +47,7 @@ export default function Login() {
   return (
     <button 
       onClick={handleLogin}
-      className="px-3 py-1.5 bg-white/5 backdrop-blur-md border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 rounded-full font-medium text-sm transition-all"
+      className="px-3 py-1.5 bg-[#dcd0c2]/30 backdrop-blur-md border-2 border-dashed border-dashed border-[#dcd0c2]/50 text-[#3d3a36] hover:text-[#b87e6b] hover:bg-[#dcd0c2]/50 rounded-full font-medium text-sm transition-all"
       aria-label="Google 登入"
     >
       G 登入

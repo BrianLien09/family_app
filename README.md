@@ -1,7 +1,7 @@
 # 🏠 我們家的小助手 (Family Utility Site)
 
 這是一個結合 **「智慧行事曆」** 與 **「食譜計算神器」** 的全端 Web App，專為家庭生活設計。
-透過現代化的網頁技術與玻璃擬態 (Glassmorphism) 設計風格，讓記錄生活與下廚變得更優雅、更直覺。
+透過現代化的網頁技術與織物質感 (Woven & Weft) 大地色系風格，讓記錄生活與下廚變得更溫暖、更直覺。
 
 ## ✨ 核心功能
 
@@ -62,7 +62,7 @@
 
 - **Frontend Framework**: [Next.js 16 (App Router)](https://nextjs.org/)
 - **Language**: TypeScript
-- **Styling**: Tailwind CSS (Glassmorphism 視覺風格)
+- **Styling**: Tailwind CSS (Woven & Weft 織物質感 / 大地色系風格)
 - **Backend / Database**: Google Firebase (Firestore)
 - **Authentication**: Firebase Auth (Google 登入)
 - **PWA**: [@ducanh2912/next-pwa](https://github.com/DuCanhGH/next-pwa) (Service Worker 自動生成)
@@ -280,6 +280,13 @@ npm run dev
 ---
 
 ## 📝 更新歷史
+
+### v4.0 (2026/06) - Woven & Weft 織物質感設計系統
+- 全面優化 UI/UX，採用大地色系（米色 `#e6e2d8`、燕麥白 `#f0ece1`、鐵鏽紅 `#b87e6b`、石板藍 `#5f7186`）
+- 行程標籤全面同步為大地色彩分類（洗牙、剪頭髮、排班、值班、繳費、其他）
+- 修復了所有在淺色背景下看不清的字體對比度與按鈕圖示
+- Tooltip 樣式重構，採用高對比度的縫線白紙卡標籤投影樣式
+- 彈窗與食譜計算器全面淺色化，提升長時間操作與閱讀的視覺舒適度
 
 ### v3.3 (2026/06) - 家庭帳本 (Expense Tracker)
 - 新增收支紀錄系統、動態圓餅圖分析、成員獨立帳本

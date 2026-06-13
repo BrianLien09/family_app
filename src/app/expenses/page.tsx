@@ -80,20 +80,20 @@ export default function ExpensesPage() {
     }
   };
 
-  if (!isLoaded) return <div className="min-h-screen flex items-center justify-center text-slate-500">載入中...</div>;
+  if (!isLoaded) return <div className="min-h-screen flex items-center justify-center text-[#3d3a36]">載入中...</div>;
 
   return (
     <div className="container mx-auto px-4 py-8 pt-20 max-w-3xl min-h-screen">
       {/* 頂部標題與月份切換 */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div className="flex items-center gap-4 bg-white/5 rounded-2xl p-2 border border-white/10">
-          <button onClick={prevMonth} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
+        <div className="flex items-center gap-4 bg-[#dcd0c2]/30 rounded-2xl p-2 border-2 border-dashed border-dashed border-[#dcd0c2]/50">
+          <button onClick={prevMonth} className="p-2 hover:bg-[#dcd0c2]/50 rounded-xl transition-all duration-200">
             <ChevronLeft size={20} />
           </button>
           <span className="font-bold text-lg min-w-[120px] text-center">
             {currentDate.getFullYear()} 年 {currentDate.getMonth() + 1} 月
           </span>
-          <button onClick={nextMonth} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
+          <button onClick={nextMonth} className="p-2 hover:bg-[#dcd0c2]/50 rounded-xl transition-all duration-200">
             <ChevronRight size={20} />
           </button>
         </div>
@@ -103,7 +103,7 @@ export default function ExpensesPage() {
             onClick={() => setBatchMode(!batchMode)}
             className={clsx(
               "flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border",
-              batchMode ? "bg-purple-500/20 text-purple-400 border-purple-500/50" : "bg-white/5 text-slate-300 border-white/10 hover:bg-white/10"
+              batchMode ? "bg-[#5f7186]/10 text-[#5f7186] border-[#5f7186]/50" : "bg-[#dcd0c2]/30 text-[#3d3a36] border-dashed border-[#dcd0c2]/50 hover:bg-[#dcd0c2]/50"
             )}
           >
             <CheckSquare size={16} />
@@ -114,7 +114,7 @@ export default function ExpensesPage() {
               setEditingExpense(null);
               setIsModalOpen(true);
             }}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white rounded-xl text-sm font-bold shadow-lg shadow-teal-500/20 transition-all active:scale-95"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[#5f7186] hover:bg-[#47576b] text-[#f0ece1] rounded-xl text-sm font-bold shadow-[0_8px_20px_rgba(139,121,101,0.08)] shadow-[#5f7186]/30 transition-all active:scale-95"
           >
             <Plus size={16} />
             記一筆
@@ -131,16 +131,16 @@ export default function ExpensesPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={toggleSelectAll}
-              className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
+              className="px-3 py-1.5 bg-[#dcd0c2]/30 hover:bg-[#dcd0c2]/30 rounded-lg text-sm font-medium transition-all duration-200"
             >
               {selectedIds.length === filteredExpenses.length ? '取消全選' : '全選'}
             </button>
-            <span className="text-sm text-purple-400 font-medium">已選擇 {selectedIds.length} 筆</span>
+            <span className="text-sm text-[#5f7186] font-medium">已選擇 {selectedIds.length} 筆</span>
           </div>
           <button
             onClick={handleBatchDelete}
             disabled={selectedIds.length === 0}
-            className="flex items-center gap-2 px-3 py-1.5 bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 bg-[#b87e6b]/20 text-[#b87e6b] hover:bg-[#b87e6b]/20 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-medium transition-all duration-200"
           >
             <Trash2 size={16} />
             刪除
@@ -169,7 +169,7 @@ export default function ExpensesPage() {
             />
           ))
         ) : (
-          <div className="text-center py-12 text-slate-500 bg-white/5 rounded-2xl border border-white/10 border-dashed">
+          <div className="text-center py-12 text-[#3d3a36] bg-[#dcd0c2]/30 rounded-2xl border-2 border-dashed border-dashed border-[#dcd0c2]/50 border-dashed">
             <p className="mb-2">本月尚無紀錄 📝</p>
             <p className="text-sm">點擊右上角「記一筆」開始記錄</p>
           </div>

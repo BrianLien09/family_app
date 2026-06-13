@@ -179,17 +179,17 @@ export default function AddDateModal({
       aria-modal="true"
       aria-labelledby="modal-title"
     >
-      <div className="w-full max-w-md bg-[#161b2c] border border-slate-700 shadow-2xl rounded-xl overflow-hidden flex flex-col animate-scale-in">
+      <div className="w-full max-w-md bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] shadow-2xl rounded-xl overflow-hidden flex flex-col animate-scale-in">
 
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3">
-          <h2 id="modal-title" className="text-lg font-bold text-white flex items-center gap-2.5">
-            <span className="w-1 h-5 bg-purple-500 rounded-full" />
+          <h2 id="modal-title" className="text-lg font-bold text-[#3d3a36] flex items-center gap-2.5">
+            <span className="w-1 h-5 bg-[#5f7186] rounded-full" />
             {initialData ? '編輯行程' : '新增行程'}
           </h2>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white transition-colors"
+            className="text-[#3d3a36] hover:text-[#b87e6b] transition-all duration-200"
             aria-label="關閉對話框"
           >
             <X size={22} />
@@ -201,13 +201,13 @@ export default function AddDateModal({
 
           {/* 標題 */}
           <div className="group relative">
-            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors">
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#3d3a36] group-focus-within:text-[#5f7186] transition-all duration-200">
               <Type size={16} />
             </div>
             <input
               required
               autoFocus
-              className="w-full bg-[#1e2336] border border-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all text-sm"
+              className="w-full bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg pl-10 pr-4 py-2.5 text-[#3d3a36] placeholder-[#78716c]/70 focus:outline-none focus:border-[#b87e6b] focus:ring-2 focus:ring-[#b87e6b]/30 transition-all text-sm"
               placeholder="行程標題 (例如：阿弟排班)"
               value={title}
               onChange={e => setTitle(e.target.value)}
@@ -219,13 +219,13 @@ export default function AddDateModal({
           <div className="space-y-2">
             {/* 日期 */}
             <div className="group relative">
-              <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors">
+              <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#3d3a36] group-focus-within:text-[#5f7186] transition-all duration-200">
                 <Calendar size={16} />
               </div>
               <input
                 type="date"
                 required
-                className="w-full bg-[#1e2336] border border-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all [color-scheme:dark] text-sm"
+                className="w-full bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg pl-10 pr-4 py-2.5 text-[#3d3a36] focus:outline-none focus:border-[#b87e6b] focus:ring-2 focus:ring-[#b87e6b]/30 transition-all  text-sm"
                 value={date}
                 onChange={e => setDate(e.target.value)}
                 aria-label="日期"
@@ -236,12 +236,12 @@ export default function AddDateModal({
             <div className="grid grid-cols-2 gap-2">
               {(['開始時間', '結束時間'] as const).map((label, i) => (
                 <div key={label} className="group relative">
-                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors">
+                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#3d3a36] group-focus-within:text-[#5f7186] transition-all duration-200">
                     <Clock size={16} />
                   </div>
                   <input
                     type="time"
-                    className="w-full bg-[#1e2336] border border-slate-700 rounded-lg pl-10 pr-3 py-2.5 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all [color-scheme:dark] text-sm"
+                    className="w-full bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg pl-10 pr-3 py-2.5 text-[#3d3a36] focus:outline-none focus:border-[#b87e6b] focus:ring-2 focus:ring-[#b87e6b]/30 transition-all  text-sm"
                     value={i === 0 ? startTime : endTime}
                     onChange={e => i === 0 ? setStartTime(e.target.value) : setEndTime(e.target.value)}
                     aria-label={label}
@@ -251,7 +251,7 @@ export default function AddDateModal({
             </div>
 
             {startTime && endTime && (
-              <p className="text-xs text-slate-500 pl-0.5">
+              <p className="text-xs text-[#3d3a36] pl-0.5">
                 時間區段：{startTime} ~ {endTime}
               </p>
             )}
@@ -259,7 +259,7 @@ export default function AddDateModal({
 
           {/* 分類選擇 */}
           <div className="space-y-1.5">
-            <div className="flex items-center gap-1.5 text-slate-400">
+            <div className="flex items-center gap-1.5 text-[#3d3a36]">
               <Hash size={13} />
               <span className="text-xs font-bold uppercase tracking-wider">選擇分類</span>
             </div>
@@ -274,8 +274,8 @@ export default function AddDateModal({
                     className={clsx(
                       'px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
                       category === cat
-                        ? 'bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-500/20'
-                        : 'bg-[#1e2336] border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200'
+                        ? 'bg-[#5f7186] border-[#5f7186]/50 text-[#3d3a36] shadow-[0_8px_20px_rgba(139,121,101,0.08)] shadow-[#b87e6b]/20'
+                        : 'bg-[#f0ece1] border-[#dcd0c2] text-[#3d3a36] hover:border-[#5f7186]/50 hover:text-[#5f7186]'
                     )}
                     aria-label={`分類: ${cat}`}
                     aria-pressed={category === cat}
@@ -287,7 +287,7 @@ export default function AddDateModal({
                     <button
                       type="button"
                       onClick={() => handleDeleteCategory(cat)}
-                      className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover/category:opacity-100 transition-opacity"
+                      className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 hover:bg-red-600 text-[#3d3a36] rounded-full flex items-center justify-center opacity-0 group-hover/category:opacity-100 transition-opacity"
                       aria-label={`刪除類別 ${cat}`}
                     >
                       <X size={10} />
@@ -301,7 +301,7 @@ export default function AddDateModal({
                 <button
                   type="button"
                   onClick={() => setShowAddCategory(true)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#1e2336] border border-dashed border-slate-600 text-slate-400 hover:border-purple-500 hover:text-purple-400 transition-all"
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#f0ece1] border-2 border-dashed border-dashed border-[#dcd0c2] text-[#3d3a36] hover:border-[#5f7186]/50 hover:text-[#5f7186] transition-all"
                   aria-label="新增自訂類別"
                 >
                   <Plus size={13} className="inline mr-0.5" />
@@ -317,20 +317,20 @@ export default function AddDateModal({
                       if (e.key === 'Enter') { e.preventDefault(); handleAddCategory(); }
                     }}
                     placeholder="類別名稱"
-                    className="px-2.5 py-1.5 bg-[#1e2336] border border-slate-700 rounded-lg text-white text-xs focus:outline-none focus:border-purple-500 w-24"
+                    className="px-2.5 py-1.5 bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg text-[#3d3a36] text-xs focus:outline-none focus:border-[#b87e6b] w-24"
                     autoFocus
                   />
                   <button
                     type="button"
                     onClick={handleAddCategory}
-                    className="px-2 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs transition-colors"
+                    className="px-2 py-1.5 bg-[#5f7186] hover:bg-[#5f7186] text-[#3d3a36] rounded-lg text-xs transition-all duration-200"
                   >
                     <Check size={13} />
                   </button>
                   <button
                     type="button"
                     onClick={() => { setShowAddCategory(false); setNewCategoryName(''); }}
-                    className="px-2 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-xs transition-colors"
+                    className="px-2 py-1.5 bg-[#dcd0c2]/50 hover:bg-[#dcd0c2]/80 text-[#3d3a36] rounded-lg text-xs transition-all duration-200"
                   >
                     <X size={13} />
                   </button>
@@ -344,8 +344,8 @@ export default function AddDateModal({
                 className={clsx(
                   'px-2.5 py-1.5 rounded-lg text-xs transition-all border',
                   showSubCatManager
-                    ? 'bg-slate-600 border-slate-500 text-white'
-                    : 'bg-[#1e2336] border-slate-700 text-slate-500 hover:text-slate-300 hover:border-slate-500'
+                    ? 'bg-[#5f7186] border-[#5f7186] text-[#f0ece1]'
+                    : 'bg-[#f0ece1] border-[#dcd0c2] text-[#3d3a36] hover:text-[#5f7186] hover:border-[#5f7186]'
                 )}
                 aria-label={`管理「${category}」的子分類`}
                 title="設定此分類的子分類時間"
@@ -362,7 +362,7 @@ export default function AddDateModal({
                     key={sub.name}
                     type="button"
                     onClick={() => handleSelectSubCategory(sub.startTime, sub.endTime)}
-                    className="px-2.5 py-1 rounded-md text-xs font-medium bg-slate-800 border border-slate-600 text-slate-300 hover:border-purple-500 hover:text-purple-300 transition-all"
+                    className="px-2.5 py-1 rounded-md text-xs font-medium bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] text-[#3d3a36] hover:border-[#5f7186]/50 hover:text-[#5f7186] transition-all"
                     title={`${sub.startTime}${sub.endTime ? ` ~ ${sub.endTime}` : ''}`}
                   >
                     {sub.name}
@@ -373,8 +373,8 @@ export default function AddDateModal({
 
             {/* inline 子分類管理器 */}
             {showSubCatManager && (
-              <div className="mt-1.5 p-3 bg-[#1a1f33] border border-slate-700 rounded-lg space-y-2">
-                <p className="text-xs text-slate-400 font-medium">
+              <div className="mt-1.5 p-3 bg-[#1a1f33] border-2 border-dashed border-[#dcd0c2] rounded-lg space-y-2">
+                <p className="text-xs text-[#3d3a36] font-medium">
                   「{category}」的子分類設定
                 </p>
 
@@ -384,23 +384,23 @@ export default function AddDateModal({
                     {subCategories.map(sub => (
                       <div
                         key={sub.name}
-                        className="flex items-center gap-2 text-xs text-slate-300"
+                        className="flex items-center gap-2 text-xs text-[#3d3a36]"
                       >
                         <span className="font-medium w-16 shrink-0 truncate">{sub.name}</span>
-                        <span className="text-slate-500">
+                        <span className="text-[#3d3a36]">
                           {sub.startTime}{sub.endTime ? ` ~ ${sub.endTime}` : ''}
                         </span>
                         <button
                           type="button"
                           onClick={() => deleteSubCategory(category, sub.name)}
-                          className="ml-auto text-slate-600 hover:text-red-400 transition-colors"
+                          className="ml-auto text-slate-600 hover:text-[#b87e6b] transition-all duration-200"
                           aria-label={`刪除子分類 ${sub.name}`}
                         >
                           <Trash2 size={12} />
                         </button>
                       </div>
                     ))}
-                    <div className="border-t border-slate-700 pt-1" />
+                    <div className="border-t border-[#dcd0c2] pt-1" />
                   </div>
                 )}
 
@@ -411,27 +411,27 @@ export default function AddDateModal({
                     value={subCatForm.name}
                     onChange={e => setSubCatForm(f => ({ ...f, name: e.target.value }))}
                     placeholder="名稱（如週六班）"
-                    className="flex-1 min-w-0 px-2.5 py-1.5 bg-[#1e2336] border border-slate-700 rounded-lg text-white text-xs focus:outline-none focus:border-purple-500"
+                    className="flex-1 min-w-0 px-2.5 py-1.5 bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg text-[#3d3a36] text-xs focus:outline-none focus:border-[#b87e6b]"
                   />
                   <input
                     type="time"
                     value={subCatForm.startTime}
                     onChange={e => setSubCatForm(f => ({ ...f, startTime: e.target.value }))}
-                    className="px-2 py-1.5 bg-[#1e2336] border border-slate-700 rounded-lg text-white text-xs focus:outline-none focus:border-purple-500 [color-scheme:dark]"
+                    className="px-2 py-1.5 bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg text-[#3d3a36] text-xs focus:outline-none focus:border-[#b87e6b] "
                     aria-label="子分類開始時間"
                   />
                   <input
                     type="time"
                     value={subCatForm.endTime}
                     onChange={e => setSubCatForm(f => ({ ...f, endTime: e.target.value }))}
-                    className="px-2 py-1.5 bg-[#1e2336] border border-slate-700 rounded-lg text-white text-xs focus:outline-none focus:border-purple-500 [color-scheme:dark]"
+                    className="px-2 py-1.5 bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg text-[#3d3a36] text-xs focus:outline-none focus:border-[#b87e6b] "
                     aria-label="子分類結束時間（選填）"
                   />
                   <button
                     type="button"
                     onClick={handleSaveSubCat}
                     disabled={!subCatForm.name.trim() || !subCatForm.startTime}
-                    className="px-2.5 py-1.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-xs transition-colors"
+                    className="px-2.5 py-1.5 bg-[#5f7186] hover:bg-[#5f7186] disabled:opacity-40 disabled:cursor-not-allowed text-[#3d3a36] rounded-lg text-xs transition-all duration-200"
                     aria-label="儲存子分類"
                   >
                     <Check size={13} />
@@ -443,11 +443,11 @@ export default function AddDateModal({
 
           {/* 備註 */}
           <div className="group relative">
-            <div className="absolute left-3.5 top-3.5 text-slate-500 group-focus-within:text-purple-400 transition-colors">
+            <div className="absolute left-3.5 top-3.5 text-[#3d3a36] group-focus-within:text-[#5f7186] transition-all duration-200">
               <AlignLeft size={16} />
             </div>
             <textarea
-              className="w-full bg-[#1e2336] border border-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all resize-none h-16 text-sm"
+              className="w-full bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg pl-10 pr-4 py-2.5 text-[#3d3a36] placeholder-[#78716c]/70 focus:outline-none focus:border-[#b87e6b] focus:ring-2 focus:ring-[#b87e6b]/30 transition-all resize-none h-16 text-sm"
               placeholder="備註 (選填)"
               value={description}
               onChange={e => setDescription(e.target.value)}
@@ -460,14 +460,14 @@ export default function AddDateModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors font-medium text-sm"
+              className="px-5 py-2 rounded-lg text-[#3d3a36] hover:text-[#b87e6b] hover:bg-[#dcd0c2]/30 transition-all duration-200 font-medium text-sm"
               aria-label="取消"
             >
               取消
             </button>
             <button
               type="submit"
-              className="px-6 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-lg shadow-purple-500/20 transition-all font-bold flex items-center gap-1.5 text-sm"
+              className="px-6 py-2 rounded-lg bg-[#b87e6b] hover:bg-[#a66a58] text-[#f0ece1] shadow-[0_8px_20px_rgba(139,121,101,0.08)] shadow-[#b87e6b]/20 transition-all font-bold flex items-center gap-1.5 text-sm"
               aria-label={initialData ? '確認修改' : '確認新增'}
             >
               <Check size={16} />

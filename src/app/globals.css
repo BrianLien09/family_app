@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --background: #0f111a;
-  --foreground: #ffffff;
+  --background: #e6e2d8; /* Warm Grey-Beige Background */
+  --foreground: #3d3a36; /* Dark Charcoal Text */
 }
 
 @layer base {
@@ -13,51 +13,52 @@
   }
   
   body {
-    @apply bg-[#0f111a] text-white min-h-screen relative overflow-x-hidden transition-colors duration-300;
-    background-image: radial-gradient(
-        circle at 15% 50%,
-        rgba(76, 29, 149, 0.15),
-        transparent 40%
-      ),
-      radial-gradient(
-        circle at 85% 30%,
-        rgba(236, 72, 153, 0.1),
-        transparent 40%
-      );
+    background-color: var(--background);
+    /* Fabric noise SVG background, slightly more muted to match earthy tone */
+    background-image: url("data:image/svg+xml,%3Csvg width='4' height='4' viewBox='0 0 4 4' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 3h1v1H1V3zm2-2h1v1H3V1z' fill='%23dcd0c2' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E");
+    color: var(--foreground);
+    @apply min-h-screen relative overflow-x-hidden transition-colors duration-300;
   }
 
-  /* 增強焦點指示器 - 無障礙改善 */
+  /* Focus indicator using the rust accent color */
   *:focus-visible {
-    outline: 2px solid rgba(168, 85, 247, 0.8);
-    outline-offset: 2px;
+    outline: 2px dashed rgba(184, 126, 107, 0.8); /* #b87e6b Rust */
+    outline-offset: 3px;
     border-radius: 4px;
   }
 
   button:focus-visible {
-    outline: 2px solid rgba(168, 85, 247, 0.8);
-    outline-offset: 2px;
+    outline: 2px dashed rgba(184, 126, 107, 0.8);
+    outline-offset: 3px;
   }
 
   input:focus-visible,
   textarea:focus-visible,
   select:focus-visible {
-    outline: 2px solid rgba(168, 85, 247, 0.8);
+    outline: 2px dashed rgba(184, 126, 107, 0.8);
     outline-offset: -2px;
   }
 }
 
-/* Glass Utilities */
+/* Woven & Weft Utilities */
 @layer components {
   .glass-card {
-    @apply bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 shadow-xl transition-colors duration-300;
+    /* Stitched container */
+    @apply bg-[#f0ece1]/95 backdrop-blur-sm border-2 border-dashed border-[#dcd0c2] rounded-2xl p-6 shadow-[0_4px_12px_rgba(61,58,54,0.04)] text-[#3d3a36] transition-all duration-300;
+  }
+
+  .glass-card:hover {
+    @apply shadow-[0_8px_20px_rgba(61,58,54,0.06)] -translate-y-[1px];
   }
 
   .glass-input {
-    @apply w-full bg-white/5 border-b border-white/20 px-4 py-3 outline-none transition-all focus:border-purple-500 focus:bg-white/10 rounded-t-lg;
+    /* Muted input field */
+    @apply w-full bg-[#e6e2d8] border-b-2 border-dashed border-[#dcd0c2] px-4 py-3 outline-none transition-all focus:border-[#b87e6b] focus:bg-[#f0ece1] rounded-t-lg text-[#3d3a36] shadow-inner;
   }
 
   .btn-primary {
-    @apply bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-purple-500/20 transition-all active:scale-95;
+    /* Rust colored button */
+    @apply bg-[#b87e6b] hover:bg-[#a66a58] text-[#f0ece1] font-medium py-3 px-6 rounded-xl shadow-[0_4px_12px_rgba(184,126,107,0.2)] border border-[#a66a58] transition-all duration-200 active:translate-y-[2px] active:shadow-inner;
   }
 }
 
@@ -65,7 +66,6 @@
   from {
     opacity: 0;
   }
-
   to {
     opacity: 1;
   }
@@ -74,9 +74,8 @@
 @keyframes scaleIn {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.98);
   }
-
   to {
     opacity: 1;
     transform: scale(1);
@@ -84,31 +83,27 @@
 }
 
 .animate-fade-in {
-  /* will-change 讓瀏覽器提前把元素提升到 GPU layer，
-     消除動畫第一幀的合成延遲（俗稱「第一幀卡頓」） */
   will-change: opacity;
-  animation: fadeIn 0.2s ease-out forwards;
+  animation: fadeIn 0.3s ease-out forwards;
 }
 
 .animate-scale-in {
-  /* transform + opacity 同時動畫，需要提前告知瀏覽器兩個屬性 */
   will-change: transform, opacity;
-  animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: scaleIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
 @layer utilities {
   .custom-scrollbar::-webkit-scrollbar {
-    height: 4px;
-    width: 4px;
+    height: 6px;
+    width: 6px;
   }
   .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
+    @apply bg-[#dcd0c2] rounded-full;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.4);
+    @apply bg-[#c2b4a3];
   }
 }
-

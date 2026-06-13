@@ -243,7 +243,7 @@ export default function Home() {
     setIsModalOpen(true);
   };
 
-  if (!isLoaded) return <div className="min-h-screen flex items-center justify-center text-slate-500">載入中...</div>;
+  if (!isLoaded) return <div className="min-h-screen flex items-center justify-center text-[#3d3a36]">載入中...</div>;
 
   return (
     <div className="container mx-auto px-4 py-8 pt-20 max-w-5xl">
@@ -251,19 +251,19 @@ export default function Home() {
       <div className="glass-card p-4 mb-6">
         {/* 搜尋欄 */}
         <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#3d3a36]" size={20} />
           <input
             type="text"
             placeholder="搜尋行程標題或描述..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-10 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-purple-500/50 transition-all"
+            className="w-full pl-10 pr-10 py-3 bg-[#dcd0c2]/30 border-2 border-dashed border-dashed border-[#dcd0c2]/50 rounded-xl text-[#f0ece1] placeholder:text-[#3d3a36] focus:outline-none focus:border-[#b87e6b]/50 transition-all"
             aria-label="搜尋行程"
           />
           {searchTerm && (
             <button
               onClick={() => setSearchTerm('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#3d3a36] hover:text-[#b87e6b] transition-all duration-200"
               aria-label="清除搜尋"
             >
               <X size={20} />
@@ -276,7 +276,7 @@ export default function Home() {
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm text-slate-300 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-[#dcd0c2]/30 hover:bg-[#dcd0c2]/50 rounded-lg text-sm text-[#3d3a36] transition-all duration-200"
               aria-label="切換篩選器"
             >
               <Filter size={16} />
@@ -285,7 +285,7 @@ export default function Home() {
             
             <button
               onClick={jumpToUpcoming}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 border border-blue-500/30 rounded-lg text-sm text-blue-300 font-medium transition-all hover:shadow-lg hover:shadow-blue-500/20"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#5f7186]/10 to-[#5f7186]/10 hover:from-[#5f7186]/20 hover:to-[#5f7186]/20 border-2 border-dashed border-[#5f7186]/30 rounded-lg text-sm text-[#5f7186] font-medium transition-all hover:shadow-[0_8px_20px_rgba(139,121,101,0.08)] hover:shadow-[#5f7186]/20"
               aria-label="跳到最近行程"
               title="快速找到最接近今天的行程"
             >
@@ -296,7 +296,7 @@ export default function Home() {
             
             <button
               onClick={jumpToPast}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500/20 to-pink-500/20 hover:from-orange-500/30 hover:to-pink-500/30 border border-orange-500/30 rounded-lg text-sm text-orange-300 font-medium transition-all hover:shadow-lg hover:shadow-orange-500/20"
+              className="flex items-center gap-2 px-4 py-2 bg-[#b87e6b]/20 hover:bg-[#b87e6b]/30 border-2 border-dashed border-[#b87e6b]/50 rounded-lg text-sm text-[#b87e6b] font-medium transition-all hover:shadow-[0_8px_20px_rgba(139,121,101,0.08)] hover:shadow-[#b87e6b]/20"
               aria-label="回顧過往行程"
               title="快速查看最近完成的行程"
             >
@@ -309,7 +309,7 @@ export default function Home() {
           {(searchTerm || selectedCategories.length > 0 || dateRangeStart || dateRangeEnd) && (
             <button
               onClick={clearFilters}
-              className="text-xs text-slate-400 hover:text-white transition-colors self-end sm:self-auto"
+              className="text-xs text-[#3d3a36] hover:text-[#b87e6b] transition-all duration-200 self-end sm:self-auto"
             >
               清除所有篩選
             </button>
@@ -318,10 +318,10 @@ export default function Home() {
 
         {/* 篩選選項 */}
         {showFilters && (
-          <div className="space-y-4 pt-4 border-t border-white/10">
+          <div className="space-y-4 pt-4 border-t border-dashed border-[#dcd0c2]/50">
             {/* 分類多選 */}
             <div>
-              <label className="text-xs font-bold text-slate-400 mb-2 block">分類</label>
+              <label className="text-xs font-bold text-[#3d3a36] mb-2 block">分類</label>
               <div className="flex flex-wrap gap-2">
                 {categories.map((category: string) => (
                   <button
@@ -330,8 +330,8 @@ export default function Home() {
                     className={clsx(
                       "px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
                       selectedCategories.includes(category)
-                        ? "bg-purple-500 text-white shadow-lg shadow-purple-500/30"
-                        : "bg-white/5 text-slate-300 hover:bg-white/10"
+                        ? "bg-[#5f7186] text-[#f0ece1] shadow-[0_8px_20px_rgba(139,121,101,0.08)] shadow-purple-500/30"
+                        : "bg-[#dcd0c2]/30 text-[#3d3a36] hover:bg-[#dcd0c2]/50"
                     )}
                     aria-label={`篩選 ${category}`}
                     aria-pressed={selectedCategories.includes(category)}
@@ -344,21 +344,21 @@ export default function Home() {
 
             {/* 日期區間 */}
             <div>
-              <label className="text-xs font-bold text-slate-400 mb-2 block">日期區間</label>
+              <label className="text-xs font-bold text-[#3d3a36] mb-2 block">日期區間</label>
               <div className="flex gap-3 items-center">
                 <input
                   type="date"
                   value={dateRangeStart}
                   onChange={(e) => setDateRangeStart(e.target.value)}
-                  className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500/50 transition-all"
+                  className="flex-1 px-3 py-2 bg-[#dcd0c2]/30 border-2 border-dashed border-dashed border-[#dcd0c2]/50 rounded-lg text-[#f0ece1] text-sm focus:outline-none focus:border-[#b87e6b]/50 transition-all"
                   aria-label="開始日期"
                 />
-                <span className="text-slate-500">至</span>
+                <span className="text-[#3d3a36]">至</span>
                 <input
                   type="date"
                   value={dateRangeEnd}
                   onChange={(e) => setDateRangeEnd(e.target.value)}
-                  className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500/50 transition-all"
+                  className="flex-1 px-3 py-2 bg-[#dcd0c2]/30 border-2 border-dashed border-dashed border-[#dcd0c2]/50 rounded-lg text-[#f0ece1] text-sm focus:outline-none focus:border-[#b87e6b]/50 transition-all"
                   aria-label="結束日期"
                 />
               </div>
@@ -368,8 +368,8 @@ export default function Home() {
 
         {/* 篩選結果提示 */}
         {(searchTerm || selectedCategories.length > 0 || dateRangeStart || dateRangeEnd) && (
-          <div className="mt-4 text-xs text-slate-400">
-            找到 <span className="text-purple-400 font-bold">{filteredDates.length}</span> 個符合條件的行程
+          <div className="mt-4 text-xs text-[#3d3a36]">
+            找到 <span className="text-[#5f7186] font-bold">{filteredDates.length}</span> 個符合條件的行程
           </div>
         )}
       </div>
@@ -392,18 +392,18 @@ export default function Home() {
                   <span className={clsx(
                     "px-2 py-1 rounded text-xs font-medium",
                     previewMode === 'upcoming' 
-                      ? "bg-blue-500/20 text-blue-300 border border-blue-500/30"
-                      : "bg-orange-500/20 text-orange-300 border border-orange-500/30"
+                      ? "bg-[#5f7186]/10 text-[#5f7186] border-dashed border-[#5f7186]/30"
+                      : "bg-[#b87e6b]/10 text-[#b87e6b] border-dashed border-[#b87e6b]/30"
                   )}>
                     {previewMode === 'upcoming' ? '即將到來' : '回顧過往'}
                   </span>
                   {eventsList.length > 1 && (
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-[#3d3a36]">
                       ({previewIndex + 1}/{eventsList.length})
                     </span>
                   )}
                 </div>
-                <h3 className="text-lg font-bold text-white mb-1">
+                <h3 className="text-lg font-bold text-[#f0ece1] mb-1">
                   {previewDate.toLocaleDateString('zh-TW', { 
                     year: 'numeric', 
                     month: 'long', 
@@ -417,7 +417,7 @@ export default function Home() {
                   setPreviewMode(null);
                   setPreviewIndex(0);
                 }}
-                className="text-slate-400 hover:text-white transition-colors"
+                className="text-[#3d3a36] hover:text-[#b87e6b] transition-all duration-200"
                 aria-label="關閉預覽"
               >
                 <X size={20} />
@@ -427,12 +427,12 @@ export default function Home() {
             {/* 下拉選單 - 選擇要查看的行程 */}
             {eventsList.length > 1 && (
               <div className="mb-4">
-                <label className="text-xs text-slate-400 mb-2 block">選擇行程</label>
+                <label className="text-xs text-[#3d3a36] mb-2 block">選擇行程</label>
                 <div className="relative">
                   <select
                     value={previewIndex}
                     onChange={(e) => setPreviewIndex(Number(e.target.value))}
-                    className="w-full px-3 py-2 pr-8 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500/50 transition-all appearance-none cursor-pointer"
+                    className="w-full px-3 py-2 pr-8 bg-[#dcd0c2]/30 border-2 border-dashed border-dashed border-[#dcd0c2]/50 rounded-lg text-[#f0ece1] text-sm focus:outline-none focus:border-[#b87e6b]/50 transition-all appearance-none cursor-pointer"
                   >
                     {eventsList.map((event, index) => {
                       const eventDate = new Date(event.date);
@@ -441,44 +441,44 @@ export default function Home() {
                         day: 'numeric' 
                       });
                       return (
-                        <option key={event.id} value={index} className="bg-slate-800">
+                        <option key={event.id} value={index} className="bg-[#f0ece1]">
                           {formattedDate} - {event.title} {event.startTime && `(${event.startTime})`}
                         </option>
                       );
                     })}
                   </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#3d3a36] pointer-events-none" size={16} />
                 </div>
               </div>
             )}
             
             {/* 當前行程詳情 */}
             <div className="mb-4">
-              <div className="flex items-start gap-3 p-4 bg-white/5 rounded-lg">
-                <div className="flex flex-col items-center justify-center min-w-[56px] h-14 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-lg border border-blue-500/30">
-                  <span className="text-xs text-blue-300 leading-none mb-1">{previewDate.getMonth() + 1}月</span>
-                  <span className="text-xl font-bold text-white leading-none">{previewDate.getDate()}</span>
+              <div className="flex items-start gap-3 p-4 bg-[#dcd0c2]/30 rounded-lg">
+                <div className="flex flex-col items-center justify-center min-w-[56px] h-14 bg-gradient-to-br from-[#5f7186]/10 to-[#5f7186]/10 rounded-lg border-2 border-dashed border-[#5f7186]/30">
+                  <span className="text-xs text-[#5f7186] leading-none mb-1">{previewDate.getMonth() + 1}月</span>
+                  <span className="text-xl font-bold text-[#f0ece1] leading-none">{previewDate.getDate()}</span>
                 </div>
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
-                    <h4 className="text-base font-bold text-white">{currentEvent.title}</h4>
+                    <h4 className="text-base font-bold text-[#f0ece1]">{currentEvent.title}</h4>
                     <span className={clsx(
                       "px-2 py-0.5 rounded text-[10px] font-medium shrink-0",
-                      currentEvent.category === '洗牙' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
-                      currentEvent.category === '剪頭髮' ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30' :
-                      currentEvent.category === '阿弟排班' ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 
-                      currentEvent.category === '孔呆值班' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' :
-                      currentEvent.category === '繳費' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' : 
-                      'bg-pink-500/20 text-pink-300 border border-pink-500/30'
+                      currentEvent.category === '洗牙' ? 'bg-[#5f7186]/10 text-[#5f7186] border-dashed border-[#5f7186]/30' :
+                      currentEvent.category === '剪頭髮' ? 'bg-[#b87e6b]/10 text-[#b87e6b] border-dashed border-[#b87e6b]/30' :
+                      currentEvent.category === '阿弟排班' ? 'bg-[#9c9c9c]/15 text-[#3d3a36] border-dashed border-[#9c9c9c]/40' : 
+                      currentEvent.category === '孔呆值班' ? 'bg-[#d4c5b0]/20 text-[#8c7457] border-dashed border-[#d4c5b0]/50' :
+                      currentEvent.category === '繳費' ? 'bg-[#78716c]/10 text-[#3d3a36] border-dashed border-[#78716c]/30' : 
+                      'bg-[#3d3a36]/5 text-[#3d3a36]/70 border-dashed border-[#3d3a36]/20'
                     )}>
                       {currentEvent.category}
                     </span>
                   </div>
                   
-                  <p className="text-sm text-slate-400 mb-2">
+                  <p className="text-sm text-[#3d3a36] mb-2">
                     {currentEvent.startTime && (
-                      <span className="text-blue-300 font-medium">
+                      <span className="text-[#5f7186] font-medium">
                         {currentEvent.startTime}
                         {currentEvent.endTime && ` ~ ${currentEvent.endTime}`}
                       </span>
@@ -486,7 +486,7 @@ export default function Home() {
                   </p>
                   
                   {currentEvent.description && (
-                    <p className="text-sm text-slate-300 bg-white/5 p-2 rounded border border-white/5">
+                    <p className="text-sm text-[#3d3a36] bg-[#dcd0c2]/30 p-2 rounded border-2 border-dashed border-dashed border-[#dcd0c2]/50">
                       {currentEvent.description}
                     </p>
                   )}
@@ -506,7 +506,7 @@ export default function Home() {
                     calendarSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   }
                 }}
-                className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 border border-blue-500/30 rounded-lg text-sm text-blue-300 font-medium transition-all hover:shadow-lg hover:shadow-blue-500/20"
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-[#5f7186]/10 to-[#5f7186]/10 hover:from-[#5f7186]/20 hover:to-[#5f7186]/20 border-2 border-dashed border-[#5f7186]/30 rounded-lg text-sm text-[#5f7186] font-medium transition-all hover:shadow-[0_8px_20px_rgba(139,121,101,0.08)] hover:shadow-[#5f7186]/20"
               >
                 在月曆中查看
               </button>
@@ -516,7 +516,7 @@ export default function Home() {
                   setPreviewMode(null);
                   setPreviewIndex(0);
                 }}
-                className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm text-slate-300 transition-colors"
+                className="px-4 py-2 bg-[#dcd0c2]/30 hover:bg-[#dcd0c2]/50 rounded-lg text-sm text-[#3d3a36] transition-all duration-200"
               >
                 關閉
               </button>
@@ -532,11 +532,11 @@ export default function Home() {
            {/* 日期卡片 */}
            <div className="glass-card flex flex-col items-center justify-center text-center py-8 relative overflow-hidden group">
              {/* ... */}
-             <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center shadow-lg shadow-blue-500/20 mb-4 rotate-3 group-hover:rotate-6 transition-transform">
-                 <Calendar className="text-white w-8 h-8" />
+             <div className="w-16 h-16 rounded-2xl bg-[#b87e6b] flex items-center justify-center shadow-[0_8px_20px_rgba(139,121,101,0.08)] shadow-[#5f7186]/20 mb-4 rotate-3 group-hover:rotate-6 transition-transform">
+                 <Calendar className="text-[#f0ece1] w-8 h-8" />
              </div>
-             <h2 className="text-3xl font-bold text-white mb-1">{new Date().getDate()}</h2>
-             <p className="text-blue-200 uppercase tracking-widest text-xs font-semibold mb-6">
+             <h2 className="text-3xl font-bold text-[#3d3a36] mb-1">{new Date().getDate()}</h2>
+             <p className="text-[#5f7186] uppercase tracking-widest text-xs font-semibold mb-6">
                  {new Date().toLocaleString('zh-TW', { month: 'long' })}
              </p>
              {/* 修改按鈕事件：handleOpenAdd 裡面已經加了登入檢查 */}
@@ -548,34 +548,34 @@ export default function Home() {
            {/* 近期行程 */}
            <div className="glass-card p-4">
               {/* ... 近期行程內容保持不變 ... */}
-              <h3 className="text-xs font-bold text-slate-400 mb-4 uppercase tracking-wider flex items-center gap-2">
-                 <div className="w-1 h-3 bg-blue-400 rounded-full"></div>
+              <h3 className="text-xs font-bold text-[#3d3a36] mb-4 uppercase tracking-wider flex items-center gap-2">
+                 <div className="w-1 h-3 bg-[#5f7186] rounded-full"></div>
                  最近行程
               </h3>
               <div className="space-y-3">
                  {upcomingDates.length > 0 ? (
                    upcomingDates.slice(0, 4).map(item => (
-                     <div key={item.id} className="flex items-center gap-3 group cursor-pointer hover:bg-white/5 p-2 -mx-2 rounded-lg transition-colors" onClick={() => handleOpenEdit(item)}>
-                        <div className="flex flex-col items-center justify-center w-10 h-10 bg-white/5 rounded-lg border border-white/5 shrink-0 group-hover:border-white/20 transition-colors">
-                           <span className="text-[10px] text-slate-400 leading-none mb-0.5">{new Date(item.date).getMonth() + 1}月</span>
-                           <span className="text-sm font-bold text-white leading-none">{new Date(item.date).getDate()}</span>
+                     <div key={item.id} className="flex items-center gap-3 group cursor-pointer hover:bg-[#dcd0c2]/30 p-2 -mx-2 rounded-lg transition-all duration-200" onClick={() => handleOpenEdit(item)}>
+                        <div className="flex flex-col items-center justify-center w-10 h-10 bg-[#dcd0c2]/30 rounded-lg border-2 border-dashed border-dashed border-[#dcd0c2]/50 shrink-0 group-hover:border-dashed border-[#dcd0c2]/50 transition-all duration-200">
+                           <span className="text-[10px] text-[#3d3a36] leading-none mb-0.5">{new Date(item.date).getMonth() + 1}月</span>
+                           <span className="text-sm font-bold text-[#b87e6b] leading-none">{new Date(item.date).getDate()}</span>
                         </div>
                         <div className="min-w-0 flex-1">
                            <div className="flex items-center justify-between">
-                              <p className="text-sm font-bold text-slate-200 truncate group-hover:text-white transition-colors">{item.title}</p>
-                              <span className="text-[10px] text-slate-500 bg-white/5 px-1.5 py-0.5 rounded shrink-0 ml-2">
+                              <p className="text-sm font-bold text-[#3d3a36] truncate group-hover:text-[#b87e6b] transition-all duration-200">{item.title}</p>
+                              <span className="text-[10px] text-[#3d3a36] bg-[#dcd0c2]/30 px-1.5 py-0.5 rounded shrink-0 ml-2">
                                 {Math.ceil((new Date(item.date).getTime() - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24))}天
                               </span>
                            </div>
                            <div className="flex items-center gap-2 mt-0.5">
                               <span className={clsx("w-1.5 h-1.5 rounded-full shrink-0", 
-                                 item.category === '洗牙' ? 'bg-blue-400' :
-                                 item.category === '剪頭髮' ? 'bg-orange-400' :
-                                 item.category === '阿弟排班' ? 'bg-green-400' : 
-                                 item.category === '孔呆值班' ? 'bg-cyan-400' :
-                                 item.category === '繳費' ? 'bg-yellow-400' : 'bg-pink-500'
+                                 item.category === '洗牙' ? 'bg-[#5f7186]' :
+                                 item.category === '剪頭髮' ? 'bg-[#b87e6b]' :
+                                 item.category === '阿弟排班' ? 'bg-[#6e8568]' : 
+                                 item.category === '孔呆值班' ? 'bg-[#b8956b]' :
+                                 item.category === '繳費' ? 'bg-[#78716c]' : 'bg-[#3d3a36]/70'
                               )}></span>
-                              <span className="text-xs text-slate-500 truncate">
+                              <span className="text-xs text-[#3d3a36] truncate">
                                 {item.startTime && `${item.startTime} · `}{item.category}
                               </span>
                            </div>
@@ -583,11 +583,11 @@ export default function Home() {
                      </div>
                    ))
                  ) : (
-                   <div className="flex flex-col items-center justify-center py-8 text-slate-500"><p className="text-xs">目前無近期行程</p></div>
+                   <div className="flex flex-col items-center justify-center py-8 text-[#3d3a36]"><p className="text-xs">目前無近期行程</p></div>
                  )}
                  {upcomingDates.length > 4 && (
-                    <div className="pt-2 border-t border-white/5 text-center">
-                       <span className="text-[10px] text-slate-600">還有 {upcomingDates.length - 4} 個行程...</span>
+                    <div className="pt-2 border-t border-dashed border-[#dcd0c2]/50 text-center">
+                       <span className="text-[10px] text-[#78716c]">還有 {upcomingDates.length - 4} 個行程...</span>
                     </div>
                  )}
               </div>

@@ -53,24 +53,24 @@ export default function UpdatePrompt({
       role="alert"
       aria-live="polite"
     >
-      <div className="glass-card p-4 border border-purple-500/30 shadow-xl">
+      <div className="glass-card p-4 border-2 border-dashed border-[#5f7186]/50 shadow-[0_12px_24px_rgba(139,121,101,0.1)]">
         <div className="flex items-start gap-3">
           {/* 圖示區 */}
           <div className="flex-shrink-0">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#5f7186] to-[#b87e6b] flex items-center justify-center">
               <RefreshCw 
                 size={20} 
-                className={`text-white ${isUpdating ? 'animate-spin' : ''}`}
+                className={`text-[#f0ece1] ${isUpdating ? 'animate-spin' : ''}`}
               />
             </div>
           </div>
 
           {/* 內容區 */}
           <div className="flex-1 min-w-0">
-            <h3 className="text-white font-semibold text-sm mb-1">
+            <h3 className="text-[#f0ece1] font-semibold text-sm mb-1">
               {isUpdating ? '更新中...' : '有新版本可用'}
             </h3>
-            <p className="text-slate-300 text-xs mb-3">
+            <p className="text-[#3d3a36] text-xs mb-3">
               {isUpdating 
                 ? '正在套用最新版本，請稍候...' 
                 : '發現新功能和改進，建議立即更新以獲得最佳體驗'}
@@ -83,10 +83,10 @@ export default function UpdatePrompt({
                   onClick={handleUpdate}
                   className="
                     px-4 py-2 rounded-lg text-xs font-medium
-                    bg-gradient-to-r from-purple-500 to-pink-500
+                    bg-gradient-to-r from-[#5f7186] to-[#b87e6b]
                     hover:from-purple-600 hover:to-pink-600
-                    text-white transition-all
-                    focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-[#0f111a]
+                    text-[#f0ece1] transition-all
+                    focus:outline-none focus:ring-2 focus:ring-[#b87e6b] focus:ring-offset-2 focus:ring-offset-[#0f111a]
                   "
                   aria-label="更新應用程式"
                 >
@@ -96,8 +96,8 @@ export default function UpdatePrompt({
                   onClick={handleDismiss}
                   className="
                     px-4 py-2 rounded-lg text-xs font-medium
-                    bg-white/5 hover:bg-white/10
-                    text-slate-300 transition-all
+                    bg-[#dcd0c2]/30 hover:bg-[#dcd0c2]/50
+                    text-[#3d3a36] transition-all
                     focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-[#0f111a]
                   "
                   aria-label="稍後再說"
@@ -109,9 +109,9 @@ export default function UpdatePrompt({
 
             {/* 更新中的載入動畫 */}
             {isUpdating && (
-              <div className="h-1 bg-white/10 rounded-full overflow-hidden mt-2">
+              <div className="h-1 bg-[#dcd0c2]/30 rounded-full overflow-hidden mt-2">
                 <div 
-                  className="h-full bg-gradient-to-r from-purple-500 to-pink-500 animate-pulse"
+                  className="h-full bg-gradient-to-r from-[#5f7186] to-[#b87e6b] animate-pulse"
                   style={{ width: '70%' }}
                 />
               </div>
@@ -125,7 +125,7 @@ export default function UpdatePrompt({
               className="
                 flex-shrink-0 w-8 h-8 rounded-full
                 flex items-center justify-center
-                text-slate-400 hover:text-white hover:bg-white/10
+                text-[#3d3a36] hover:text-[#b87e6b] hover:bg-[#dcd0c2]/50
                 transition-all
                 focus:outline-none focus:ring-2 focus:ring-white/20
               "

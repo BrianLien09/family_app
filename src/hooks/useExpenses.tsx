@@ -161,7 +161,7 @@ export function useExpenses() {
                   toast.error('復原失敗');
                 }
               }}
-              className="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold rounded-md transition-colors"
+              className="px-3 py-1 bg-[#5f7186] hover:bg-[#47576b] text-[#f0ece1] text-sm font-semibold rounded-md transition-all duration-200"
             >
               復原
             </button>

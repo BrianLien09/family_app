@@ -13,9 +13,8 @@ export default function MemberFilter({ selectedMember, onChange }: MemberFilterP
         onClick={() => onChange('全體')}
         className={clsx(
           "px-4 py-2 rounded-xl text-sm font-bold transition-all border",
-          selectedMember === '全體'
-            ? "bg-white/20 text-white border-white/30 shadow-lg"
-            : "bg-white/5 text-slate-300 border-white/10 hover:bg-white/10"
+          selectedMember === '全體' ? "bg-[#5f7186] text-[#f0ece1] border-[#5f7186] shadow-[0_8px_20px_rgba(139,121,101,0.08)]"
+            : "bg-[#dcd0c2]/30 text-[#3d3a36] border-dashed border-[#dcd0c2]/50 hover:bg-[#dcd0c2]/50"
         )}
       >
         全體
@@ -25,10 +24,10 @@ export default function MemberFilter({ selectedMember, onChange }: MemberFilterP
           key={member}
           onClick={() => onChange(member)}
           className={clsx(
-            "px-4 py-2 rounded-xl text-sm font-bold transition-all border flex items-center gap-2",
+            "px-4 py-2 rounded-xl text-sm font-bold transition-all border-2 border-dashed flex items-center gap-2",
             selectedMember === member
-              ? "text-white shadow-lg"
-              : "bg-white/5 text-slate-300 border-white/10 hover:bg-white/10"
+              ? "text-[#f0ece1] shadow-[0_8px_20px_rgba(139,121,101,0.08)]"
+              : "bg-[#dcd0c2]/30 text-[#3d3a36] border-dashed border-[#dcd0c2]/50 hover:bg-[#dcd0c2]/50"
           )}
           style={{
             backgroundColor: selectedMember === member ? MEMBER_COLORS[member] : undefined,

@@ -84,10 +84,15 @@
 }
 
 .animate-fade-in {
+  /* will-change 讓瀏覽器提前把元素提升到 GPU layer，
+     消除動畫第一幀的合成延遲（俗稱「第一幀卡頓」） */
+  will-change: opacity;
   animation: fadeIn 0.2s ease-out forwards;
 }
 
 .animate-scale-in {
+  /* transform + opacity 同時動畫，需要提前告知瀏覽器兩個屬性 */
+  will-change: transform, opacity;
   animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 

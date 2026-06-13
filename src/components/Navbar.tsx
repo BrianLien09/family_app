@@ -12,22 +12,30 @@ export default function Navbar() {
   const [isVisible, setIsVisible] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // 🖱️ 滑動偵測邏輯
+  // 🖱️ 滞動偵測，加上 rAF 節流
+  // 為何用 rAF：原始 scroll handler 每次滞動就觸發一次 setState
+  // 在手機快速滞動時可能 1秒 100+ 次，導致不必要的 re-render
+  // rAF 的語意：下一幀畫面繪製前再執行，自動和 60fps 對齊
   useEffect(() => {
     let lastScrollY = window.scrollY;
+    let ticking = false;
 
     const controlNavbar = () => {
-      if (typeof window === 'undefined') return;
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
 
-      const currentScrollY = window.scrollY;
-
-      // 往下滑超過 100px 就隱藏，往上滑就顯示
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        setIsVisible(false);
-      } else {
-        setIsVisible(true);
+          // 往下滑超過 100px 就隱藏，往上滑就顯示
+          if (currentScrollY > lastScrollY && currentScrollY > 100) {
+            setIsVisible(false);
+          } else {
+            setIsVisible(true);
+          }
+          lastScrollY = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
       }
-      lastScrollY = currentScrollY;
     };
 
     window.addEventListener('scroll', controlNavbar, { passive: true });
@@ -127,51 +135,59 @@ export default function Navbar() {
           </div>
        </div>
 
-       {/* Mobile Nav Dropdown */}
+       {/* Mobile Nav Dropdown
+            #7 原本用 max-height: 0 → 500px 做展開動畫，但瀏覽器不知道實際高度，
+            easing 曲線無法精確計算，展開時有明顯頓感。
+            改用 grid-template-rows: 0fr → 1fr：兩端均已知，
+            動畫曲線完美。內層 div 需要 overflow-hidden 防止 0fr 時內容溢出。
+       */}
        <div
          className={clsx(
-           "md:hidden border-b overflow-hidden transition-all duration-500 ease-in-out",
+           "md:hidden border-b grid transition-[grid-template-rows] duration-400 ease-[cubic-bezier(0.16,1,0.3,1)]",
            "bg-[#0f111a] border-[#232942]",
-           isMobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+           isMobileMenuOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
          )}
        >
-         <div className="flex flex-col p-4 space-y-1">
-           {navItems.map((item) => {
-             const isActive = pathname === item.href;
-             const isExternal = item.href.startsWith('http');
+         {/* overflow-hidden 是讓 0fr 時確實起作用的關鍵 */}
+         <div className="overflow-hidden">
+           <div className="flex flex-col p-4 space-y-1">
+             {navItems.map((item) => {
+               const isActive = pathname === item.href;
+               const isExternal = item.href.startsWith('http');
 
-             if (isExternal) {
+               if (isExternal) {
+                 return (
+                   <a
+                     key={item.href}
+                     href={item.href}
+                     target="_blank"
+                     rel="noopener noreferrer"
+                     className="px-4 py-3 rounded-lg text-base font-bold transition-all flex items-center justify-between group text-slate-300 hover:text-white hover:bg-white/5"
+                     onClick={() => setIsMobileMenuOpen(false)}
+                   >
+                     {item.name}
+                     <ExternalLink size={16} className="text-slate-500 group-hover:text-white transition-colors" />
+                   </a>
+                 );
+               }
+
                return (
-                 <a
+                 <Link
                    key={item.href}
                    href={item.href}
-                   target="_blank"
-                   rel="noopener noreferrer"
-                   className="px-4 py-3 rounded-lg text-base font-bold transition-all flex items-center justify-between group text-slate-300 hover:text-white hover:bg-white/5"
                    onClick={() => setIsMobileMenuOpen(false)}
+                   className={clsx(
+                     "px-4 py-3 rounded-lg text-base font-bold transition-all",
+                     isActive
+                       ? "bg-[#6366f1]/10 text-[#818cf8] border border-[#6366f1]/20"
+                       : "text-slate-300 hover:text-white hover:bg-white/5"
+                   )}
                  >
                    {item.name}
-                   <ExternalLink size={16} className="text-slate-500 group-hover:text-white transition-colors" />
-                 </a>
+                 </Link>
                );
-             }
-
-             return (
-               <Link
-                 key={item.href}
-                 href={item.href}
-                 onClick={() => setIsMobileMenuOpen(false)}
-                 className={clsx(
-                   "px-4 py-3 rounded-lg text-base font-bold transition-all",
-                   isActive
-                     ? "bg-[#6366f1]/10 text-[#818cf8] border border-[#6366f1]/20"
-                     : "text-slate-300 hover:text-white hover:bg-white/5"
-                 )}
-               >
-                 {item.name}
-               </Link>
-             );
-           })}
+             })}
+           </div>
          </div>
        </div>
     </nav>

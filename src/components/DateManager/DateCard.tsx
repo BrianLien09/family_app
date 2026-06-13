@@ -33,7 +33,9 @@ export default function DateCard({ item, onDelete, onEdit, batchMode = false, is
   return (
     <div 
       className={clsx(
-        "group relative flex items-start gap-4 p-3 rounded-lg border backdrop-blur-sm transition-all duration-300",
+        // will-change-transform：預先告知瀏覽器此元素會有 transform 動畫（hover 浮起效果）
+        // 讓瀏覽器提前分配 GPU layer，消除 hover 瞬間的輕微頓感
+        "group relative flex items-start gap-4 p-3 rounded-lg border backdrop-blur-sm transition-all duration-300 will-change-transform",
         batchMode ? "cursor-pointer" : "",
         isSelected 
           ? "bg-purple-500/20 border-purple-500 shadow-lg shadow-purple-500/20" 

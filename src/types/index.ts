@@ -50,3 +50,38 @@ export interface Recipe {
     minutes: number;
   } | null;
 }
+
+// 家庭成員定義（順序即為顯示順序）
+export const FAMILY_MEMBERS = ['Sandy', 'Brian', 'Mango', '孔呆', '共同'] as const;
+export type FamilyMember = typeof FAMILY_MEMBERS[number];
+
+// 家庭成員顏色對應（用於圖表與 UI）
+export const MEMBER_COLORS: Record<FamilyMember, string> = {
+  Sandy: '#fb7185',   // rose-400
+  Brian: '#818cf8',   // indigo-400
+  Mango: '#fbbf24',   // amber-400
+  孔呆: '#2dd4bf',   // teal-400
+  共同: '#c084fc',   // purple-400
+};
+
+// 支出分類
+export const EXPENSE_CATEGORIES = [
+  '餐費', '交通', '購物', '醫療', '娛樂',
+  '水電費', '房租', '通訊', '教育', '其它'
+] as const;
+
+// 收入分類
+export const INCOME_CATEGORIES = [
+  '薪水', '獎金', '投資', '回饋', '其它'
+] as const;
+
+// 單筆帳本記錄
+export interface ExpenseItem {
+  id: string;
+  type: 'income' | 'expense';  // 收入或支出
+  amount: number;               // 金額（台幣整數）
+  category: string;             // 分類
+  member: FamilyMember;         // 誰的消費
+  description?: string;         // 備註（選填）
+  date: string;                 // YYYY-MM-DD
+}

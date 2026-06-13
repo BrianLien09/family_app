@@ -225,7 +225,7 @@ export default function Home() {
       addDateToMultipleDates(batchAddDates, data);
       setBatchAddDates([]);
     } else {
-      addDate(data);
+      addDate({ ...data, id: '' });
     }
     setIsModalOpen(false);
     setEditingDate(null);

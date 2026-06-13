@@ -45,6 +45,7 @@ export default function Navbar() {
   const navItems = [
     { name: '總覽', href: '/' },
     { name: '食譜神器', href: '/recipes' },
+    { name: '家庭帳本', href: '/expenses' },
     { name: '冥夜小助手', href: 'https://brianlien09.github.io/schedule_app/' },
     { name: '冥夜音樂 🎵', href: 'https://brianlien09.github.io/Music_app/' },
   ];

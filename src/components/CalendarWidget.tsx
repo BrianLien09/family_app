@@ -84,11 +84,11 @@ const DayCell = memo(function DayCell({
       className={clsx(
         'relative flex flex-col cursor-pointer transition-all duration-200 p-1 md:p-2 group',
         'aspect-square md:aspect-auto md:min-h-[110px]',
-        !isCurrentMonth ? 'bg-black/20 text-slate-600' : 'bg-white/[0.02] hover:bg-white/[0.05]',
-        isSelected && 'bg-white/[0.08] ring-1 ring-inset ring-purple-500',
-        isTodayDate && !isSelected && 'bg-blue-500/5',
-        isMultiSelected && 'ring-2 ring-purple-500 bg-[#5f7186]/10',
-        isDragActive && 'hover:ring-2 hover:ring-blue-400 hover:bg-blue-500/5',
+        !isCurrentMonth ? 'bg-[#dcd0c2]/20 text-[#3d3a36]' : 'bg-transparent hover:bg-[#b87e6b]/5',
+        isSelected && 'bg-[#b87e6b]/10 ring-1 ring-inset ring-[#b87e6b]',
+        isTodayDate && !isSelected && 'bg-[#5f7186]/5',
+        isMultiSelected && 'ring-2 ring-[#5f7186] bg-[#5f7186]/10',
+        isDragActive && 'hover:ring-2 hover:ring-[#5f7186] hover:bg-[#5f7186]/5',
       )}
     >
       {/* 日期數字 + 桌面版新增按鈕 */}
@@ -97,7 +97,8 @@ const DayCell = memo(function DayCell({
           className={clsx(
             'text-xs font-medium block text-center md:text-left',
             isTodayDate ? 'text-blue-400 font-bold' : 'text-[#3d3a36]',
-            isSelected && 'text-[#f0ece1]',
+            // 選取狀態用主色調鐵鏽紅，在淺色背景下保持可見
+            isSelected && 'text-[#b87e6b] font-bold',
             !isCurrentMonth && 'opacity-50',
           )}
         >

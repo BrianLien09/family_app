@@ -19,7 +19,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f111a",
+  // 改為大地色系暖米背景，與 Woven & Weft UI 設計語言一致
+  themeColor: "#e6e2d8",
 };
 
 export default function RootLayout({

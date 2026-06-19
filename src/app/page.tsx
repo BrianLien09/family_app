@@ -7,6 +7,7 @@ import { useDates } from '@/hooks/useDates';
 import CalendarWidget from '@/components/CalendarWidget';
 import AddDateModal from '@/components/DateManager/AddDateModal';
 import { Plus, Calendar, Search, Filter, X, CalendarClock, History, ChevronDown } from 'lucide-react';
+import CapybaraLoader from '@/components/CapybaraLoader';
 import { DateItem, DateCategory } from '@/types';
 import { useCategories } from '@/hooks/useCategories';
 import clsx from 'clsx';
@@ -243,7 +244,8 @@ export default function Home() {
     setIsModalOpen(true);
   };
 
-  if (!isLoaded) return <div className="min-h-screen flex items-center justify-center text-[#3d3a36]">載入中...</div>;
+  // 首次進入尚未從 Firebase 或快取取得資料時，顯示水豚載入動畫
+  if (!isLoaded) return <CapybaraLoader label="正在整理家庭行程..." />;
 
   return (
     <div className="container mx-auto px-4 py-8 pt-20 max-w-5xl">

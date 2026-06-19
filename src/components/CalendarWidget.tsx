@@ -83,7 +83,7 @@ const DayCell = memo(function DayCell({
       onDrop={(e) => onDrop(e, day)}
       className={clsx(
         'relative flex flex-col cursor-pointer transition-all duration-200 p-1 md:p-2 group',
-        'aspect-square md:aspect-auto md:min-h-[110px]',
+        'aspect-square min-h-[44px] md:aspect-auto md:min-h-[110px]',
         !isCurrentMonth ? 'bg-[#dcd0c2]/20 text-[#3d3a36]' : 'bg-transparent hover:bg-[#b87e6b]/5',
         isSelected && 'bg-[#b87e6b]/10 ring-1 ring-inset ring-[#b87e6b]',
         isTodayDate && !isSelected && 'bg-[#5f7186]/5',

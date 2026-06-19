@@ -76,17 +76,17 @@ export default function ExpenseSummary({ expenses, selectedMember }: ExpenseSumm
     <div className="space-y-6 mb-8">
       {/* 數字卡片 */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="glass-card p-4 sm:p-6 flex flex-col justify-center items-center text-center">
-          <span className="text-xs sm:text-sm text-[#3d3a36] mb-1">總收入</span>
-          <span className="text-lg sm:text-2xl font-bold text-[#5f7186]">${totalIncome.toLocaleString()}</span>
+        <div className="glass-card p-3 sm:p-6 flex flex-col justify-center items-center text-center">
+          <span className="text-[10px] sm:text-sm text-[#3d3a36] mb-1">總收入</span>
+          <span className="text-sm sm:text-2xl font-bold text-[#5f7186] break-all tabular-nums">${totalIncome.toLocaleString()}</span>
         </div>
-        <div className="glass-card p-4 sm:p-6 flex flex-col justify-center items-center text-center">
-          <span className="text-xs sm:text-sm text-[#3d3a36] mb-1">總支出</span>
-          <span className="text-lg sm:text-2xl font-bold text-[#b87e6b]">${totalExpense.toLocaleString()}</span>
+        <div className="glass-card p-3 sm:p-6 flex flex-col justify-center items-center text-center">
+          <span className="text-[10px] sm:text-sm text-[#3d3a36] mb-1">總支出</span>
+          <span className="text-sm sm:text-2xl font-bold text-[#b87e6b] break-all tabular-nums">${totalExpense.toLocaleString()}</span>
         </div>
-        <div className="glass-card p-4 sm:p-6 flex flex-col justify-center items-center text-center">
-          <span className="text-xs sm:text-sm text-[#3d3a36] mb-1">結餘</span>
-          <span className={`text-lg sm:text-2xl font-bold ${balance >= 0 ? 'text-blue-400' : 'text-[#b87e6b]'}`}>
+        <div className="glass-card p-3 sm:p-6 flex flex-col justify-center items-center text-center">
+          <span className="text-[10px] sm:text-sm text-[#3d3a36] mb-1">結餘</span>
+          <span className={`text-sm sm:text-2xl font-bold break-all tabular-nums ${balance >= 0 ? 'text-blue-400' : 'text-[#b87e6b]'}`}>
             ${balance.toLocaleString()}
           </span>
         </div>

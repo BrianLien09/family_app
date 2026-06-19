@@ -259,7 +259,7 @@ export default function Home() {
             placeholder="搜尋行程標題或描述..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-10 py-3 bg-[#dcd0c2]/30 border-2 border-dashed border-dashed border-[#dcd0c2]/50 rounded-xl text-[#f0ece1] placeholder:text-[#3d3a36] focus:outline-none focus:border-[#b87e6b]/50 transition-all"
+            className="w-full pl-10 pr-10 py-3 bg-[#dcd0c2]/30 border-2 border-dashed border-dashed border-[#dcd0c2]/50 rounded-xl text-[#3d3a36] placeholder:text-[#78716c]/70 focus:outline-none focus:border-[#b87e6b]/50 transition-all"
             aria-label="搜尋行程"
           />
           {searchTerm && (
@@ -352,7 +352,7 @@ export default function Home() {
                   type="date"
                   value={dateRangeStart}
                   onChange={(e) => setDateRangeStart(e.target.value)}
-                  className="flex-1 px-3 py-2 bg-[#dcd0c2]/30 border-2 border-dashed border-dashed border-[#dcd0c2]/50 rounded-lg text-[#f0ece1] text-sm focus:outline-none focus:border-[#b87e6b]/50 transition-all"
+                  className="flex-1 px-3 py-2 bg-[#dcd0c2]/30 border-2 border-dashed border-dashed border-[#dcd0c2]/50 rounded-lg text-[#3d3a36] text-sm focus:outline-none focus:border-[#b87e6b]/50 transition-all"
                   aria-label="開始日期"
                 />
                 <span className="text-[#3d3a36]">至</span>
@@ -360,7 +360,7 @@ export default function Home() {
                   type="date"
                   value={dateRangeEnd}
                   onChange={(e) => setDateRangeEnd(e.target.value)}
-                  className="flex-1 px-3 py-2 bg-[#dcd0c2]/30 border-2 border-dashed border-dashed border-[#dcd0c2]/50 rounded-lg text-[#f0ece1] text-sm focus:outline-none focus:border-[#b87e6b]/50 transition-all"
+                  className="flex-1 px-3 py-2 bg-[#dcd0c2]/30 border-2 border-dashed border-dashed border-[#dcd0c2]/50 rounded-lg text-[#3d3a36] text-sm focus:outline-none focus:border-[#b87e6b]/50 transition-all"
                   aria-label="結束日期"
                 />
               </div>
@@ -405,7 +405,7 @@ export default function Home() {
                     </span>
                   )}
                 </div>
-                <h3 className="text-lg font-bold text-[#f0ece1] mb-1">
+                <h3 className="text-lg font-bold text-[#3d3a36] mb-1">
                   {previewDate.toLocaleDateString('zh-TW', { 
                     year: 'numeric', 
                     month: 'long', 
@@ -434,7 +434,7 @@ export default function Home() {
                   <select
                     value={previewIndex}
                     onChange={(e) => setPreviewIndex(Number(e.target.value))}
-                    className="w-full px-3 py-2 pr-8 bg-[#dcd0c2]/30 border-2 border-dashed border-dashed border-[#dcd0c2]/50 rounded-lg text-[#f0ece1] text-sm focus:outline-none focus:border-[#b87e6b]/50 transition-all appearance-none cursor-pointer"
+                    className="w-full px-3 py-2 pr-8 bg-[#dcd0c2]/30 border-2 border-dashed border-dashed border-[#dcd0c2]/50 rounded-lg text-[#3d3a36] text-sm focus:outline-none focus:border-[#b87e6b]/50 transition-all appearance-none cursor-pointer"
                   >
                     {eventsList.map((event, index) => {
                       const eventDate = new Date(event.date);
@@ -459,12 +459,12 @@ export default function Home() {
               <div className="flex items-start gap-3 p-4 bg-[#dcd0c2]/30 rounded-lg">
                 <div className="flex flex-col items-center justify-center min-w-[56px] h-14 bg-gradient-to-br from-[#5f7186]/10 to-[#5f7186]/10 rounded-lg border-2 border-dashed border-[#5f7186]/30">
                   <span className="text-xs text-[#5f7186] leading-none mb-1">{previewDate.getMonth() + 1}月</span>
-                  <span className="text-xl font-bold text-[#f0ece1] leading-none">{previewDate.getDate()}</span>
+                  <span className="text-xl font-bold text-[#3d3a36] leading-none">{previewDate.getDate()}</span>
                 </div>
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
-                    <h4 className="text-base font-bold text-[#f0ece1]">{currentEvent.title}</h4>
+                    <h4 className="text-base font-bold text-[#3d3a36]">{currentEvent.title}</h4>
                     <span className={clsx(
                       "px-2 py-0.5 rounded text-[10px] font-medium shrink-0",
                       currentEvent.category === '洗牙' ? 'bg-[#5f7186]/10 text-[#5f7186] border-dashed border-[#5f7186]/30' :
@@ -529,10 +529,10 @@ export default function Home() {
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
         
-        {/* 左側欄位 */}
-        <div className="md:col-span-3 flex flex-col gap-6">
+        {/* 左側欄位 - 手機版排在月曆之後（order-2），桌面版排在前面（md:order-1） */}
+        <div className="md:col-span-3 flex flex-col gap-6 order-2 md:order-1">
            {/* 日期卡片 */}
-           <div className="glass-card flex flex-col items-center justify-center text-center py-8 relative overflow-hidden group">
+           <div className="glass-card flex flex-col items-center justify-center text-center py-5 md:py-8 relative overflow-hidden group">
              {/* ... */}
              <div className="w-16 h-16 rounded-2xl bg-[#b87e6b] flex items-center justify-center shadow-[0_8px_20px_rgba(139,121,101,0.08)] shadow-[#5f7186]/20 mb-4 rotate-3 group-hover:rotate-6 transition-transform">
                  <Calendar className="text-[#f0ece1] w-8 h-8" />
@@ -596,8 +596,8 @@ export default function Home() {
            </div>
         </div>
 
-        {/* 右側欄位 (月曆) - 使用篩選後的資料 */}
-        <div className="md:col-span-9">
+        {/* 右側欄位 (月曆) - 手機版優先顯示（order-1），桌面版排在右側（md:order-2） */}
+        <div className="md:col-span-9 order-1 md:order-2">
            <CalendarWidget 
                events={filteredDates} 
                onAddEvent={handleCalendarAddClick}

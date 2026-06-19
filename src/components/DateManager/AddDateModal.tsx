@@ -174,12 +174,17 @@ export default function AddDateModal({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in"
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
     >
-      <div className="w-full max-w-md bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] shadow-2xl rounded-xl overflow-hidden flex flex-col animate-scale-in">
+      <div className="w-full sm:max-w-md max-h-[92vh] bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] shadow-2xl rounded-t-2xl sm:rounded-xl overflow-hidden flex flex-col animate-slide-up">
+
+        {/* 手機版拖曳把手 */}
+        <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
+          <div className="w-10 h-1 rounded-full bg-[#dcd0c2]" />
+        </div>
 
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3">
@@ -197,7 +202,7 @@ export default function AddDateModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="px-5 pb-4 space-y-3">
+        <form onSubmit={handleSubmit} className="px-5 pb-6 space-y-3 overflow-y-auto flex-1">
 
           {/* 標題 */}
           <div className="group relative">
@@ -373,7 +378,7 @@ export default function AddDateModal({
 
             {/* inline 子分類管理器 */}
             {showSubCatManager && (
-              <div className="mt-1.5 p-3 bg-[#1a1f33] border-2 border-dashed border-[#dcd0c2] rounded-lg space-y-2">
+              <div className="mt-1.5 p-3 bg-[#dcd0c2]/30 border-2 border-dashed border-[#dcd0c2] rounded-lg space-y-2">
                 <p className="text-xs text-[#3d3a36] font-medium">
                   「{category}」的子分類設定
                 </p>

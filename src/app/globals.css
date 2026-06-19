@@ -9,7 +9,15 @@
 
 @layer base {
   html {
-    font-size: 18px;
+    /* 手機維持瀏覽器預設 16px，避免 rem 等比放大導致手機文字溢出 */
+    /* 桌面（768px 以上）才升至 18px，保留原本的閱讀舒適感 */
+    font-size: 16px;
+  }
+
+  @media (min-width: 768px) {
+    html {
+      font-size: 18px;
+    }
   }
   
   body {
@@ -90,6 +98,29 @@
 .animate-scale-in {
   will-change: transform, opacity;
   animation: scaleIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 手機：從底部滑入；桌面（sm+）：切回 scaleIn 效果 */
+.animate-slide-up {
+  will-change: transform, opacity;
+  animation: slideUp 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@media (min-width: 640px) {
+  .animate-slide-up {
+    animation: scaleIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
 }
 
 @layer utilities {

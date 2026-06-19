@@ -115,8 +115,9 @@ export default function DateCard({ item, onDelete, onEdit, batchMode = false, is
        </div>
 
        {/* Actions */}
+       {/* 桌面版：hover 才顯示；手機版：常駐顯示（手機無 hover 事件） */}
        {!batchMode && (
-         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all">
            <button 
              onClick={onEdit}
              className="p-2 text-[#3d3a36] hover:text-[#5f7186] bg-[#f0ece1] shadow-[0_8px_20px_rgba(139,121,101,0.08)] rounded-full border-2 border-dashed border-dashed border-[#dcd0c2]/50 transition-all duration-200"

@@ -18,6 +18,24 @@ interface AddDateModalProps {
   presetDate?: string | null; // 從月曆點擊傳入的預設日期 (YYYY-MM-DD)
 }
 
+/**
+ * 取得四捨五入到整點的當前時間字串 (HH:mm)
+ * 若分鐘 >= 30，則進位到下一個小時整點
+ * 若分鐘 < 30，則捨去到當前小時整點
+ */
+function getRoundedHourString(): string {
+  const now = new Date();
+  const minutes = now.getMinutes();
+  const hours = now.getHours();
+
+  let roundedHours = hours;
+  if (minutes >= 30) {
+    roundedHours = (hours + 1) % 24;
+  }
+
+  return `${String(roundedHours).padStart(2, '0')}:00`;
+}
+
 // 子分類管理的 inline 表單狀態
 interface SubCatFormState {
   name: string;
@@ -79,14 +97,21 @@ export default function AddDateModal({
     } else {
       // 新增模式
       const defaultDate = presetDate || new Date().toISOString().split('T')[0];
-      setTitle('');
       setDate(defaultDate);
       setDescription('');
-      setCategory('其它');
 
-      // 嘗試帶入「其它」分類的預設時間；若無則用當下時間
-      const preset = getDefaultTime('其它');
-      setStartTime(preset.startTime || new Date().toTimeString().slice(0, 5));
+      // 讀取上一次成功新增行程時所選用的分類 (LocalStorage)
+      const lastCategory = localStorage.getItem('last_selected_category') || '其它';
+      // 確保該分類依然存在於分類清單中，否則回退到 '其它'
+      const resolvedCategory = categories.includes(lastCategory) ? lastCategory : '其它';
+      setCategory(resolvedCategory);
+
+      // 直接將分類名稱導入到行程標題
+      setTitle(resolvedCategory);
+
+      // 嘗試帶入該分類的預設時間；若無則使用四捨五入到整點的當前時間
+      const preset = getDefaultTime(resolvedCategory);
+      setStartTime(preset.startTime || getRoundedHourString());
       setEndTime(preset.endTime || '');
     }
 
@@ -95,7 +120,7 @@ export default function AddDateModal({
     setNewCategoryName('');
     setShowSubCatManager(false);
     setSubCatForm({ name: '', startTime: '', endTime: '' });
-  }, [isOpen, initialData, presetDate, getDefaultTime]);
+  }, [isOpen, initialData, presetDate, getDefaultTime, categories]);
 
   // 2. ESC 關閉
   useEffect(() => {
@@ -109,23 +134,27 @@ export default function AddDateModal({
 
   if (!isOpen) return null;
 
-  // 選擇分類時，自動帶入該分類的預設時間
+  // 選擇分類時，自動帶入該分類的預設時間，並將分類名稱導入行程標題
   const handleSelectCategory = (cat: string) => {
     setCategory(cat);
     setShowSubCatManager(false);
+
+    // 將大分類名稱導入行程標題
+    setTitle(cat);
 
     const preset = getDefaultTime(cat);
     if (preset.startTime) setStartTime(preset.startTime);
     if (preset.endTime !== undefined) setEndTime(preset.endTime ?? '');
   };
 
-  // 點選子分類時帶入對應時間
-  const handleSelectSubCategory = (startT: string, endT?: string) => {
+  // 點選子分類時帶入對應時間，並將子分類名稱導入行程標題
+  const handleSelectSubCategory = (name: string, startT: string, endT?: string) => {
+    setTitle(name);
     setStartTime(startT);
     setEndTime(endT || '');
   };
 
-  // 送出行程，同時記憶本次時間
+  // 送出行程，同時記憶本次時間與分類
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
@@ -139,9 +168,12 @@ export default function AddDateModal({
 
     onSubmit({ title, date, startTime, endTime, category, description });
 
-    // 只有新增模式才自動記憶時間（編輯模式不覆蓋）
-    if (!initialData && startTime) {
-      await saveDefaultTime(category, startTime, endTime);
+    // 只有新增模式才自動記憶時間與分類（編輯模式不覆蓋）
+    if (!initialData) {
+      localStorage.setItem('last_selected_category', category);
+      if (startTime) {
+        await saveDefaultTime(category, startTime, endTime);
+      }
     }
 
     onClose();
@@ -279,7 +311,7 @@ export default function AddDateModal({
                     className={clsx(
                       'px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
                       category === cat
-                        ? 'bg-[#5f7186] border-[#5f7186]/50 text-[#3d3a36] shadow-[0_8px_20px_rgba(139,121,101,0.08)] shadow-[#b87e6b]/20'
+                        ? 'bg-[#5f7186] border-[#5f7186]/50 text-[#f0ece1] shadow-[0_8px_20px_rgba(139,121,101,0.08)] shadow-[#b87e6b]/20'
                         : 'bg-[#f0ece1] border-[#dcd0c2] text-[#3d3a36] hover:border-[#5f7186]/50 hover:text-[#5f7186]'
                     )}
                     aria-label={`分類: ${cat}`}
@@ -328,7 +360,7 @@ export default function AddDateModal({
                   <button
                     type="button"
                     onClick={handleAddCategory}
-                    className="px-2 py-1.5 bg-[#5f7186] hover:bg-[#5f7186] text-[#3d3a36] rounded-lg text-xs transition-all duration-200"
+                    className="px-2 py-1.5 bg-[#5f7186] hover:bg-[#5f7186] text-[#f0ece1] rounded-lg text-xs transition-all duration-200"
                   >
                     <Check size={13} />
                   </button>
@@ -366,7 +398,7 @@ export default function AddDateModal({
                   <button
                     key={sub.name}
                     type="button"
-                    onClick={() => handleSelectSubCategory(sub.startTime, sub.endTime)}
+                    onClick={() => handleSelectSubCategory(sub.name, sub.startTime, sub.endTime)}
                     className="px-2.5 py-1 rounded-md text-xs font-medium bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] text-[#3d3a36] hover:border-[#5f7186]/50 hover:text-[#5f7186] transition-all"
                     title={`${sub.startTime}${sub.endTime ? ` ~ ${sub.endTime}` : ''}`}
                   >
@@ -436,7 +468,7 @@ export default function AddDateModal({
                     type="button"
                     onClick={handleSaveSubCat}
                     disabled={!subCatForm.name.trim() || !subCatForm.startTime}
-                    className="px-2.5 py-1.5 bg-[#5f7186] hover:bg-[#5f7186] disabled:opacity-40 disabled:cursor-not-allowed text-[#3d3a36] rounded-lg text-xs transition-all duration-200"
+                    className="px-2.5 py-1.5 bg-[#5f7186] hover:bg-[#5f7186] disabled:opacity-40 disabled:cursor-not-allowed text-[#f0ece1] rounded-lg text-xs transition-all duration-200"
                     aria-label="儲存子分類"
                   >
                     <Check size={13} />

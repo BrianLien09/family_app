@@ -43,6 +43,7 @@ export default function Navbar() {
   }, []);
 
   const navItems = [
+    { name: '\u88dc\u8ca8\u6e05\u55ae', href: '/restock' },
     { name: '總覽', href: '/' },
     { name: '食譜神器', href: '/recipes' },
     { name: '家庭帳本', href: '/expenses' },

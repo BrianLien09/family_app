@@ -1,138 +1,300 @@
-import os
 import json
+import os
+from datetime import date, datetime, timedelta
+from typing import TypedDict
+
 import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import firestore
-from datetime import datetime, timedelta
+from firebase_admin import credentials, firestore
 from linebot import LineBotApi
 from linebot.models import TextSendMessage
 
-# 1. 初始化 Firebase 連線
-cred_json = os.getenv('FIREBASE_CREDENTIALS')
 
-if cred_json:
-    cred_dict = json.loads(cred_json)
-    cred = credentials.Certificate(cred_dict)
-    firebase_admin.initialize_app(cred)
-    db = firestore.client()
-else:
-    print("❌ 找不到 Firebase 金鑰，無法連線")
-    exit(1)
+class ScheduleEvent(TypedDict):
+    date: str
+    display_time: str
+    title: str
+    sort_time: str
 
-# LINE 設定
-CHANNEL_ACCESS_TOKEN = os.getenv('LINE_CHANNEL_ACCESS_TOKEN')
-USER_ID = os.getenv('LINE_USER_ID')
 
-def get_schedule_from_firebase():
-    today = datetime.now().date()
-    tomorrow = today + timedelta(days=1)
-    
-    # 轉換日期格式 (例如 2026-01-18)
-    today_str = str(today)
-    tomorrow_str = str(tomorrow)
-    
-    # 用來暫存取出的行程物件
-    events_list = []
-    
+class RestockReminder(TypedDict):
+    doc_id: str
+    name: str
+    target_interval_days: int
+    effective_interval_days: int
+    predicted_due_date: str
+    overdue_days: int
+    note: str
+
+
+def zh(text: str) -> str:
+    return text.encode("utf-8").decode("unicode_escape")
+
+
+cred_json = os.getenv("FIREBASE_CREDENTIALS")
+
+if not cred_json:
+    print(zh("\\u627e\\u4e0d\\u5230 Firebase \\u91d1\\u9470\\uff0c\\u7121\\u6cd5\\u57f7\\u884c\\u901a\\u77e5"))
+    raise SystemExit(1)
+
+cred_dict = json.loads(cred_json)
+cred = credentials.Certificate(cred_dict)
+firebase_admin.initialize_app(cred)
+db = firestore.client()
+
+CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
+USER_ID = os.getenv("LINE_USER_ID")
+
+
+def calculate_average_interval_days(purchase_dates: list[str]) -> int | None:
+    if len(purchase_dates) < 2:
+        return None
+
+    intervals: list[int] = []
+    for index in range(1, len(purchase_dates)):
+        current_date = date.fromisoformat(purchase_dates[index])
+        previous_date = date.fromisoformat(purchase_dates[index - 1])
+        interval_days = (current_date - previous_date).days
+        if interval_days > 0:
+            intervals.append(interval_days)
+
+    if not intervals:
+        return None
+
+    return max(1, round(sum(intervals) / len(intervals)))
+
+
+def get_effective_interval_days(target_interval_days: int, purchase_dates: list[str]) -> int:
+    average_interval_days = calculate_average_interval_days(purchase_dates)
+    normalized_target_interval = max(1, target_interval_days)
+
+    if average_interval_days is None:
+        return normalized_target_interval
+
+    return max(1, round((average_interval_days * 0.7) + (normalized_target_interval * 0.3)))
+
+
+def get_schedule_events(reference_date: date) -> list[ScheduleEvent]:
+    today_str = reference_date.isoformat()
+    tomorrow_str = (reference_date + timedelta(days=1)).isoformat()
+    events: list[ScheduleEvent] = []
+
     try:
-        schedules_ref = db.collection('schedules')
-        query = schedules_ref.where('date', 'in', [today_str, tomorrow_str])
-        results = query.stream()
-        
-        for doc in results:
-            event = doc.to_dict()
-            title = event.get('title', '未命名行程')
-            date_val = event.get('date')
-            
-            # --- 處理時間 (支援新舊格式) ---
-            start_time = event.get('startTime')
-            end_time = event.get('endTime')
-            old_time = event.get('time')
-            
-            # 決定顯示的時間字串與排序時間
-            display_time = "全天"
+        query = db.collection("schedules").where("date", "in", [today_str, tomorrow_str])
+        for snapshot in query.stream():
+            event = snapshot.to_dict()
+            title = event.get("title", zh("\\u672a\\u547d\\u540d\\u884c\\u7a0b"))
+            event_date = event.get("date")
+
+            start_time = event.get("startTime")
+            end_time = event.get("endTime")
+            legacy_time = event.get("time")
+
+            display_time = zh("\\u5168\\u5929")
             sort_time = ""
 
-            if start_time:
-                # 新格式：有 startTime
+            if isinstance(start_time, str) and start_time:
                 sort_time = start_time
-                if end_time:
+                if isinstance(end_time, str) and end_time:
                     display_time = f"{start_time} ~ {end_time}"
                 else:
                     display_time = start_time
-            elif old_time:
-                # 舊格式：只有 time
-                sort_time = old_time
-                display_time = old_time
-            
-            # 如果都沒抓到，維持預設的 "全天" 與空字串排序
-            
-            events_list.append({
-                "date": date_val,
-                "display_time": display_time,
-                "title": title,
-                "sort_time": sort_time
-            })
+            elif isinstance(legacy_time, str) and legacy_time:
+                sort_time = legacy_time
+                display_time = legacy_time
 
-    except Exception as e:
-        print(f"讀取 Firebase 出錯: {e}")
-        return None
+            if isinstance(event_date, str):
+                events.append(
+                    {
+                        "date": event_date,
+                        "display_time": display_time,
+                        "title": title,
+                        "sort_time": sort_time,
+                    }
+                )
+    except Exception as error:
+        print(f"{zh('\\u8b80\\u53d6\\u884c\\u7a0b\\u8cc7\\u6599\\u5931\\u6557')}: {error}")
 
-    if not events_list:
-        return None
+    events.sort(key=lambda event: (event["date"], event["sort_time"], event["title"]))
+    return events
 
-    # --- 排序 ---
-    # 先依照日期排，再依照時間排
-    events_list.sort(key=lambda x: (x['date'], x['sort_time']))
 
-    # --- 溫馨管家風格設定 ---
-    today_msgs = []
-    tomorrow_msgs = []
+def get_due_restock_items(reference_date: date) -> list[RestockReminder]:
+    reminders: list[RestockReminder] = []
 
-    for e in events_list:
-        # 統一格式： 🔹 時間｜標題
-        line = f"🔹 {e['display_time']}｜{e['title']}"
-        
-        if e['date'] == today_str:
-            today_msgs.append(line)
-        elif e['date'] == tomorrow_str:
-            tomorrow_msgs.append(line)
+    try:
+        for snapshot in db.collection("restockItems").stream():
+            item = snapshot.to_dict()
+            name = item.get("name", zh("\\u672a\\u547d\\u540d\\u7269\\u54c1"))
+            last_purchased_on = item.get("lastPurchasedOn")
 
-    # --- 組合最終訊息 ---
-    
-    # 1. 開頭問候語
-    final_text = "Hi 大家晚安，我是小管家 🤖\n今天辛苦了！來看看明天的行程吧～\n\n"
-    
-    # 2. 明日行程 (重點顯示)
-    if tomorrow_msgs:
-        final_text += f"📅 {tomorrow_str} (明天)\n"
-        final_text += "\n".join(tomorrow_msgs) + "\n\n"
-    else:
-        final_text += f"📅 {tomorrow_str} (明天)\n🔹 無特別行程，好好休息！\n\n"
+            if not isinstance(last_purchased_on, str) or not last_purchased_on:
+                continue
 
-    # 3. 今日回顧 (有的話才顯示，不想顯示也可以刪除這段)
-    if today_msgs:
-        final_text += f"📅 {today_str} (今天已完成)\n"
-        final_text += "\n".join(today_msgs) + "\n\n"
-        
-    # 4. 結尾提醒
-    final_text += "記得設鬧鐘喔！⏰"
+            purchase_history = item.get("purchaseHistory", [])
+            purchase_dates = sorted(
+                {
+                    entry.get("purchasedOn")
+                    for entry in purchase_history
+                    if isinstance(entry, dict) and isinstance(entry.get("purchasedOn"), str)
+                }
+                | {last_purchased_on}
+            )
 
-    return final_text
+            target_interval_days = item.get("targetIntervalDays", 30)
+            if not isinstance(target_interval_days, int) or target_interval_days < 1:
+                target_interval_days = 30
 
-def main():
+            effective_interval_days = get_effective_interval_days(target_interval_days, purchase_dates)
+            predicted_due_date = date.fromisoformat(last_purchased_on) + timedelta(days=effective_interval_days)
+            predicted_due_date_str = predicted_due_date.isoformat()
+            overdue_days = (reference_date - predicted_due_date).days
+
+            if overdue_days < 0:
+                continue
+
+            last_notified_due_on = item.get("lastNotifiedDueOn", "")
+            if last_notified_due_on == predicted_due_date_str:
+                continue
+
+            note = item.get("note", "")
+            reminders.append(
+                {
+                    "doc_id": snapshot.id,
+                    "name": name,
+                    "target_interval_days": target_interval_days,
+                    "effective_interval_days": effective_interval_days,
+                    "predicted_due_date": predicted_due_date_str,
+                    "overdue_days": overdue_days,
+                    "note": note if isinstance(note, str) else "",
+                }
+            )
+    except Exception as error:
+        print(f"{zh('\\u8b80\\u53d6\\u88dc\\u8ca8\\u8cc7\\u6599\\u5931\\u6557')}: {error}")
+
+    reminders.sort(key=lambda reminder: (reminder["predicted_due_date"], reminder["name"]))
+    return reminders
+
+
+def build_schedule_section(events: list[ScheduleEvent], reference_date: date) -> str:
+    if not events:
+        return ""
+
+    today_str = reference_date.isoformat()
+    tomorrow_str = (reference_date + timedelta(days=1)).isoformat()
+
+    today_lines: list[str] = []
+    tomorrow_lines: list[str] = []
+
+    for event in events:
+        line = f"\u2022 {event['display_time']}\uff5c{event['title']}"
+        if event["date"] == today_str:
+            today_lines.append(line)
+        elif event["date"] == tomorrow_str:
+            tomorrow_lines.append(line)
+
+    sections: list[str] = []
+
+    if tomorrow_lines:
+        sections.append(
+            "\n".join(
+                [
+                    zh(f"\\U0001f4c5 \\u660e\\u5929\\u884c\\u7a0b\\uff08{tomorrow_str}\\uff09"),
+                    *tomorrow_lines,
+                ]
+            )
+        )
+
+    if today_lines:
+        sections.append(
+            "\n".join(
+                [
+                    zh(f"\\U0001f558 \\u4eca\\u5929\\u5269\\u9918\\u884c\\u7a0b\\uff08{today_str}\\uff09"),
+                    *today_lines,
+                ]
+            )
+        )
+
+    return "\n\n".join(sections)
+
+
+def build_restock_section(reminders: list[RestockReminder]) -> str:
+    lines = [zh("\\U0001f9fb \\u88dc\\u8ca8\\u63d0\\u9192")]
+
+    for reminder in reminders:
+        status = (
+            zh("\\u4eca\\u5929\\u5dee\\u4e0d\\u591a\\u8a72\\u88dc\\u8ca8")
+            if reminder["overdue_days"] == 0
+            else zh(f"\\u5df2\\u8d85\\u904e {reminder['overdue_days']} \\u5929")
+        )
+
+        lines.append(
+            f"\u2022 {reminder['name']}\uff5c{status}\uff5c"
+            f"{zh('\\u63a8\\u7b97\\u65e5')} {reminder['predicted_due_date']}\uff5c"
+            f"{zh('\\u667a\\u6167\\u983b\\u7387')} {reminder['effective_interval_days']} {zh('\\u5929')}"
+        )
+
+        if reminder["note"]:
+            lines.append(f"  {zh('\\u5099\\u8a3b\\uff1a')}{reminder['note']}")
+
+    return "\n".join(lines)
+
+
+def build_message(reference_date: date) -> tuple[str | None, list[RestockReminder]]:
+    reminders = get_due_restock_items(reference_date)
+
+    if not reminders:
+        return None, []
+
+    schedule_section = build_schedule_section(get_schedule_events(reference_date), reference_date)
+    restock_section = build_restock_section(reminders)
+
+    sections = [
+        zh("\\u0048\\u0069 \\u5927\\u5bb6\\u665a\\u5b89\\uff0c\\u6211\\u662f\\u5bb6\\u5ead\\u88dc\\u8ca8\\u5c0f\\u7ba1\\u5bb6 \\U0001f916"),
+        zh("\\u4eca\\u5929\\u5148\\u628a\\u8a72\\u88dc\\u8ca8\\u7684\\u6771\\u897f\\u6574\\u7406\\u597d\\u4e86\\uff0c\\u9806\\u4fbf\\u9644\\u4e0a\\u4eca\\u65e5\\u8207\\u660e\\u65e5\\u884c\\u7a0b\\u3002"),
+        restock_section,
+    ]
+
+    if schedule_section:
+        sections.append(schedule_section)
+
+    sections.append(zh("\\u63d0\\u9192\\u5df2\\u5408\\u4f75\\u6210\\u540c\\u4e00\\u5247 LINE \\u8a0a\\u606f\\uff0c\\u907f\\u514d\\u984d\\u5ea6\\u6d6a\\u8cbb\\u3002"))
+
+    return "\n\n".join(sections), reminders
+
+
+def mark_reminders_as_sent(reminders: list[RestockReminder]) -> None:
+    for reminder in reminders:
+        try:
+            db.collection("restockItems").document(reminder["doc_id"]).update(
+                {
+                    "lastNotifiedDueOn": reminder["predicted_due_date"],
+                    "updatedAt": firestore.SERVER_TIMESTAMP,
+                }
+            )
+        except Exception as error:
+            print(f"{zh('\\u66f4\\u65b0\\u63d0\\u9192\\u72c0\\u614b\\u5931\\u6557')} ({reminder['name']}): {error}")
+
+
+def main() -> None:
     if not CHANNEL_ACCESS_TOKEN or not USER_ID:
-        print("❌ LINE Token 或 User ID 未設定")
+        print(zh("\\u004c\\u0049\\u004e\\u0045 Token \\u6216 User ID \\u672a\\u8a2d\\u5b9a"))
         return
 
-    msg_text = get_schedule_from_firebase()
-    
-    if msg_text:
+    today = datetime.now().date()
+    message, reminders = build_message(today)
+
+    if not message:
+        print(zh("\\u4eca\\u5929\\u6c92\\u6709\\u9700\\u8981\\u9001\\u51fa\\u7684\\u88dc\\u8ca8\\u63d0\\u9192\\uff0c\\u7565\\u904e LINE \\u63a8\\u64ad"))
+        return
+
+    try:
         line_bot_api = LineBotApi(CHANNEL_ACCESS_TOKEN)
-        line_bot_api.push_message(USER_ID, TextSendMessage(text=msg_text))
-        print("✅ 訊息發送成功")
-    else:
-        print("🍵 無近期行程")
+        line_bot_api.push_message(USER_ID, TextSendMessage(text=message))
+        mark_reminders_as_sent(reminders)
+        print(zh(f"\\u5df2\\u9001\\u51fa {len(reminders)} \\u7b46\\u88dc\\u8ca8\\u63d0\\u9192\\uff0c\\u4e26\\u5408\\u4f75\\u4eca\\u65e5\\u8207\\u660e\\u65e5\\u884c\\u7a0b"))
+    except Exception as error:
+        print(f"{zh('\\u004c\\u0049\\u004e\\u0045 \\u63a8\\u64ad\\u5931\\u6557')}: {error}")
+
 
 if __name__ == "__main__":
     main()

@@ -47,6 +47,18 @@ function sanitizeRestockItem(id: string, raw: Record<string, unknown>): RestockI
   return {
     id,
     name: typeof raw.name === 'string' ? raw.name : '\u672a\u547d\u540d\u7269\u54c1',
+    currentStock: typeof raw.currentStock === 'number' && raw.currentStock >= 0
+      ? raw.currentStock
+      : undefined,
+    stockUnit: typeof raw.stockUnit === 'string' && raw.stockUnit.trim()
+      ? raw.stockUnit.trim()
+      : undefined,
+    lowStockThreshold: typeof raw.lowStockThreshold === 'number' && raw.lowStockThreshold >= 0
+      ? raw.lowStockThreshold
+      : undefined,
+    restockAmount: typeof raw.restockAmount === 'number' && raw.restockAmount > 0
+      ? raw.restockAmount
+      : undefined,
     targetIntervalDays: typeof raw.targetIntervalDays === 'number' && raw.targetIntervalDays > 0
       ? raw.targetIntervalDays
       : 30,
@@ -293,12 +305,16 @@ export function useRestockItems() {
     }
 
     const purchaseHistory = normalizePurchaseHistory(currentItem.purchaseHistory, purchasedOn);
+    const nextStock = currentItem.currentStock === undefined
+      ? undefined
+      : currentItem.currentStock + (currentItem.restockAmount ?? 1);
 
     try {
       await updateDoc(doc(db, 'restockItems', id), {
         lastPurchasedOn: purchasedOn,
         purchaseHistory,
         lastNotifiedDueOn: '',
+        ...(nextStock === undefined ? {} : { currentStock: nextStock }),
         updatedAt: new Date(),
       });
 
@@ -311,6 +327,7 @@ export function useRestockItems() {
                   lastPurchasedOn: purchasedOn,
                   purchaseHistory,
                   lastNotifiedDueOn: '',
+                  ...(nextStock === undefined ? {} : { currentStock: nextStock }),
                 }
               : item
           ))
@@ -320,10 +337,51 @@ export function useRestockItems() {
         return nextItems;
       });
 
-      toast.success(`\u5df2\u8a18\u9304 ${currentItem.name} \u7684\u88dc\u8ca8\u65e5\u671f`);
+      toast.success(nextStock === undefined
+        ? `\u5df2\u8a18\u9304 ${currentItem.name} \u7684\u88dc\u8ca8\u65e5\u671f`
+        : `\u5df2\u88dc\u8ca8\uff0c${currentItem.name} \u5eab\u5b58\u5df2\u66f4\u65b0`);
     } catch (error) {
       console.error('Failed to mark restock item as purchased', error);
       toast.error('\u8a18\u9304\u88dc\u8ca8\u5931\u6557');
+    }
+  };
+
+  const adjustStock = async (id: string, adjustment: number) => {
+    if (!auth.currentUser) {
+      toast.error('\u8acb\u5148\u767b\u5165\u624d\u80fd\u66f4\u65b0\u5eab\u5b58');
+      return;
+    }
+
+    const currentItem = items.find((item) => item.id === id);
+    if (!currentItem || currentItem.currentStock === undefined) {
+      return;
+    }
+
+    const nextStock = currentItem.currentStock + adjustment;
+    if (nextStock < 0) {
+      toast.error('\u5eab\u5b58\u4e0d\u80fd\u4f4e\u65bc 0');
+      return;
+    }
+
+    const previousItems = [...items];
+    setItems((prev) => {
+      const nextItems = prev.map((item) => (
+        item.id === id ? { ...item, currentStock: nextStock } : item
+      ));
+      updateCache(nextItems);
+      return nextItems;
+    });
+
+    try {
+      await updateDoc(doc(db, 'restockItems', id), {
+        currentStock: nextStock,
+        updatedAt: new Date(),
+      });
+    } catch (error) {
+      console.error('Failed to adjust stock', error);
+      toast.error('\u66f4\u65b0\u5eab\u5b58\u5931\u6557');
+      setItems(previousItems);
+      updateCache(previousItems);
     }
   };
 
@@ -333,6 +391,7 @@ export function useRestockItems() {
     updateItem,
     deleteItem,
     markPurchased,
+    adjustStock,
     isLoaded,
     isRefreshing,
     refresh,

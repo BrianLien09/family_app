@@ -93,6 +93,10 @@ export interface RestockPurchaseRecord {
 export interface RestockItem {
   id: string;
   name: string;
+  currentStock?: number;
+  stockUnit?: string;
+  lowStockThreshold?: number;
+  restockAmount?: number;
   targetIntervalDays: number;
   lastPurchasedOn: string;
   purchaseHistory: RestockPurchaseRecord[];

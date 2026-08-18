@@ -43,10 +43,10 @@ export default function Navbar() {
   }, []);
 
   const navItems = [
-    { name: '\u88dc\u8ca8\u6e05\u55ae', href: '/restock' },
     { name: '總覽', href: '/' },
     { name: '食譜神器', href: '/recipes' },
     { name: '家庭帳本', href: '/expenses' },
+    { name: '庫存與補貨', href: '/restock' },
     { name: '冥夜小助手', href: 'https://brianlien09.github.io/schedule_app/' },
     { name: '冥夜音樂 🎵', href: 'https://brianlien09.github.io/Music_app/' },
   ];

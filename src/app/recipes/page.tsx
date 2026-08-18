@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRecipes } from '@/hooks/useRecipes';
 import RecipeCalculator from '@/components/RecipeManager/RecipeCalculator';
 import AddRecipeModal from '@/components/RecipeManager/AddRecipeModal';
+import ConfirmDialog from '@/components/ConfirmDialog';
+import CapybaraLoader from '@/components/CapybaraLoader';
 import { ChefHat, Plus, Search, RotateCw, CheckSquare, Square, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Recipe } from '@/types';
 import clsx from 'clsx';
@@ -18,6 +20,7 @@ export default function RecipesPage() {
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
   // 批次選擇狀態
   const [batchMode, setBatchMode] = useState(false);
@@ -38,14 +41,15 @@ export default function RecipesPage() {
     currentPage * itemsPerPage
   );
   
-  // Reset to page 1 when search changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm]);
-
   const handleModalSubmit = (recipeData: Recipe) => {
     if (editingRecipe) {
-      const { id, ...fieldsToUpdate } = recipeData;
+      const fieldsToUpdate = {
+        title: recipeData.title,
+        description: recipeData.description,
+        baseServings: recipeData.baseServings,
+        ingredients: recipeData.ingredients,
+        cookingTime: recipeData.cookingTime,
+      };
       updateRecipe(editingRecipe.id, fieldsToUpdate);
     } else {
       addRecipe(recipeData);
@@ -98,14 +102,10 @@ export default function RecipesPage() {
       return;
     }
     
-    if (confirm(`確定要刪除 ${selectedIds.length} 個食譜嗎？`)) {
-      deleteRecipes(selectedIds);
-      setSelectedIds([]);
-      setBatchMode(false);
-    }
+    setIsDeleteDialogOpen(true);
   };
 
-  if (!isLoaded) return <div className="p-8 text-center text-[#3d3a36]">載入中...</div>;
+  if (!isLoaded) return <CapybaraLoader label="正在整理家庭食譜..." />;
 
   return (
     <div className="container min-h-screen pb-32 pt-28">
@@ -180,7 +180,10 @@ export default function RecipesPage() {
              className="w-full pl-10 py-3 bg-[#dcd0c2]/30 border-2 border-dashed border-dashed border-[#dcd0c2]/50 rounded-xl text-[#f0ece1] placeholder:text-[#3d3a36] focus:outline-none focus:border-[#b87e6b]/50 transition-all hover:bg-[#dcd0c2]/50"
              placeholder="搜尋食譜..."
              value={searchTerm}
-             onChange={e => setSearchTerm(e.target.value)}
+             onChange={e => {
+               setSearchTerm(e.target.value);
+               setCurrentPage(1);
+             }}
            />
         </div>
       </header>
@@ -304,11 +307,28 @@ export default function RecipesPage() {
         />
       )}
 
-      <AddRecipeModal 
-        isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)} 
-        onSubmit={handleModalSubmit}
-        initialData={editingRecipe}
+      {isAddModalOpen && (
+        <AddRecipeModal
+          key={editingRecipe?.id ?? 'new'}
+          isOpen
+          onClose={() => setIsAddModalOpen(false)}
+          onSubmit={handleModalSubmit}
+          initialData={editingRecipe}
+        />
+      )}
+
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        title="刪除選取的食譜？"
+        description={`將刪除 ${selectedIds.length} 個食譜，此操作可在完成後透過提示訊息復原。`}
+        confirmLabel="刪除食譜"
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={() => {
+          deleteRecipes(selectedIds);
+          setSelectedIds([]);
+          setBatchMode(false);
+          setIsDeleteDialogOpen(false);
+        }}
       />
     </div>
   );

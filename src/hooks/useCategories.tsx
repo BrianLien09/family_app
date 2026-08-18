@@ -1,5 +1,5 @@
 // src/hooks/useCategories.tsx
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { DEFAULT_CATEGORIES } from '@/types';
 import toast from 'react-hot-toast';
 

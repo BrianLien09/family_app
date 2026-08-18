@@ -21,28 +21,10 @@ export default function AddRestockModal({
 }: AddRestockModalProps) {
   useImmersiveMode(isOpen);
 
-  const [name, setName] = useState('');
-  const [targetIntervalDays, setTargetIntervalDays] = useState('30');
-  const [lastPurchasedOn, setLastPurchasedOn] = useState(getTodayDateString());
-  const [note, setNote] = useState('');
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    if (initialData) {
-      setName(initialData.name);
-      setTargetIntervalDays(String(initialData.targetIntervalDays));
-      setLastPurchasedOn(initialData.lastPurchasedOn);
-      setNote(initialData.note ?? '');
-    } else {
-      setName('');
-      setTargetIntervalDays('30');
-      setLastPurchasedOn(getTodayDateString());
-      setNote('');
-    }
-  }, [initialData, isOpen]);
+  const [name, setName] = useState(() => initialData?.name ?? '');
+  const [targetIntervalDays, setTargetIntervalDays] = useState(() => String(initialData?.targetIntervalDays ?? 30));
+  const [lastPurchasedOn, setLastPurchasedOn] = useState(() => initialData?.lastPurchasedOn ?? getTodayDateString());
+  const [note, setNote] = useState(() => initialData?.note ?? '');
 
   useEffect(() => {
     if (!isOpen) {

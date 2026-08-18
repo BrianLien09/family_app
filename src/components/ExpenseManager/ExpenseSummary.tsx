@@ -117,7 +117,7 @@ export default function ExpenseSummary({ expenses, selectedMember }: ExpenseSumm
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(value: any) => `$${Number(value).toLocaleString()}`}
+                    formatter={(value: number | string | readonly (number | string)[] | undefined) => `$${Number(value).toLocaleString()}`}
                     contentStyle={{ backgroundColor: '#ffffff', border: '2px dashed #b87e6b', borderRadius: '12px', boxShadow: '0 8px 24px rgba(61, 58, 54, 0.12)' }}
                     itemStyle={{ color: '#3d3a36', fontWeight: 'bold' }}
                   />

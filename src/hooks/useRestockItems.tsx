@@ -12,6 +12,7 @@ import {
 import { onAuthStateChanged } from 'firebase/auth';
 import toast from 'react-hot-toast';
 import { auth, db } from '@/lib/firebase';
+import { omitId } from '@/lib/object';
 import { RestockItem, RestockPurchaseRecord } from '@/types';
 import { getTodayDateString, normalizePurchaseHistory } from '@/lib/restock';
 
@@ -241,7 +242,7 @@ export function useRestockItems() {
               toast.dismiss(toastItem.id);
 
               try {
-                const { id: _unusedId, ...dataToRestore } = itemToDelete;
+                const dataToRestore = omitId(itemToDelete);
                 const docRef = await addDoc(collection(db, 'restockItems'), {
                   ...dataToRestore,
                   createdAt: new Date(),

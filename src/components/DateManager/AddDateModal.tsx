@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
   X, Type, Calendar, Clock, AlignLeft, Hash, Check, Plus, Settings2, Trash2
 } from 'lucide-react';
@@ -50,12 +50,19 @@ export default function AddDateModal({
   initialData,
   presetDate,
 }: AddDateModalProps) {
-  const [title, setTitle] = useState('');
-  const [date, setDate] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
-  const [category, setCategory] = useState<DateCategory>('其它');
-  const [description, setDescription] = useState('');
+  const { categories, addCategory, deleteCategory, isDefaultCategory } = useCategories();
+  const { getDefaultTime, saveDefaultTime, getSubCategories, saveSubCategory, deleteSubCategory } =
+    useCategoryTimePresets();
+  const initialCategory = initialData?.category
+    ?? (typeof window === 'undefined' ? '其它' : localStorage.getItem('last_selected_category') || '其它');
+  const resolvedInitialCategory = categories.includes(initialCategory) ? initialCategory : '其它';
+
+  const [title, setTitle] = useState(() => initialData?.title ?? resolvedInitialCategory);
+  const [date, setDate] = useState(() => initialData?.date ?? presetDate ?? new Date().toISOString().split('T')[0]);
+  const [startTime, setStartTime] = useState(() => initialData?.startTime ?? (getDefaultTime(resolvedInitialCategory).startTime || getRoundedHourString()));
+  const [endTime, setEndTime] = useState(() => initialData?.endTime ?? (getDefaultTime(resolvedInitialCategory).endTime || ''));
+  const [category, setCategory] = useState<DateCategory>(() => resolvedInitialCategory);
+  const [description, setDescription] = useState(() => initialData?.description ?? '');
 
   // 自訂類別相關
   const [showAddCategory, setShowAddCategory] = useState(false);
@@ -69,58 +76,7 @@ export default function AddDateModal({
     endTime: '',
   });
 
-  const { categories, addCategory, deleteCategory, isDefaultCategory } = useCategories();
-  const { getDefaultTime, saveDefaultTime, getSubCategories, saveSubCategory, deleteSubCategory } =
-    useCategoryTimePresets();
-
-  // 用 ref 追蹤上一次 isOpen 的值，判斷是否剛剛「開啟 → Modal 」轉換
-  const prevIsOpenRef = useRef(false);
-
   useImmersiveMode(isOpen);
-
-  // 1. Modal 開啟時填入初始值（利用 prevIsOpenRef 讓效果只在「關→開」時觸發，
-  //    避免 presets 變化時覆蓋使用者正在編輯的輸入）
-  useEffect(() => {
-    const justOpened = isOpen && !prevIsOpenRef.current;
-    prevIsOpenRef.current = isOpen;
-
-    if (!justOpened) return;
-
-    if (initialData) {
-      // 編輯模式：填入現有資料
-      setTitle(initialData.title);
-      setDate(initialData.date);
-      setStartTime(initialData.startTime || '');
-      setEndTime(initialData.endTime || '');
-      setCategory(initialData.category || '其它');
-      setDescription(initialData.description || '');
-    } else {
-      // 新增模式
-      const defaultDate = presetDate || new Date().toISOString().split('T')[0];
-      setDate(defaultDate);
-      setDescription('');
-
-      // 讀取上一次成功新增行程時所選用的分類 (LocalStorage)
-      const lastCategory = localStorage.getItem('last_selected_category') || '其它';
-      // 確保該分類依然存在於分類清單中，否則回退到 '其它'
-      const resolvedCategory = categories.includes(lastCategory) ? lastCategory : '其它';
-      setCategory(resolvedCategory);
-
-      // 直接將分類名稱導入到行程標題
-      setTitle(resolvedCategory);
-
-      // 嘗試帶入該分類的預設時間；若無則使用四捨五入到整點的當前時間
-      const preset = getDefaultTime(resolvedCategory);
-      setStartTime(preset.startTime || getRoundedHourString());
-      setEndTime(preset.endTime || '');
-    }
-
-    // 重置 inline UI 狀態
-    setShowAddCategory(false);
-    setNewCategoryName('');
-    setShowSubCatManager(false);
-    setSubCatForm({ name: '', startTime: '', endTime: '' });
-  }, [isOpen, initialData, presetDate, getDefaultTime, categories]);
 
   // 2. ESC 關閉
   useEffect(() => {

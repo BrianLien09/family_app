@@ -161,24 +161,27 @@ export default function RestockPage() {
         )}
       </section>
 
-      <AddRestockModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setEditingItem(null);
-        }}
-        initialData={editingItem}
-        onSubmit={(data) => {
-          if (editingItem) {
-            updateItem(editingItem.id, data);
-          } else {
-            addItem(data);
-          }
+      {isModalOpen && (
+        <AddRestockModal
+          key={editingItem?.id ?? 'new'}
+          isOpen
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingItem(null);
+          }}
+          initialData={editingItem}
+          onSubmit={(data) => {
+            if (editingItem) {
+              updateItem(editingItem.id, data);
+            } else {
+              addItem(data);
+            }
 
-          setIsModalOpen(false);
-          setEditingItem(null);
-        }}
-      />
+            setIsModalOpen(false);
+            setEditingItem(null);
+          }}
+        />
+      )}
     </div>
   );
 }

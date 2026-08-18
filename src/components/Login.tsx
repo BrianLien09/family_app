@@ -32,11 +32,18 @@ export default function Login() {
     return (
       <div className="flex items-center gap-2">
         {/* 顯示頭像或名字 */}
-        <img 
-          src={user.photoURL || ''} 
-          alt="Avatar" 
-          className="w-8 h-8 rounded-full border-2 border-dashed border-dashed border-[#dcd0c2]/50"
-        />
+        <span
+          role="img"
+          aria-label="使用者頭像"
+          className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-dashed border-[#dcd0c2]/50 bg-[#e6e2d8] text-xs font-bold text-[#3d3a36]"
+          style={{
+            backgroundImage: user.photoURL ? `url("${user.photoURL}")` : undefined,
+            backgroundPosition: 'center',
+            backgroundSize: 'cover',
+          }}
+        >
+          {!user.photoURL && user.displayName?.slice(0, 1)}
+        </span>
         <button onClick={handleLogout} className="text-sm text-[#3d3a36] hover:text-[#b87e6b]">
           登出
         </button>

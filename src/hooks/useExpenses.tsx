@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from '@/lib/firebase';
+import { omitId } from '@/lib/object';
 import { ExpenseItem } from '@/types';
 import toast from 'react-hot-toast';
 
@@ -142,7 +143,7 @@ export function useExpenses() {
               onClick={async () => {
                 toast.dismiss(t.id);
                 try {
-                  const { id: _, ...dataToRestore } = itemToDelete;
+                  const dataToRestore = omitId(itemToDelete);
                   const docRef = await addDoc(collection(db, 'expenses'), {
                     ...dataToRestore,
                     createdAt: new Date(),

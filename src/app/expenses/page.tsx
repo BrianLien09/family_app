@@ -10,6 +10,8 @@ import MemberFilter from '@/components/ExpenseManager/MemberFilter';
 import ExpenseSummary from '@/components/ExpenseManager/ExpenseSummary';
 import ExpenseCard from '@/components/ExpenseManager/ExpenseCard';
 import AddExpenseModal from '@/components/ExpenseManager/AddExpenseModal';
+import ConfirmDialog from '@/components/ConfirmDialog';
+import CapybaraLoader from '@/components/CapybaraLoader';
 import clsx from 'clsx';
 
 export default function ExpensesPage() {
@@ -29,6 +31,7 @@ export default function ExpensesPage() {
   // Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<ExpenseItem | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // 篩選當月且符合成員的資料
   const filteredExpenses = useMemo(() => {
@@ -73,14 +76,10 @@ export default function ExpensesPage() {
 
   const handleBatchDelete = () => {
     if (selectedIds.length === 0) return;
-    if (confirm(`確定要刪除 ${selectedIds.length} 筆記錄嗎？`)) {
-      deleteExpenses(selectedIds);
-      setSelectedIds([]);
-      setBatchMode(false);
-    }
+    setIsDeleteDialogOpen(true);
   };
 
-  if (!isLoaded) return <div className="min-h-screen flex items-center justify-center text-[#3d3a36]">載入中...</div>;
+  if (!isLoaded) return <CapybaraLoader label="正在整理家庭帳本..." />;
 
   return (
     <div className="container mx-auto px-4 py-8 pt-20 max-w-3xl min-h-screen">
@@ -177,22 +176,39 @@ export default function ExpensesPage() {
       </div>
 
       {/* 新增/編輯 Modal */}
-      <AddExpenseModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setEditingExpense(null);
-        }}
-        initialData={editingExpense}
-        defaultMember={selectedMember === '全體' ? '共同' : selectedMember}
-        onSubmit={(data) => {
-          if (editingExpense) {
-            updateExpense(editingExpense.id, data);
-          } else {
-            addExpense(data);
-          }
-          setIsModalOpen(false);
-          setEditingExpense(null);
+      {isModalOpen && (
+        <AddExpenseModal
+          key={editingExpense?.id ?? 'new'}
+          isOpen
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingExpense(null);
+          }}
+          initialData={editingExpense}
+          defaultMember={selectedMember === '全體' ? '共同' : selectedMember}
+          onSubmit={(data) => {
+            if (editingExpense) {
+              updateExpense(editingExpense.id, data);
+            } else {
+              addExpense(data);
+            }
+            setIsModalOpen(false);
+            setEditingExpense(null);
+          }}
+        />
+      )}
+
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        title="刪除選取的記錄？"
+        description={`將刪除 ${selectedIds.length} 筆帳本記錄，此操作可在完成後透過提示訊息復原。`}
+        confirmLabel="刪除記錄"
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={() => {
+          deleteExpenses(selectedIds);
+          setSelectedIds([]);
+          setBatchMode(false);
+          setIsDeleteDialogOpen(false);
         }}
       />
     </div>

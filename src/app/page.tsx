@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { useDates } from '@/hooks/useDates';
 import CalendarWidget from '@/components/CalendarWidget';
 import AddDateModal from '@/components/DateManager/AddDateModal';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { Plus, Calendar, Search, Filter, X, CalendarClock, History, ChevronDown } from 'lucide-react';
 import CapybaraLoader from '@/components/CapybaraLoader';
 import { DateItem, DateCategory } from '@/types';
@@ -38,6 +39,7 @@ export default function Home() {
   // 新增：批次選擇狀態
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [batchMode, setBatchMode] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
   // 新增：批次新增到多個日期的狀態
   const [batchAddDates, setBatchAddDates] = useState<string[]>([]);
@@ -149,30 +151,26 @@ export default function Home() {
       return;
     }
     
-    if (confirm(`確定要刪除 ${selectedIds.length} 個行程嗎？`)) {
-      deleteDates(selectedIds);
-      setSelectedIds([]);
-      setBatchMode(false);
-    }
+    setIsDeleteDialogOpen(true);
   };
   
   // 計算即將到來的行程（使用篩選後的資料）
-  const upcomingDates = useMemo(() => {
+  const upcomingDates = (() => {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    return filteredDates
+    return [...filteredDates]
       .filter(d => new Date(d.date).getTime() >= todayStart)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [filteredDates]);
+  })();
   
   // 計算過往的行程（使用篩選後的資料）
-  const pastDates = useMemo(() => {
+  const pastDates = (() => {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    return filteredDates
+    return [...filteredDates]
       .filter(d => new Date(d.date).getTime() < todayStart)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // 由近到遠排序
-  }, [filteredDates]);
+  })();
 
   // ✨✨✨ 新增這段 useEffect ✨✨✨
   useEffect(() => {
@@ -622,16 +620,33 @@ export default function Home() {
 
       </div>
 
-      <AddDateModal 
-        isOpen={isModalOpen} 
-        onClose={() => {
-          setIsModalOpen(false);
-          setSelectedDateForNew(null);
-          setBatchAddDates([]);
-        }} 
-        onSubmit={handleModalSubmit}
-        initialData={editingDate}
-        presetDate={selectedDateForNew}
+      {isModalOpen && (
+        <AddDateModal
+          key={`${editingDate?.id ?? 'new'}-${selectedDateForNew ?? ''}`}
+          isOpen
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedDateForNew(null);
+            setBatchAddDates([]);
+          }}
+          onSubmit={handleModalSubmit}
+          initialData={editingDate}
+          presetDate={selectedDateForNew}
+        />
+      )}
+
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        title="刪除選取的行程？"
+        description={`將刪除 ${selectedIds.length} 個行程，此操作可在完成後透過提示訊息復原。`}
+        confirmLabel="刪除行程"
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={() => {
+          deleteDates(selectedIds);
+          setSelectedIds([]);
+          setBatchMode(false);
+          setIsDeleteDialogOpen(false);
+        }}
       />
     </div>
   );

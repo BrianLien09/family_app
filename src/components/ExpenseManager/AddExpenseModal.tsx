@@ -5,7 +5,6 @@ import { FamilyMember, FAMILY_MEMBERS, EXPENSE_CATEGORIES, INCOME_CATEGORIES, Ex
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 
-import { useEffect } from 'react';
 
 interface AddExpenseModalProps {
   isOpen: boolean;
@@ -18,38 +17,16 @@ interface AddExpenseModalProps {
 export default function AddExpenseModal({ isOpen, onClose, onSubmit, initialData, defaultMember }: AddExpenseModalProps) {
   useImmersiveMode(isOpen);
 
-  const [type, setType] = useState<'expense' | 'income'>('expense');
-  const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState<string>(EXPENSE_CATEGORIES[0]);
-  const [member, setMember] = useState<FamilyMember>('共同');
+  const [type, setType] = useState<'expense' | 'income'>(() => initialData?.type ?? 'expense');
+  const [amount, setAmount] = useState(() => initialData?.amount.toString() ?? '');
+  const [category, setCategory] = useState<string>(() => initialData?.category ?? EXPENSE_CATEGORIES[0]);
+  const [member, setMember] = useState<FamilyMember>(() => initialData?.member ?? defaultMember ?? '共同');
   const [date, setDate] = useState(() => {
+    if (initialData) return initialData.date;
     const today = new Date();
     return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   });
-  const [description, setDescription] = useState('');
-
-  // 監聽 initialData 或 defaultMember 變化
-  useEffect(() => {
-    if (isOpen) {
-      if (initialData) {
-        setType(initialData.type);
-        setAmount(initialData.amount.toString());
-        setCategory(initialData.category);
-        setMember(initialData.member);
-        setDate(initialData.date);
-        setDescription(initialData.description || '');
-      } else {
-        // 重置為預設
-        setType('expense');
-        setAmount('');
-        setCategory(EXPENSE_CATEGORIES[0]);
-        setMember(defaultMember || '共同');
-        const today = new Date();
-        setDate(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`);
-        setDescription('');
-      }
-    }
-  }, [isOpen, initialData, defaultMember]);
+  const [description, setDescription] = useState(() => initialData?.description ?? '');
 
   if (!isOpen) return null;
 

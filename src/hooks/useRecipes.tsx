@@ -10,8 +10,9 @@ import {
   orderBy,
   updateDoc 
 } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { db, auth } from '@/lib/firebase';
+import { omitId } from '@/lib/object';
 import { Recipe } from '@/types'; 
 import toast from 'react-hot-toast'; 
 
@@ -24,7 +25,7 @@ export function useRecipes() {
   const getCacheKey = (uid: string) => `recipe_cache_${uid}`;
 
   // 1. 讀取食譜
-  const fetchRecipes = useCallback(async (user: any) => {
+  const fetchRecipes = useCallback(async (user: User) => {
     if (isLoaded) setIsRefreshing(true);
     try {
       const q = query(collection(db, "recipes"), orderBy("createdAt", "desc"));
@@ -96,7 +97,7 @@ export function useRecipes() {
     }
     
     try {
-      const { id, ...dataToSave } = newItem;
+      const dataToSave = omitId(newItem);
       const docRef = await addDoc(collection(db, "recipes"), {
         ...dataToSave,
         createdAt: new Date()
@@ -152,7 +153,7 @@ export function useRecipes() {
               toast.dismiss(t.id);
               // 復原：重新新增回 Firebase
               try {
-                const { id: _, ...dataToRestore } = itemToDelete;
+                const dataToRestore = omitId(itemToDelete);
                 const docRef = await addDoc(collection(db, "recipes"), {
                   ...dataToRestore,
                   createdAt: new Date()

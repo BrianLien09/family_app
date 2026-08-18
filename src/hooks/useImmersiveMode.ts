@@ -11,10 +11,6 @@ export function useImmersiveMode(enable: boolean) {
     const navbar = document.getElementById('navbar');
 
     if (navbar) {
-      // 記錄原本的樣式 (以免把 transition 弄壞)
-      const originalTransition = navbar.style.transition;
-      const originalTransform = navbar.style.transform;
-
       // 強制隱藏 (加上 !important 確保權重)
       navbar.style.cssText = `
         transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;

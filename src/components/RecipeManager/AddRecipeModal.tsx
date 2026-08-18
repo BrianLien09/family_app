@@ -13,58 +13,20 @@ interface AddRecipeModalProps {
 }
 
 export default function AddRecipeModal({ isOpen, onClose, onSubmit, initialData }: AddRecipeModalProps) {
-  const [title, setTitle] = useState('');
-  const [baseServings, setBaseServings] = useState(1);
-  const [description, setDescription] = useState('');
+  const [title, setTitle] = useState(() => initialData?.title ?? '');
+  const [baseServings, setBaseServings] = useState(() => initialData?.baseServings ?? 1);
+  const [description, setDescription] = useState(() => initialData?.description ?? '');
   
   // 烹飪時間 state
-  const [cookingTimeValue, setCookingTimeValue] = useState<string>('');
-  const [cookingTimeUnit, setCookingTimeUnit] = useState<string>('度');
-  const [cookingTimeMinutes, setCookingTimeMinutes] = useState<string>('');
+  const [cookingTimeValue, setCookingTimeValue] = useState<string>(() => initialData?.cookingTime ? String(initialData.cookingTime.value) : '');
+  const [cookingTimeUnit, setCookingTimeUnit] = useState<string>(() => initialData?.cookingTime?.unit ?? '度');
+  const [cookingTimeMinutes, setCookingTimeMinutes] = useState<string>(() => initialData?.cookingTime ? String(initialData.cookingTime.minutes) : '');
 
   useImmersiveMode(isOpen);
   
-  const [ingredients, setIngredients] = useState<Omit<RecipeIngredient, 'id'>[]>([
-      { name: '', amount: 0, unit: 'g' }
-  ]);
-
-  // ✨ 關鍵邏輯：監聽視窗開啟狀態與初始資料
-  useEffect(() => {
-    if (isOpen) {
-      if (initialData) {
-        // ✏️ 編輯模式：帶入舊資料
-        setTitle(initialData.title);
-        setBaseServings(initialData.baseServings);
-        setDescription(initialData.description || '');
-        
-        if (initialData.cookingTime) {
-          setCookingTimeValue(String(initialData.cookingTime.value));
-          setCookingTimeUnit(initialData.cookingTime.unit);
-          setCookingTimeMinutes(String(initialData.cookingTime.minutes));
-        } else {
-          setCookingTimeValue('');
-          setCookingTimeUnit('度');
-          setCookingTimeMinutes('');
-        }
-        
-        // 把舊的食材資料填進去 (只要名、量、單位)
-        setIngredients(initialData.ingredients.map(i => ({
-          name: i.name,
-          amount: i.amount,
-          unit: i.unit
-        })));
-      } else {
-        // ➕ 新增模式：重置所有欄位
-        setTitle('');
-        setBaseServings(1);
-        setDescription('');
-        setCookingTimeValue('');
-        setCookingTimeUnit('度');
-        setCookingTimeMinutes('');
-        setIngredients([{ name: '', amount: 0, unit: 'g' }]);
-      }
-    }
-  }, [isOpen, initialData]);
+  const [ingredients, setIngredients] = useState<Omit<RecipeIngredient, 'id'>[]>(() => (
+    initialData?.ingredients.map(({ name, amount, unit }) => ({ name, amount, unit })) ?? [{ name: '', amount: 0, unit: 'g' }]
+  ));
 
   // ESC 鍵盤快捷鍵
   useEffect(() => {

@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from '@/lib/firebase';
+import { omitId } from '@/lib/object';
 import { DateItem } from '@/types';
 import toast from 'react-hot-toast';
 
@@ -112,7 +113,7 @@ export function useDates() {
       return;
     }
     try {
-      const { id, ...dataToSave } = newItem;
+      const dataToSave = omitId(newItem);
       const docRef = await addDoc(collection(db, "schedules"), {
         ...dataToSave,
         createdAt: new Date()
@@ -166,7 +167,7 @@ export function useDates() {
               toast.dismiss(t.id);
               // 復原：重新新增回 Firebase
               try {
-                const { id: _, ...dataToRestore } = itemToDelete;
+                const dataToRestore = omitId(itemToDelete);
                 const docRef = await addDoc(collection(db, "schedules"), {
                   ...dataToRestore,
                   createdAt: new Date()
@@ -278,7 +279,7 @@ export function useDates() {
     }
     
     try {
-      const { id, ...dataToCopy } = sourceEvent;
+      const dataToCopy = omitId(sourceEvent);
       const docRef = await addDoc(collection(db, "schedules"), {
         ...dataToCopy,
         date: targetDateString, // 只改變日期

@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef } from 'react';
 import { Recipe } from '@/types';
-import { Minus, Plus, Utensils, X, Save, Scale as ScaleIcon, Calculator, Edit, Trash2, ChevronRight, FileDown } from 'lucide-react';
+import { Minus, Plus, Utensils, X, Save, Scale as ScaleIcon, Calculator, Edit, Trash2, FileDown } from 'lucide-react';
 import clsx from 'clsx';
 import { useImmersiveMode } from '@/hooks/useImmersiveMode';
 import html2canvas from 'html2canvas';

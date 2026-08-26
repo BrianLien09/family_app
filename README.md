@@ -1,315 +1,128 @@
-# 🏠 我們家的小助手 (Family Utility Site)
+# 我們家的小助手
 
-這是一個結合 **「智慧行事曆」** 與 **「食譜計算神器」** 的全端 Web App，專為家庭生活設計。
-透過現代化的網頁技術與織物質感 (Woven & Weft) 大地色系風格，讓記錄生活與下廚變得更溫暖、更直覺。
+<p align="center">
+  <img src="./assets/readme/hero.svg" width="100%" alt="我們家的小助手：整合行事曆、食譜、家庭帳本與補貨清單的家庭共用工具" />
+</p>
 
-## ✨ 核心功能
+> 一個為家庭日常設計的網頁工具：把行程、食譜比例、收支與補貨狀態放在同一個可共用的空間。
 
-### 💸 家庭帳本 (Expense Tracker)
-清楚掌握家庭收支，支援獨立與共同記帳！
+## 四個日常工具
 
-- **收支紀錄**：支援記錄「收入」與「支出」，可綁定特定家庭成員（如 Sandy、Brian 等）或「共同」支出。
-- **動態圖表分析**：
-  - 在「全家人」模式下，圓餅圖會顯示各成員的支出佔比。
-  - 在「單一成員」模式下，自動切換顯示該成員的各項花費分類佔比。
-- **靈活分類**：內建餐費、交通、薪水等常見收支分類，並自動帶入第一筆預設值。
-- **即時同步與防呆**：包含 Firebase 雲端同步、LocalStorage 秒載入快取，以及 5 秒「復原刪除」後悔藥。
-- **直覺編輯**：一鍵點擊卡片旁的「鉛筆」按鈕即可編輯既有收支。
+| 工具 | 適合處理的事 | 主要能力 |
+| --- | --- | --- |
+| 📅 智慧行事曆 | 安排行程、輪班與繳費 | 分類、搜尋、日期區間篩選、倒數提醒、批次操作與 5 秒復原 |
+| 🍳 食譜轉換神器 | 依現有食材或人數調整食譜 | 份量／食材雙模式換算、烹飪時間、PDF 匯出、搜尋與批次操作 |
+| 💸 家庭帳本 | 記錄個人及共同收支 | 成員篩選、收入／支出紀錄、分類與成員占比圖表、編輯及復原 |
+| 🛒 庫存與補貨 | 管理家中常備品 | 庫存下限、採買紀錄、補貨週期預測與待補排序 |
 
-### 📅 智慧行事曆 (Schedule Manager)
-不再忘記重要行程，全家人資訊同步！
+## 為什麼放在一起？
 
-- **雲端即時同步**：整合 **Google Firebase** 資料庫，手機新增行程，電腦馬上看得到。
-- **倒數計時器**：自動計算距離目標日期還有幾天，緊急事件（3天內）會有呼吸燈特效提醒。
-- **🆕 自訂類別**：除了內建標籤外，支援新增與刪除自訂類別，滿足個人化需求。
-- **🆕 彈性時段**：支援設定行程結束時間（如 14:00 - 16:00），時間安排更精確。
-- **直覺分類**：內建「阿弟排班」、「剪頭髮」、「洗牙」等常用標籤，支援篩選功能。
-- **歷史歸檔**：過期的行程會自動變暗並移至列表底部，保持介面清爽。
-- **🆕 智慧搜尋**：關鍵字搜尋 + 多選分類 + 日期區間篩選，快速找到目標行程。
-- **🆕 復原刪除**：誤刪行程？5 秒內可以一鍵復原，不用擔心手滑！
-- **🆕 批次操作**：支援多選批次刪除行程，提升管理效率。
-- **🆕 快速預覽**：「即將到來」與「回顧過往」按鈕可快速預覽行程，多個行程時可透過下拉選單切換查看。
-- **🆕 智慧分頁**：月曆每頁顯示 5 個事件，保持介面清爽易讀。
+家庭生活不是四套彼此孤立的資料。這個專案把經常需要一起查看、一起更新的資訊整理成一致的操作方式：登入後同步資料、先從本機快取快速開啟，再視需要在手機或桌面安裝成 PWA。
 
-### 🍳 食譜比例轉換神器 (Kitchen AI)
-解決「食譜寫 4 人份，但我只想煮 1 人份」的數學難題。
+<p align="center">
+  <img src="./assets/readme/workflow.svg" width="100%" alt="Google 登入、四項家庭工具、Firestore 與 LocalStorage 同步及 PWA 使用流程" />
+</p>
 
-- **雙模式換算**：
-  1. **依份量**：直接拉動滑桿，將 4 人份食譜一鍵轉為 2.5 人份。
-  2. **依食材**：冰箱只剩 100g 麵粉？輸入現有重量，系統自動反推所有食材比例。
-- **🆕 烹飪時間紀錄**：新增烹飪時間選填欄位，支援自訂溫度、功率與時間，食譜計算機與 PDF 匯出均完美支援顯示。
-- **沈浸式體驗 (Immersive Mode)**：打開食譜時，導航列自動隱藏，鎖定背景滾動，給你全螢幕的專注體驗。
-- **響應式混合佈局 (Hybrid Layout)**：
-  - **電腦版**：全螢幕儀表板，左側控制面板固定，右側清單滾動。
-  - **手機版**：置中卡片式設計，單手也能輕鬆操作。
-- **🆕 復原刪除**：誤刪食譜也能輕鬆還原！
-- **🆕 批次操作**：支援多選批次刪除食譜，管理更輕鬆。
-- **🆕 PDF 匯出**：可將食譜匯出為 PDF 格式，方便列印或分享。
-- **🆕 智慧分頁**：每頁顯示 12 個食譜，快速瀏覽不卡頓。
+## 使用方式
 
-### 📱 PWA 漸進式網頁應用 (Progressive Web App)
-讓網頁 App 像原生應用一樣好用！
+1. 使用 Google 帳號登入。
+2. 從導覽列進入「總覽」、「食譜神器」、「家庭帳本」或「庫存與補貨」。
+3. 新增資料後，對應的自訂 Hook 會處理 Firestore 同步與本機快取。
 
-- **安裝到主畫面**：可以將應用安裝到手機或桌面主畫面，一鍵開啟，體驗更接近原生 App。
-- **離線瀏覽**：支援離線訪問已載入的資料，透過 LocalStorage 快取機制，即使沒有網路也能查看行程與食譜。
-- **自動快取靜態資源**：Service Worker 自動快取 CSS、JavaScript、圖片等靜態檔案，加速後續訪問。
-- **智慧更新提示**：當應用有新版本時，會自動顯示更新提示，點擊即可重新載入最新版本。
-- **全平台支援**：支援 iOS、Android、Windows、macOS 等所有主流平台。
+### 快速操作提示
 
-## 🛠️ 技術棧 (Tech Stack)
+- 行事曆可用關鍵字、分類與日期區間縮小結果；近期與過往行程可快速預覽。
+- 食譜可從基準份數調整，或輸入手邊食材量反推其他食材；計算結果可匯出 PDF。
+- 帳本可在全體或指定成員檢視下切換，圖表會依目前篩選範圍呈現。
+- 補貨清單會將到期／庫存不足項目優先排在前面。
 
-本專案採用 **Vibe Coding** 模式開發，強調快速迭代與極致的 UI/UX 體驗。
+## 資料與體驗設計
 
-- **Frontend Framework**: [Next.js 16 (App Router)](https://nextjs.org/)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS (Woven & Weft 織物質感 / 大地色系風格)
-- **Backend / Database**: Google Firebase (Firestore)
-- **Authentication**: Firebase Auth (Google 登入)
-- **PWA**: [@ducanh2912/next-pwa](https://github.com/DuCanhGH/next-pwa) (Service Worker 自動生成)
-- **Deployment**: GitHub Pages
-- **Notifications**: LINE Bot API (定時推送)
+- **Firebase Auth + Firestore**：以 Google 登入識別使用者，並儲存行程、食譜、帳本及補貨資料。
+- **LocalStorage 快取**：先還原已讀資料，降低重新開啟時的等待感；同步失敗時保留可見資料並提供提示。
+- **樂觀更新與復原**：刪除等常用操作先反映在畫面上，部分列表操作提供 5 秒復原。
+- **Woven & Weft 介面**：使用暖米、燕麥白、鐵鏽紅與石板藍，搭配虛線縫線與紙卡質感。
+- **PWA**：可安裝到主畫面；Service Worker 快取靜態資源與已載入資料的瀏覽情境。
 
-## 💡 技術亮點
+## 技術架構
 
-1. **Smart Navbar (智慧導航列)**
-   - 瀏覽時自動偵測滑動方向：往下滑動隱藏，往上滑動顯示。
-   - 封裝 `useImmersiveMode` Hook，在開啟 Modal 時強制接管導航列狀態。
+```text
+src/
+├── app/                    # App Router：總覽、食譜、帳本、補貨頁面
+├── components/             # 共用導覽、對話框、載入與各工具元件
+├── hooks/                  # Firebase CRUD、快取與沉浸式體驗
+├── lib/                    # Firebase 初始化與補貨預測工具
+└── types/                  # 共用 TypeScript 型別
+```
 
-2. **解決響應式痛點**
-   - 針對手機版 (Mobile) 與電腦版 (Desktop) 實作不同的 Layout 策略。
-   - 解決 iOS Safari 上常見的 `100vh` 與 Z-index 遮擋問題。
+| 類別 | 使用技術 |
+| --- | --- |
+| 前端 | Next.js 16、React 19、TypeScript、Tailwind CSS |
+| 資料 | Firebase Auth、Cloud Firestore、LocalStorage |
+| 視覺化／匯出 | Recharts、jsPDF、html2canvas |
+| PWA | `@ducanh2912/next-pwa` |
+| 部署 | GitHub Pages（靜態匯出） |
 
-3. **資料庫 CRUD**
-   - 完整的增刪查改功能，並實作資料庫即時監聽。
-   - LocalStorage 快取機制，實現秒速載入體驗。
+## 本機開發
 
-4. **🆕 進階搜尋與篩選**
-   - 關鍵字搜尋支援標題與描述欄位
-   - 多選分類篩選（可同時選擇多個標籤）
-   - 日期區間篩選（查看特定期間的行程）
-   - 即時顯示篩選結果數量
+### 1. 安裝依賴
 
-5. **🆕 樂觀更新 (Optimistic UI)**
-   - 刪除操作立即反映在 UI，提供流暢體驗
-   - Toast 通知附帶復原按鈕，5 秒內可撤銷操作
-   - 錯誤時自動回復狀態，確保資料一致性
+```bash
+npm install
+```
 
-6. **🆕 無障礙設計 (Accessibility)**
-   - 完整的 ARIA 標籤支援
-   - 鍵盤快捷鍵（ESC 關閉 Modal、Tab 導航）
-   - 增強的焦點指示器（紫色外框）
-   - 螢幕閱讀器友善
+### 2. 設定 Firebase 環境變數
 
-7. **🆕 批次操作系統**
-   - 支援多選行程或食譜進行批次刪除
-   - 視覺化選取狀態（勾選框與高亮效果）
-   - 全選/取消全選快速操作
-   - 批次模式下顯示已選取數量
+在專案根目錄建立 `.env.local`：
 
-8. **🆕 智慧分頁**
-   - 行程月曆：每頁 5 個事件，避免滾動過長
-   - 食譜列表：每頁 12 個食譜，網格佈局最佳化
-   - 上一頁/下一頁導航，顯示當前頁碼
-
-9. **🆕 預覽卡片下拉選單**
-   - 「即將到來」按鈕：快速預覽最近的未來行程
-   - 「回顧過往」按鈕：回顧最近完成的行程
-   - 多個行程時提供下拉選單切換查看
-   - 顯示行程計數器（第 X 個，共 Y 個）
-   - 一鍵跳轉到月曆詳細檢視
-
-10. **🆕 PWA 漸進式網頁應用**
-    - Service Worker 自動快取靜態資源，加速載入
-    - 支援離線訪問與安裝到主畫面
-    - 智慧更新偵測與提示機制
-    - 全平台相容（iOS、Android、Desktop）
-
-## 🚀 快速開始 (Local Development)
-
-如果你想在本地端運行此專案：
-
-1. **安裝依賴**
-   ```bash
-   npm install
-   ```
-
-2. **設定環境變數**
-請在根目錄建立 `.env.local` 檔案，並填入你的 Firebase Config：
 ```env
 NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-...
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 ```
 
+### 3. 啟動開發伺服器
 
-3. **啟動開發伺服器**
 ```bash
 npm run dev
 ```
 
+開啟 [http://localhost:3000](http://localhost:3000) 預覽。開發模式會停用 PWA；請以 production build 驗證 Service Worker 行為。
 
-打開瀏覽器輸入 `http://localhost:3000` 即可預覽。
+## 建置與部署
 
-**注意**: 開發模式下 PWA 功能會自動停用，僅在 Production 建置時啟用。
-
-## 🌐 部署 (Deployment)
-
-本專案已設定好 GitHub Pages 自動部署流程。
-
-1. **編譯與輸出**
-   ```bash
-   npm run build
-   ```
-   
-   此指令會使用 `--webpack` 旗標進行建置，並自動生成 Service Worker 檔案（位於 `public/sw.js`）。
-   
-   **重要**: PWA 套件需要使用 Webpack 建置器，不支援 Turbopack。
-
-2. **部署至 GitHub Pages**
-   ```bash
-   npm run deploy
-   ```
-
-*(需確保 `next.config.ts` 中的 `basePath` 與 `gh-pages` 套件已設定正確)*
-
-## 📂 PWA 相關檔案說明
-
-本專案整合了 PWA 功能，以下是相關檔案的說明：
-
-| 檔案路徑 | 功能說明 |
-|---------|---------|
-| `public/manifest.json` | PWA 應用配置檔（名稱、圖示、主題色等） |
-| `public/icon-192.png` | PWA 圖示（192x192，用於主畫面） |
-| `public/icon-512.png` | PWA 圖示（512x512，用於啟動畫面） |
-| `public/sw.js` | Service Worker 檔案（自動生成，已加入 `.gitignore`） |
-| `src/hooks/useServiceWorker.ts` | Service Worker 更新偵測 Hook |
-| `src/components/UpdatePrompt.tsx` | 更新提示 UI 元件 |
-| `src/components/PWAUpdateProvider.tsx` | PWA 更新功能整合元件 |
-| `next.config.ts` | Next.js 配置（整合 PWA 插件） |
-
-**自動生成檔案**: `public/sw.js`、`public/workbox-*.js` 等 Service Worker 相關檔案會在建置時自動產生，無需手動編輯。
-
----
-
-## 🎯 最新更新
-
-### v3.3 (2026/06) - 家庭帳本 (Expense Tracker)
-
-#### ✅ 新增功能
-- **家庭帳本系統**：全新 `/expenses` 頁面，支援記錄全家人與個人的收入及支出。
-- **資料分析圖表**：整合 Recharts 套件，提供動態圓餅圖分析（成員花費佔比 vs 個人分類佔比）。
-- **完整 CRUD**：支援新增、編輯、刪除紀錄，並帶有 5 秒復原的防呆機制。
-
-#### 🔧 技術改進
-- **共用架構**：沿用高效率的 LocalStorage 快取 + Firebase 即時同步架構。
-- **無縫 UI 整合**：Glassmorphism 風格元件與共用的 `useImmersiveMode`。
-
-### v3.2 (2026/01) - PWA 漸進式網頁應用
-
-#### ✅ 新增功能
-- **PWA 支援**：應用現在可以安裝到手機或桌面主畫面，體驗更接近原生 App。
-- **離線瀏覽**：支援離線訪問已載入的資料，透過 Service Worker 快取靜態資源。
-- **自動更新提示**：當有新版本時，會自動顯示更新提示，讓使用者隨時保持最新狀態。
-- **跨平台安裝**：支援 iOS、Android、Windows、macOS 等所有主流平台。
-
-#### 🔧 技術改進
-- **整合 @ducanh2912/next-pwa**：自動生成 Service Worker 並管理快取策略。
-- **useServiceWorker Hook**：封裝 Service Worker 註冊與更新偵測邏輯。
-- **PWAUpdateProvider**：提供全域更新提示功能，無需在每個頁面重複實作。
-- **Webpack 建置**：使用 `--webpack` 旗標確保 PWA 功能正常運作。
-- **Manifest 配置**：定義應用名稱、圖示、主題色等 PWA 元資料。
-
-#### 📊 使用範例
 ```bash
-# 安裝到主畫面（以 Chrome 為例）
-1. 開啟應用網址
-2. 點擊瀏覽器的「安裝」按鈕
-3. 應用會出現在主畫面，點擊即可開啟
+# 靜態匯出至 out/，以 Webpack 建置 PWA
+npm run build
 
-# 體驗離線功能
-1. 正常訪問應用並載入資料
-2. 關閉網路連線
-3. 重新開啟應用，仍可查看已快取的資料
-
-# 更新應用
-1. 當有新版本時，會自動顯示更新提示
-2. 點擊「立即更新」按鈕
-3. 頁面重新載入，套用最新版本
+# 本機以 gh-pages 發佈 out/
+npm run deploy
 ```
 
-### v3.1 (2026/01) - 自訂類別與時間優化
+專案的 GitHub Actions 會在 `main` 分支推送後執行 `npm ci`、注入 Firebase Secrets、建置並部署至 GitHub Pages。靜態部署路徑由 `next.config.ts` 的 `basePath: '/family_app'` 設定。
 
-#### ✅ 新增功能
-- **自訂類別 (Custom Categories)**：使用者可自由新增/刪除行程類別，不再受限於預設選項。
-- **時間區段 (Time Range)**：行程時間欄位升級，支援「開始時間」與「結束時間」（選填）。
+## 專案腳本
 
-#### 🔧 技術改進
-- **資料結構升級**：拆分 `time` 欄位為 `startTime` 與 `endTime`。
-- **向下相容 (Backward Compatibility)**：`useDates` Hook 自動轉換舊版資料格式，確保無縫升級。
-- **通知機器人同步**：Python 通知腳本 (`daily_notify.py`) 支援新的時間區段顯示格式。
+| 指令 | 用途 |
+| --- | --- |
+| `npm run dev` | 啟動本機開發伺服器 |
+| `npm run lint` | 執行 ESLint |
+| `npm run build` | 靜態建置並產出 `out/` |
+| `npm run deploy` | 建置後發佈 `out/` 到 gh-pages |
 
-### v3.0 (2026/01) - 批次操作與預覽增強
+## 相關提醒
 
-#### ✅ 新增功能
-- **批次操作系統**: 支援多選批次刪除行程與食譜，提升管理效率
-- **智慧分頁**: 行程 5 個/頁，食譜 12 個/頁，改善閱讀體驗
-- **預覽卡片下拉選單**: 即將到來/回顧過往按鈕可快速預覽行程，多個行程時可切換查看
-- **PDF 匯出功能**: 食譜可匯出為 PDF 格式，方便列印與分享
+- Firebase 設定值與 GitHub Actions Secrets 不會提交到儲存庫。
+- `public/sw.js` 與 `public/workbox-*.js` 由 PWA 建置流程產生，無須手動編輯。
+- 每日行程提醒工作流程會讀取獨立的 LINE 與 Firebase 憑證 Secrets。
 
-#### 🔧 技術改進
-- 新增 `deleteDates()` 和 `deleteRecipes()` 批次刪除方法
-- 整合 jspdf 和 html2canvas 實現 PDF 匯出
-- 優化預覽卡片 UI，支援下拉選單與視覺化計數器
-- 批次模式視覺反饋（勾選框、高亮效果、動畫）
+## 授權
 
-#### 📊 使用範例
-```typescript
-// 批次刪除多個行程
-1. 點擊「批次操作」按鈕
-2. 勾選要刪除的行程
-3. 點擊「刪除 (N)」按鈕
-
-// 快速預覽即將到來的行程
-點擊「即將到來」按鈕 → 顯示預覽卡片 → 使用下拉選單切換查看
-
-// 匯出食譜為 PDF
-開啟食譜計算器 → 調整份量 → 點擊「匯出 PDF」按鈕
-```
+此專案目前標示為私人專案（`private: true`）。
 
 ---
 
-## 📝 更新歷史
-
-### v4.0 (2026/06) - Woven & Weft 織物質感設計系統
-- 全面優化 UI/UX，採用大地色系（米色 `#e6e2d8`、燕麥白 `#f0ece1`、鐵鏽紅 `#b87e6b`、石板藍 `#5f7186`）
-- 行程標籤全面同步為大地色彩分類（洗牙、剪頭髮、排班、值班、繳費、其他）
-- 修復了所有在淺色背景下看不清的字體對比度與按鈕圖示
-- Tooltip 樣式重構，採用高對比度的縫線白紙卡標籤投影樣式
-- 彈窗與食譜計算器全面淺色化，提升長時間操作與閱讀的視覺舒適度
-- **🦛 Capybara Loader**：新增水豚跑步載入動畫，取代原本的純文字「載入中...」，以純 CSS 打造，與大地色系無縫融合
-
-### v3.3 (2026/06) - 家庭帳本 (Expense Tracker)
-- 新增收支紀錄系統、動態圓餅圖分析、成員獨立帳本
-
-### v3.2 (2026/01) - PWA 漸進式網頁應用
-- 整合 PWA 功能、支援離線瀏覽、安裝到主畫面、自動更新提示
-
-### v3.1 (2026/01) - 自訂類別與時間優化
-- 新增自訂類別系統、支援行程結束時間、資料向下相容
-
-### v3.0 (2026/01) - 批次操作與預覽增強
-- 新增批次操作、分頁、PDF 匯出、預覽卡片下拉選單
-
-### v2.0 (2026/01) - 搜尋與無障礙
-- 智慧搜尋系統、復原刪除、無障礙改善
-
-### v1.0 (2025/12) - 核心功能
-- 智慧行事曆、食譜計算器、Firebase 整合
-
----
-
-### 👨‍💻 Author
-
-Created by **Brian** | 2026
-*Built with passion, coffee, and AI.*
+Created by **Brian** · 2026

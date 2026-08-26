@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="350" viewBox="0 0 1200 350" role="img" aria-labelledby="title desc">
+  <title id="title">家庭資料同步與使用流程</title>
+  <desc id="desc">使用者透過 Google 登入後，家庭工具將資料同步至 Firestore；LocalStorage 提供快速載入，PWA 提供安裝與已載入資料的離線瀏覽。</desc>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5 0 10z" fill="#5f7186"/></marker><pattern id="weave" width="12" height="12" patternUnits="userSpaceOnUse"><path d="M0 3h12M0 9h12M3 0v12M9 0v12" fill="none" stroke="#dcd0c2" stroke-opacity=".42" stroke-width="1"/></pattern></defs>
+  <rect width="1200" height="350" rx="30" fill="#f0ece1"/><rect x="1" y="1" width="1198" height="348" rx="29" fill="url(#weave)" opacity=".65"/>
+  <g font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang TC',sans-serif">
+    <text x="60" y="64" fill="#3d3a36" font-size="38" font-weight="800">一個帳號，四個家庭工具</text><text x="60" y="96" fill="#5f6368" font-size="20">清楚區分同步資料、快速載入與安裝後的使用體驗。</text><path d="M235 204h76M498 204h76M837 204h76" stroke="#5f7186" stroke-width="4" stroke-linecap="round" marker-end="url(#arrow)"/>
+    <g transform="translate(60 140)"><rect width="175" height="130" rx="20" fill="#e6e2d8" stroke="#dcd0c2" stroke-width="2" stroke-dasharray="8 6"/><text x="24" y="40" fill="#b87e6b" font-size="20" font-weight="800">1 · 登入</text><text x="24" y="72" fill="#3d3a36" font-size="22" font-weight="800">Google 登入</text><text x="24" y="105" fill="#5f6368" font-size="18">Firebase Auth</text></g>
+    <g transform="translate(323 140)"><rect width="175" height="130" rx="20" fill="#e6e2d8" stroke="#dcd0c2" stroke-width="2" stroke-dasharray="8 6"/><text x="24" y="40" fill="#5f7186" font-size="20" font-weight="800">2 · 記錄</text><text x="24" y="72" fill="#3d3a36" font-size="22" font-weight="800">生活紀錄</text><text x="24" y="105" fill="#5f6368" font-size="18">四項家庭工具</text></g>
+    <g transform="translate(586 140)"><rect width="251" height="130" rx="20" fill="#e6e2d8" stroke="#dcd0c2" stroke-width="2" stroke-dasharray="8 6"/><text x="24" y="40" fill="#5f7186" font-size="20" font-weight="800">3 · 同步與快取</text><text x="24" y="72" fill="#3d3a36" font-size="24" font-weight="800">雲端與快取</text><text x="24" y="105" fill="#5f6368" font-size="16" font-weight="700">Firestore + LocalStorage</text></g>
+    <g transform="translate(925 140)"><rect width="215" height="130" rx="20" fill="#e6e2d8" stroke="#dcd0c2" stroke-width="2" stroke-dasharray="8 6"/><text x="24" y="40" fill="#b87e6b" font-size="20" font-weight="800">4 · 隨手使用</text><text x="24" y="72" fill="#3d3a36" font-size="24" font-weight="800">PWA</text><text x="24" y="105" fill="#5f6368" font-size="18">可安裝、快取靜態資源</text></g>
+  </g>
+</svg>

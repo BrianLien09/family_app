@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import date, datetime, timedelta
-from typing import TypedDict
+from typing import Optional, TypedDict
 
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -45,7 +45,7 @@ CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 USER_ID = os.getenv("LINE_USER_ID")
 
 
-def calculate_average_interval_days(purchase_dates: list[str]) -> int | None:
+def calculate_average_interval_days(purchase_dates: list[str]) -> Optional[int]:
     if len(purchase_dates) < 2:
         return None
 
@@ -112,7 +112,8 @@ def get_schedule_events(reference_date: date) -> list[ScheduleEvent]:
                     }
                 )
     except Exception as error:
-        print(f"{zh('\\u8b80\\u53d6\\u884c\\u7a0b\\u8cc7\\u6599\\u5931\\u6557')}: {error}")
+        message = zh("\\u8b80\\u53d6\\u884c\\u7a0b\\u8cc7\\u6599\\u5931\\u6557")
+        print(f"{message}: {error}")
 
     events.sort(key=lambda event: (event["date"], event["sort_time"], event["title"]))
     return events
@@ -169,7 +170,8 @@ def get_due_restock_items(reference_date: date) -> list[RestockReminder]:
                 }
             )
     except Exception as error:
-        print(f"{zh('\\u8b80\\u53d6\\u88dc\\u8ca8\\u8cc7\\u6599\\u5931\\u6557')}: {error}")
+        message = zh("\\u8b80\\u53d6\\u88dc\\u8ca8\\u8cc7\\u6599\\u5931\\u6557")
+        print(f"{message}: {error}")
 
     reminders.sort(key=lambda reminder: (reminder["predicted_due_date"], reminder["name"]))
     return reminders
@@ -219,6 +221,10 @@ def build_schedule_section(events: list[ScheduleEvent], reference_date: date) ->
 
 def build_restock_section(reminders: list[RestockReminder]) -> str:
     lines = [zh("\\U0001f9fb \\u88dc\\u8ca8\\u63d0\\u9192")]
+    predicted_date_label = zh("\\u63a8\\u7b97\\u65e5")
+    smart_frequency_label = zh("\\u667a\\u6167\\u983b\\u7387")
+    day_label = zh("\\u5929")
+    note_label = zh("\\u5099\\u8a3b\\uff1a")
 
     for reminder in reminders:
         status = (
@@ -229,17 +235,17 @@ def build_restock_section(reminders: list[RestockReminder]) -> str:
 
         lines.append(
             f"\u2022 {reminder['name']}\uff5c{status}\uff5c"
-            f"{zh('\\u63a8\\u7b97\\u65e5')} {reminder['predicted_due_date']}\uff5c"
-            f"{zh('\\u667a\\u6167\\u983b\\u7387')} {reminder['effective_interval_days']} {zh('\\u5929')}"
+            f"{predicted_date_label} {reminder['predicted_due_date']}\uff5c"
+            f"{smart_frequency_label} {reminder['effective_interval_days']} {day_label}"
         )
 
         if reminder["note"]:
-            lines.append(f"  {zh('\\u5099\\u8a3b\\uff1a')}{reminder['note']}")
+            lines.append(f"  {note_label}{reminder['note']}")
 
     return "\n".join(lines)
 
 
-def build_message(reference_date: date) -> tuple[str | None, list[RestockReminder]]:
+def build_message(reference_date: date) -> tuple[Optional[str], list[RestockReminder]]:
     reminders = get_due_restock_items(reference_date)
 
     if not reminders:
@@ -272,7 +278,8 @@ def mark_reminders_as_sent(reminders: list[RestockReminder]) -> None:
                 }
             )
         except Exception as error:
-            print(f"{zh('\\u66f4\\u65b0\\u63d0\\u9192\\u72c0\\u614b\\u5931\\u6557')} ({reminder['name']}): {error}")
+            message = zh("\\u66f4\\u65b0\\u63d0\\u9192\\u72c0\\u614b\\u5931\\u6557")
+            print(f"{message} ({reminder['name']}): {error}")
 
 
 def main() -> None:
@@ -293,7 +300,8 @@ def main() -> None:
         mark_reminders_as_sent(reminders)
         print(zh(f"\\u5df2\\u9001\\u51fa {len(reminders)} \\u7b46\\u88dc\\u8ca8\\u63d0\\u9192\\uff0c\\u4e26\\u5408\\u4f75\\u4eca\\u65e5\\u8207\\u660e\\u65e5\\u884c\\u7a0b"))
     except Exception as error:
-        print(f"{zh('\\u004c\\u0049\\u004e\\u0045 \\u63a8\\u64ad\\u5931\\u6557')}: {error}")
+        message = zh("\\u004c\\u0049\\u004e\\u0045 \\u63a8\\u64ad\\u5931\\u6557")
+        print(f"{message}: {error}")
 
 
 if __name__ == "__main__":

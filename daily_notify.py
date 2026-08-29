@@ -2,6 +2,7 @@ import json
 import os
 from datetime import date, datetime, timedelta
 from typing import Optional, TypedDict
+from zoneinfo import ZoneInfo
 
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -188,7 +189,7 @@ def build_schedule_section(events: list[ScheduleEvent], reference_date: date) ->
     tomorrow_lines: list[str] = []
 
     for event in events:
-        line = f"\u2022 {event['display_time']}\uff5c{event['title']}"
+        line = f"\U0001f539 {event['display_time']}\uff5c{event['title']}"
         if event["date"] == today_str:
             today_lines.append(line)
         elif event["date"] == tomorrow_str:
@@ -200,7 +201,7 @@ def build_schedule_section(events: list[ScheduleEvent], reference_date: date) ->
         sections.append(
             "\n".join(
                 [
-                    zh(f"\\U0001f4c5 \\u660e\\u5929\\u884c\\u7a0b\\uff08{tomorrow_str}\\uff09"),
+                    zh(f"\\U0001f4c5 {tomorrow_str} (\\u660e\\u5929)"),
                     *tomorrow_lines,
                 ]
             )
@@ -210,7 +211,7 @@ def build_schedule_section(events: list[ScheduleEvent], reference_date: date) ->
         sections.append(
             "\n".join(
                 [
-                    zh(f"\\U0001f558 \\u4eca\\u5929\\u5269\\u9918\\u884c\\u7a0b\\uff08{today_str}\\uff09"),
+                    zh(f"\\U0001f4c5 {today_str} (\\u4eca\\u5929\\u5df2\\u5b8c\\u6210)"),
                     *today_lines,
                 ]
             )
@@ -234,7 +235,7 @@ def build_restock_section(reminders: list[RestockReminder]) -> str:
         )
 
         lines.append(
-            f"\u2022 {reminder['name']}\uff5c{status}\uff5c"
+            f"\U0001f539 {reminder['name']}\uff5c{status}\uff5c"
             f"{predicted_date_label} {reminder['predicted_due_date']}\uff5c"
             f"{smart_frequency_label} {reminder['effective_interval_days']} {day_label}"
         )
@@ -246,24 +247,26 @@ def build_restock_section(reminders: list[RestockReminder]) -> str:
 
 
 def build_message(reference_date: date) -> tuple[Optional[str], list[RestockReminder]]:
+    schedule_section = build_schedule_section(get_schedule_events(reference_date), reference_date)
     reminders = get_due_restock_items(reference_date)
 
-    if not reminders:
+    if not schedule_section and not reminders:
         return None, []
 
-    schedule_section = build_schedule_section(get_schedule_events(reference_date), reference_date)
-    restock_section = build_restock_section(reminders)
+    if schedule_section:
+        intro = zh("\\u0048\\u0069 \\u5927\\u5bb6\\u665a\\u5b89\\uff0c\\u6211\\u662f\\u5c0f\\u7ba1\\u5bb6 \\U0001f916\\n\\u4eca\\u5929\\u8f9b\\u82e6\\u4e86\\uff01\\u4f86\\u770b\\u770b\\u660e\\u5929\\u7684\\u884c\\u7a0b\\u5427\\uff5e")
+    else:
+        intro = zh("\\u0048\\u0069 \\u5927\\u5bb6\\u665a\\u5b89\\uff0c\\u6211\\u662f\\u5c0f\\u7ba1\\u5bb6 \\U0001f916\\n\\u4eca\\u5929\\u8f9b\\u82e6\\u4e86\\uff01\\u4f86\\u770b\\u770b\\u88dc\\u8ca8\\u63d0\\u9192\\u5427\\uff5e")
 
-    sections = [
-        zh("\\u0048\\u0069 \\u5927\\u5bb6\\u665a\\u5b89\\uff0c\\u6211\\u662f\\u5bb6\\u5ead\\u88dc\\u8ca8\\u5c0f\\u7ba1\\u5bb6 \\U0001f916"),
-        zh("\\u4eca\\u5929\\u5148\\u628a\\u8a72\\u88dc\\u8ca8\\u7684\\u6771\\u897f\\u6574\\u7406\\u597d\\u4e86\\uff0c\\u9806\\u4fbf\\u9644\\u4e0a\\u4eca\\u65e5\\u8207\\u660e\\u65e5\\u884c\\u7a0b\\u3002"),
-        restock_section,
-    ]
+    sections = [intro]
 
     if schedule_section:
         sections.append(schedule_section)
 
-    sections.append(zh("\\u63d0\\u9192\\u5df2\\u5408\\u4f75\\u6210\\u540c\\u4e00\\u5247 LINE \\u8a0a\\u606f\\uff0c\\u907f\\u514d\\u984d\\u5ea6\\u6d6a\\u8cbb\\u3002"))
+    if reminders:
+        sections.append(build_restock_section(reminders))
+
+    sections.append(zh("\\u8a18\\u5f97\\u8a2d\\u9b27\\u9418\\u5594\\uff01\\u23f0"))
 
     return "\n\n".join(sections), reminders
 
@@ -287,7 +290,7 @@ def main() -> None:
         print(zh("\\u004c\\u0049\\u004e\\u0045 Token \\u6216 User ID \\u672a\\u8a2d\\u5b9a"))
         return
 
-    today = datetime.now().date()
+    today = datetime.now(ZoneInfo("Asia/Taipei")).date()
     message, reminders = build_message(today)
 
     if not message:
@@ -298,7 +301,10 @@ def main() -> None:
         line_bot_api = LineBotApi(CHANNEL_ACCESS_TOKEN)
         line_bot_api.push_message(USER_ID, TextSendMessage(text=message))
         mark_reminders_as_sent(reminders)
-        print(zh(f"\\u5df2\\u9001\\u51fa {len(reminders)} \\u7b46\\u88dc\\u8ca8\\u63d0\\u9192\\uff0c\\u4e26\\u5408\\u4f75\\u4eca\\u65e5\\u8207\\u660e\\u65e5\\u884c\\u7a0b"))
+        if reminders:
+            print(zh(f"\\u5df2\\u9001\\u51fa {len(reminders)} \\u7b46\\u88dc\\u8ca8\\u63d0\\u9192\\uff0c\\u4e26\\u5408\\u4f75\\u4eca\\u65e5\\u8207\\u660e\\u65e5\\u884c\\u7a0b"))
+        else:
+            print(zh("\\u5df2\\u9001\\u51fa\\u4eca\\u65e5\\u8207\\u660e\\u65e5\\u884c\\u7a0b\\u63d0\\u9192"))
     except Exception as error:
         message = zh("\\u004c\\u0049\\u004e\\u0045 \\u63a8\\u64ad\\u5931\\u6557")
         print(f"{message}: {error}")

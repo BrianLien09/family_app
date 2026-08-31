@@ -16,6 +16,11 @@ import clsx from 'clsx';
 import toast from 'react-hot-toast';
 import { auth } from '@/lib/firebase';
 
+function formatTimeRange(item: Pick<DateItem, 'startTime' | 'endTime'>): string {
+  if (item.startTime && item.endTime) return `${item.startTime} ~ ${item.endTime}`;
+  return item.startTime || item.endTime || '';
+}
+
 export default function Home() {
   const { dates, addDate, deleteDate, deleteDates, updateDate, duplicateDate, addDateToMultipleDates, isLoaded, refresh, isRefreshing } = useDates();
   const { categories } = useCategories();
@@ -567,7 +572,10 @@ export default function Home() {
                                 {Math.ceil((new Date(item.date).getTime() - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24))}天
                               </span>
                            </div>
-                           <div className="flex items-center gap-2 mt-0.5">
+                           <div className="hidden md:block mt-0.5 text-[11px] text-[#5f7186] truncate">
+                              {formatTimeRange(item)}
+                           </div>
+                           <div className="flex md:hidden items-center gap-2 mt-0.5">
                               <span className={clsx("w-1.5 h-1.5 rounded-full shrink-0", 
                                  item.category === '洗牙' ? 'bg-[#5f7186]' :
                                  item.category === '剪頭髮' ? 'bg-[#b87e6b]' :
@@ -576,7 +584,7 @@ export default function Home() {
                                  item.category === '繳費' ? 'bg-[#78716c]' : 'bg-[#3d3a36]/70'
                               )}></span>
                               <span className="text-xs text-[#3d3a36] truncate">
-                                {item.startTime && `${item.startTime} · `}{item.category}
+                                {formatTimeRange(item) && `${formatTimeRange(item)} · `}{item.category}
                               </span>
                            </div>
                         </div>

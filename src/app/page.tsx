@@ -12,6 +12,7 @@ import CapybaraLoader from '@/components/CapybaraLoader';
 import { DateItem, DateCategory } from '@/types';
 import { useCategories } from '@/hooks/useCategories';
 import clsx from 'clsx';
+import { createCategoryColorMap, getCategoryColorStyles } from '@/lib/categoryColors';
 // 2. 引入 toast 和 auth
 import toast from 'react-hot-toast';
 import { auth } from '@/lib/firebase';
@@ -24,6 +25,13 @@ function formatTimeRange(item: Pick<DateItem, 'startTime' | 'endTime'>): string 
 export default function Home() {
   const { dates, addDate, deleteDate, deleteDates, updateDate, duplicateDate, addDateToMultipleDates, isLoaded, refresh, isRefreshing } = useDates();
   const { categories } = useCategories();
+  const categoryColors = useMemo(
+    () => createCategoryColorMap([
+      ...categories,
+      ...dates.map(item => item.category),
+    ]),
+    [categories, dates],
+  );
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDate, setEditingDate] = useState<DateItem | null>(null);
@@ -468,15 +476,10 @@ export default function Home() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
                     <h4 className="text-base font-bold text-[#3d3a36]">{currentEvent.title}</h4>
-                    <span className={clsx(
-                      "px-2 py-0.5 rounded text-[10px] font-medium shrink-0",
-                      currentEvent.category === '洗牙' ? 'bg-[#5f7186]/10 text-[#5f7186] border-dashed border-[#5f7186]/30' :
-                      currentEvent.category === '剪頭髮' ? 'bg-[#b87e6b]/10 text-[#b87e6b] border-dashed border-[#b87e6b]/30' :
-                      currentEvent.category === '阿弟排班' ? 'bg-[#9c9c9c]/15 text-[#3d3a36] border-dashed border-[#9c9c9c]/40' : 
-                      currentEvent.category === '孔呆值班' ? 'bg-[#d4c5b0]/20 text-[#8c7457] border-dashed border-[#d4c5b0]/50' :
-                      currentEvent.category === '繳費' ? 'bg-[#78716c]/10 text-[#3d3a36] border-dashed border-[#78716c]/30' : 
-                      'bg-[#3d3a36]/5 text-[#3d3a36]/70 border-dashed border-[#3d3a36]/20'
-                    )}>
+                    <span
+                      className="px-2 py-0.5 rounded text-[10px] font-medium shrink-0 border border-dashed"
+                      style={getCategoryColorStyles(currentEvent.category, categoryColors).badge}
+                    >
                       {currentEvent.category}
                     </span>
                   </div>
@@ -576,13 +579,10 @@ export default function Home() {
                               {formatTimeRange(item)}
                            </div>
                            <div className="flex md:hidden items-center gap-2 mt-0.5">
-                              <span className={clsx("w-1.5 h-1.5 rounded-full shrink-0", 
-                                 item.category === '洗牙' ? 'bg-[#5f7186]' :
-                                 item.category === '剪頭髮' ? 'bg-[#b87e6b]' :
-                                 item.category === '阿弟排班' ? 'bg-[#6e8568]' : 
-                                 item.category === '孔呆值班' ? 'bg-[#b8956b]' :
-                                 item.category === '繳費' ? 'bg-[#78716c]' : 'bg-[#3d3a36]/70'
-                              )}></span>
+                               <span
+                                 className="w-1.5 h-1.5 rounded-full shrink-0"
+                                 style={getCategoryColorStyles(item.category, categoryColors).dot}
+                               ></span>
                               <span className="text-xs text-[#3d3a36] truncate">
                                 {formatTimeRange(item) && `${formatTimeRange(item)} · `}{item.category}
                               </span>
@@ -621,9 +621,10 @@ export default function Home() {
                onBatchDelete={handleBatchDelete}
                onSelectAll={toggleSelectAll}
                allSelected={selectedIds.length === filteredDates.length && filteredDates.length > 0}
-               onDuplicateDate={handleDuplicateDate}
-               onBatchAddRequest={handleBatchAddRequest}
-            />
+                onDuplicateDate={handleDuplicateDate}
+                onBatchAddRequest={handleBatchAddRequest}
+                categoryColors={categoryColors}
+             />
         </div>
 
       </div>

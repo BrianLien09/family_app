@@ -3,6 +3,7 @@
 import { DateItem } from '@/types';
 import { Trash2, Clock, Tag, Edit, Check } from 'lucide-react';
 import clsx from 'clsx';
+import { CategoryColorMap, getCategoryColorStyles } from '@/lib/categoryColors';
 
 interface DateCardProps {
   item: DateItem;
@@ -11,9 +12,10 @@ interface DateCardProps {
   batchMode?: boolean;
   isSelected?: boolean;
   onToggleSelect?: (id: string) => void;
+  categoryColors: CategoryColorMap;
 }
 
-export default function DateCard({ item, onDelete, onEdit, batchMode = false, isSelected = false, onToggleSelect }: DateCardProps) {
+export default function DateCard({ item, onDelete, onEdit, batchMode = false, isSelected = false, onToggleSelect, categoryColors }: DateCardProps) {
   const dateObj = new Date(item.date);
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -23,6 +25,7 @@ export default function DateCard({ item, onDelete, onEdit, batchMode = false, is
   
   // Is urgent? (Within 3 days)
   const isUrgent = diffDays >= 0 && diffDays <= 3;
+  const categoryStyles = getCategoryColorStyles(item.category, categoryColors);
 
   let daysText = '';
   if (diffDays < 0) daysText = '已結束';
@@ -59,7 +62,7 @@ export default function DateCard({ item, onDelete, onEdit, batchMode = false, is
        
        {/* Bullet Point (only when not in batch mode) */}
        {!batchMode && (
-         <div className="mt-1.5 w-2 h-2 rounded-full shrink-0 bg-pink-500"></div>
+         <div className="mt-1.5 w-2 h-2 rounded-full shrink-0" style={categoryStyles.dot}></div>
        )}
 
        <div className="flex-1 min-w-0">
@@ -100,7 +103,10 @@ export default function DateCard({ item, onDelete, onEdit, batchMode = false, is
              </span>
 
              {/* 3. 分類 */}
-             <span className="flex items-center gap-1.5 text-[#5f7186] font-medium text-sm bg-[#5f7186]/10 px-2 py-0.5 rounded-md whitespace-nowrap">
+              <span
+                className="flex items-center gap-1.5 font-medium text-sm px-2 py-0.5 rounded-md whitespace-nowrap border border-dashed"
+                style={categoryStyles.badge}
+              >
                <Tag size={14} />
                {item.category}
              </span>

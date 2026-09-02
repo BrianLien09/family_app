@@ -10,6 +10,7 @@ import { ChevronLeft, ChevronRight, RotateCw, Plus, CheckSquare, Square, Trash2,
 import clsx from 'clsx';
 import { DateItem } from '@/types';
 import DateCard from '@/components/DateManager/DateCard';
+import { CategoryColorMap, getCategoryColorStyles } from '@/lib/categoryColors';
 
 interface CalendarWidgetProps {
   events: DateItem[];
@@ -27,6 +28,7 @@ interface CalendarWidgetProps {
   allSelected?: boolean;
   onDuplicateDate?: (sourceId: string, targetDate: string) => void;
   onBatchAddRequest?: (dates: Date[]) => void;
+  categoryColors: CategoryColorMap;
 }
 
 // ====================================================================
@@ -52,8 +54,7 @@ interface DayCellProps {
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent, day: Date) => void;
   onDragEnd: () => void;
-  getEventColor: (category: string) => string;
-  getDotColor: (category: string) => string;
+  categoryColors: CategoryColorMap;
 }
 
 const DayCell = memo(function DayCell({
@@ -71,8 +72,7 @@ const DayCell = memo(function DayCell({
   onDragOver,
   onDrop,
   onDragEnd,
-  getEventColor,
-  getDotColor,
+  categoryColors,
 }: DayCellProps) {
   const dateLabel = format(day, 'd');
 
@@ -120,7 +120,11 @@ const DayCell = memo(function DayCell({
       {/* 手機版：圓點指示器 */}
       <div className="flex gap-0.5 justify-center flex-wrap content-start md:hidden flex-1">
         {events.slice(0, 4).map((event, idx) => (
-          <div key={idx} className={clsx('rounded-full w-1.5 h-1.5', getDotColor(event.category))} />
+          <div
+            key={idx}
+            className="rounded-full w-1.5 h-1.5"
+            style={getCategoryColorStyles(event.category, categoryColors).dot}
+          />
         ))}
       </div>
 
@@ -144,9 +148,9 @@ const DayCell = memo(function DayCell({
             onDragEnd={onDragEnd}
             className={clsx(
               'text-xs font-bold px-2 py-1 rounded border-2 border-dashed truncate shadow-[0_2px_8px_rgba(139,121,101,0.04)] cursor-move',
-              getEventColor(event.category),
               'hover:opacity-80 active:opacity-60 transition-opacity',
             )}
+            style={getCategoryColorStyles(event.category, categoryColors).event}
             title={`${event.title} - 拖曳以複製到其他日期`}
             aria-label={`拖曳 ${event.title} 以複製到其他日期`}
           >
@@ -171,7 +175,8 @@ const DayCell = memo(function DayCell({
   prev.isDragActive === next.isDragActive &&
   prev.isCurrentMonth === next.isCurrentMonth &&
   prev.events.length === next.events.length &&
-  prev.events === next.events
+  prev.events === next.events &&
+  prev.categoryColors === next.categoryColors
 );
 
 export default function CalendarWidget({ 
@@ -189,7 +194,8 @@ export default function CalendarWidget({
   onSelectAll,
   allSelected = false,
   onDuplicateDate,
-  onBatchAddRequest
+  onBatchAddRequest,
+  categoryColors,
 }: CalendarWidgetProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -338,26 +344,6 @@ export default function CalendarWidget({
     currentPage * itemsPerPage
   );
 
-  // getEventColor / getDotColor 是純函式（無外部依賴），用 useCallback 穩定引用，
-  // 確保傳入 DayCell 時不會因為新函式實例讓 memo 比較失效
-  const getEventColor = useCallback((category: string) => {
-    if (category === '洗牙') return 'bg-[#5f7186]/15 text-[#5f7186] border-dashed border-[#5f7186]/30';
-    if (category === '剪頭髮') return 'bg-[#b87e6b]/15 text-[#b87e6b] border-dashed border-[#b87e6b]/30';
-    if (category === '阿弟排班') return 'bg-[#6e8568]/15 text-[#4e5f48] border-dashed border-[#6e8568]/30';
-    if (category === '孔呆值班') return 'bg-[#b8956b]/15 text-[#8c653d] border-dashed border-[#b8956b]/30';
-    if (category === '繳費') return 'bg-[#cbb573]/15 text-[#917937] border-dashed border-[#cbb573]/30';
-    return 'bg-[#8f7d95]/15 text-[#6c5972] border-dashed border-[#8f7d95]/30';
-  }, []);
-  
-  const getDotColor = useCallback((category: string) => {
-    if (category === '洗牙') return 'bg-[#5f7186]';
-    if (category === '剪頭髮') return 'bg-[#b87e6b]';
-    if (category === '阿弟排班') return 'bg-[#6e8568]';
-    if (category === '孔呆值班') return 'bg-[#b8956b]';
-    if (category === '繳費') return 'bg-[#cbb573]';
-    return 'bg-[#8f7d95]';
-  }, []);
-
   return (
     <div className="glass-card p-4 md:p-6 select-none h-full flex flex-col">
       {/* Header */}
@@ -494,8 +480,7 @@ export default function CalendarWidget({
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               onDragEnd={handleDragEnd}
-              getEventColor={getEventColor}
-              getDotColor={getDotColor}
+              categoryColors={categoryColors}
             />
           );
         })}
@@ -519,6 +504,7 @@ export default function CalendarWidget({
                   batchMode={batchMode}
                   isSelected={selectedIds.includes(event.id)}
                   onToggleSelect={onToggleSelect}
+                  categoryColors={categoryColors}
                 />
               ))
             ) : (

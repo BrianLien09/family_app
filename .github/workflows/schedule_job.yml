@@ -2,9 +2,9 @@ name: Daily Schedule Check
 
 on:
   schedule:
-    # 台灣 19:50 = UTC 11:50
-    # 提早 10 分鐘去排隊，通常能在 20:00~20:10 之間收到
-    - cron: '50 11 * * *'
+    # 台灣 17:50 = UTC 09:50
+    # 提前執行並避開整點高峰，降低免費 GitHub Actions 排隊延遲到午夜的機率
+    - cron: '50 9 * * *'
   # 允許你手動按按鈕測試
   workflow_dispatch:
 

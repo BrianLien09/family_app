@@ -48,7 +48,6 @@ export default function Navbar() {
     { name: '家庭帳本', href: '/expenses' },
     { name: '庫存與補貨', href: '/restock' },
     { name: '冥夜小助手', href: 'https://brianlien09.github.io/schedule_app/' },
-    { name: '冥夜音樂 🎵', href: 'https://brianlien09.github.io/Music_app/' },
   ];
 
   return (
@@ -89,9 +88,10 @@ export default function Navbar() {
                       href={item.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap text-[#3d3a36] hover:text-[#b87e6b] hover:bg-[#dcd0c2]/30"
+                      className="px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap inline-flex items-center gap-1.5 text-[#3d3a36] hover:text-[#b87e6b] hover:bg-[#dcd0c2]/30"
                     >
                       {item.name}
+                      <ExternalLink size={16} className="shrink-0" aria-hidden="true" />
                     </a>
                   );
                 }
@@ -164,11 +164,11 @@ export default function Navbar() {
                      href={item.href}
                      target="_blank"
                      rel="noopener noreferrer"
-                     className="px-4 py-3 rounded-lg text-base font-bold transition-all flex items-center justify-between group text-[#3d3a36] hover:text-[#b87e6b] hover:bg-[#dcd0c2]/30"
+                     className="px-4 py-3 rounded-lg text-base font-bold transition-all flex items-center gap-1.5 text-[#3d3a36] hover:text-[#b87e6b] hover:bg-[#dcd0c2]/30"
                      onClick={() => setIsMobileMenuOpen(false)}
                    >
                      {item.name}
-                     <ExternalLink size={16} className="text-[#3d3a36] group-hover:text-[#b87e6b] transition-all duration-200" />
+                     <ExternalLink size={16} className="shrink-0" aria-hidden="true" />
                    </a>
                  );
                }

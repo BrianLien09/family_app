@@ -2,6 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 保持同一個月曆實例，以版面過渡收合側欄並釋放閱讀空間。 */
+.overview-page {
+  width: 100%;
+  max-width: 64rem;
+  transition: max-width 420ms cubic-bezier(.22, 1, .36, 1);
+}
+.overview-page.is-calendar-expanded { max-width: 100%; }
+.overview-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; }
+.overview-sidebar {
+  min-width: 0;
+  overflow: hidden;
+  order: 2;
+  max-height: 80rem;
+  transition: opacity 260ms ease, transform 420ms ease, max-height 420ms ease;
+}
+.overview-calendar { order: 1; }
+.overview-sidebar > div { min-width: 12rem; }
+.is-calendar-expanded .overview-sidebar {
+  opacity: 0;
+  transform: translateX(-1rem);
+  max-height: 0;
+}
+.is-calendar-expanded .overview-layout { gap: 0; }
+@media (min-width: 768px) {
+  .overview-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+    transition: grid-template-columns 420ms cubic-bezier(.22, 1, .36, 1), gap 420ms ease;
+  }
+  .overview-sidebar { order: 1; max-height: none; }
+  .overview-calendar { order: 2; }
+  .is-calendar-expanded .overview-layout { grid-template-columns: minmax(0, 0fr) minmax(0, 4fr); }
+  .is-calendar-expanded .overview-sidebar { max-height: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .overview-page, .overview-layout, .overview-sidebar { transition: none; }
+}
+
 :root {
   --background: #e6e2d8; /* Warm Grey-Beige Background */
   --foreground: #3d3a36; /* Dark Charcoal Text */

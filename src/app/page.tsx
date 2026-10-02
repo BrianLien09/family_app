@@ -1,7 +1,7 @@
 'use client';
 
 // 1. 引入 useEffect
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { useDates } from '@/hooks/useDates';
 import CalendarWidget from '@/components/CalendarWidget';
@@ -34,6 +34,16 @@ export default function Home() {
   );
   
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
+  const toggleCalendarExpanded = useCallback(() => setIsCalendarExpanded(value => !value), []);
+  useEffect(() => {
+    if (!isCalendarExpanded || isModalOpen) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsCalendarExpanded(false);
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isCalendarExpanded, isModalOpen]);
   const [editingDate, setEditingDate] = useState<DateItem | null>(null);
   const [selectedDateForNew, setSelectedDateForNew] = useState<string | null>(null);
   
@@ -254,7 +264,7 @@ export default function Home() {
   if (!isLoaded) return <CapybaraLoader label="正在整理家庭行程..." />;
 
   return (
-    <div className="container mx-auto px-4 py-8 pt-20 max-w-5xl">
+    <div className={clsx('overview-page mx-auto px-4 py-8 pt-20', isCalendarExpanded && 'is-calendar-expanded')}>
       {/* 搜尋與篩選區 */}
       <div className="glass-card p-4 mb-6">
         {/* 搜尋欄 */}
@@ -504,7 +514,7 @@ export default function Home() {
                   setPreviewMode(null);
                   setPreviewIndex(0);
                   // 滾動到月曆區域
-                  const calendarSection = document.querySelector('.md\\:col-span-9');
+                  const calendarSection = document.getElementById('overview-calendar');
                   if (calendarSection) {
                     calendarSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   }
@@ -528,10 +538,11 @@ export default function Home() {
         );
       })()}
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+      <div className="overview-layout">
         
         {/* 左側欄位 - 手機版排在月曆之後（order-2），桌面版排在前面（md:order-1） */}
-        <div className="md:col-span-3 flex flex-col gap-6 order-2 md:order-1">
+        <div className="overview-sidebar" inert={isCalendarExpanded} aria-hidden={isCalendarExpanded}>
+          <div className="flex flex-col gap-6">
            {/* 日期卡片 */}
            <div className="glass-card flex flex-col items-center justify-center text-center py-5 md:py-8 relative overflow-hidden group">
              {/* ... */}
@@ -595,10 +606,10 @@ export default function Home() {
                  )}
               </div>
            </div>
+          </div>
         </div>
-
-        {/* 右側欄位 (月曆) - 手機版優先顯示（order-1），桌面版排在右側（md:order-2） */}
-        <div className="md:col-span-9 order-1 md:order-2">
+        {/* 月曆保持掛載，展開時保留月份、選取日期與批次狀態。 */}
+        <div id="overview-calendar" className="overview-calendar min-w-0 scroll-mt-24">
            <CalendarWidget 
                events={filteredDates} 
                onAddEvent={handleCalendarAddClick}
@@ -619,6 +630,8 @@ export default function Home() {
                 onDuplicateDate={handleDuplicateDate}
                 onBatchAddRequest={handleBatchAddRequest}
                 categoryColors={categoryColors}
+                isExpanded={isCalendarExpanded}
+                onExpandedToggle={toggleCalendarExpanded}
              />
         </div>
 

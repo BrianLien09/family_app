@@ -1,18 +1,22 @@
 'use client';
 
 import { useState, useMemo, useEffect, memo, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import { 
   format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, 
   eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday 
 } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, RotateCw, Plus, CheckSquare, Square, Trash2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RotateCw, Plus, CheckSquare, Square, Trash2, X, Maximize2, Minimize2, Copy, Download } from 'lucide-react';
 import clsx from 'clsx';
 import { DateItem } from '@/types';
 import DateCard from '@/components/DateManager/DateCard';
 import { CategoryColorMap, getCategoryColorStyles } from '@/lib/categoryColors';
+import { createCalendarImage, downloadCalendarImage } from './calendarImage';
 
 interface CalendarWidgetProps {
+  isExpanded?: boolean;
+  onExpandedToggle?: () => void;
   events: DateItem[];
   onAddEvent?: (date: Date) => void; // 點擊新增按鈕時觸發
   onDelete: (id: string) => void;
@@ -40,6 +44,7 @@ interface CalendarWidgetProps {
 // - 用 memo + 自訂比較函式，只在真正影響外觀的 props 改變時才重繪
 // ====================================================================
 interface DayCellProps {
+  isExpanded: boolean;
   day: Date;
   events: DateItem[];
   isCurrentMonth: boolean;
@@ -58,6 +63,7 @@ interface DayCellProps {
 }
 
 const DayCell = memo(function DayCell({
+  isExpanded,
   day,
   events,
   isCurrentMonth,
@@ -82,8 +88,8 @@ const DayCell = memo(function DayCell({
       onDragOver={onDragOver}
       onDrop={(e) => onDrop(e, day)}
       className={clsx(
-        'relative flex flex-col cursor-pointer transition-all duration-200 p-1 md:p-2 group',
-        'aspect-square min-h-[44px] md:aspect-auto md:min-h-[110px]',
+        'relative flex flex-col cursor-pointer transition-colors duration-200 motion-reduce:transition-none p-1 md:p-2 group',
+        isExpanded ? 'min-h-[140px] md:min-h-[150px]' : 'aspect-square min-h-[44px] md:aspect-auto md:min-h-[110px]',
         !isCurrentMonth ? 'bg-[#dcd0c2]/20 text-[#3d3a36]' : 'bg-transparent hover:bg-[#b87e6b]/5',
         isSelected && 'bg-[#b87e6b]/10 ring-1 ring-inset ring-[#b87e6b]',
         isTodayDate && !isSelected && 'bg-[#5f7186]/5',
@@ -92,7 +98,7 @@ const DayCell = memo(function DayCell({
       )}
     >
       {/* 日期數字 + 桌面版新增按鈕 */}
-      <div className="flex items-center justify-between mb-1">
+      <div className="flex items-center justify-between mb-1 shrink-0">
         <span
           className={clsx(
             'text-xs font-medium block text-center md:text-left',
@@ -109,7 +115,7 @@ const DayCell = memo(function DayCell({
         {showAddButton && isCurrentMonth && (
           <button
             onClick={(e) => onAddClick(e, day)}
-            className="hidden md:flex opacity-0 group-hover:opacity-100 w-5 h-5 items-center justify-center rounded bg-[#5f7186] hover:bg-[#47576b] text-[#f0ece1] transition-all duration-200 shadow-[0_2px_8px_rgba(139,121,101,0.04)]"
+            className={clsx('w-5 h-5 items-center justify-center rounded bg-[#5f7186] hover:bg-[#47576b] text-[#f0ece1] transition-opacity duration-200 shadow-[0_2px_8px_rgba(139,121,101,0.04)]', isExpanded ? 'flex md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100' : 'hidden md:flex opacity-0 group-hover:opacity-100 focus-visible:opacity-100')}
             title={`新增 ${format(day, 'M/d')} 的行程`}
           >
             <Plus size={14} />
@@ -118,7 +124,7 @@ const DayCell = memo(function DayCell({
       </div>
 
       {/* 手機版：圓點指示器 */}
-      <div className="flex gap-0.5 justify-center flex-wrap content-start md:hidden flex-1">
+      <div className={clsx('gap-0.5 justify-center flex-wrap content-start md:hidden flex-1', isExpanded ? 'hidden' : 'flex')}>
         {events.slice(0, 4).map((event, idx) => (
           <div
             key={idx}
@@ -129,7 +135,7 @@ const DayCell = memo(function DayCell({
       </div>
 
       {/* 手機版：選中日期後顯示新增按鈕 */}
-      {showAddButton && isCurrentMonth && isSelected && (
+      {showAddButton && isCurrentMonth && isSelected && !isExpanded && (
         <button
           onClick={(e) => onAddClick(e, day)}
           className="md:hidden absolute bottom-1 right-1 w-4 h-4 flex items-center justify-center rounded bg-[#5f7186] text-[#f0ece1] shadow-[0_2px_8px_rgba(139,121,101,0.04)]"
@@ -139,15 +145,16 @@ const DayCell = memo(function DayCell({
       )}
 
       {/* 桌面版：行程標籤（最多 3 個，可拖曳複製） */}
-      <div className="hidden md:flex flex-col gap-1.5 w-full overflow-hidden">
-        {events.slice(0, 3).map((event) => (
+      <div className={clsx('flex-col gap-1.5 w-full min-w-0', isExpanded ? 'flex max-h-64 overflow-y-auto custom-scrollbar' : 'hidden md:flex overflow-hidden')}>
+        {(isExpanded ? events : events.slice(0, 3)).map((event) => (
           <div
             key={event.id}
             draggable
             onDragStart={(e) => onDragStart(e, event.id)}
             onDragEnd={onDragEnd}
             className={clsx(
-              'text-xs font-bold px-2 py-1 rounded border-2 border-dashed truncate shadow-[0_2px_8px_rgba(139,121,101,0.04)] cursor-move',
+              'text-xs font-bold px-2 py-1 rounded border-2 border-dashed shadow-[0_2px_8px_rgba(139,121,101,0.04)] cursor-move shrink-0',
+              isExpanded ? 'whitespace-normal break-words leading-relaxed' : 'truncate',
               'hover:opacity-80 active:opacity-60 transition-opacity',
             )}
             style={getCategoryColorStyles(event.category, categoryColors).event}
@@ -155,9 +162,14 @@ const DayCell = memo(function DayCell({
             aria-label={`拖曳 ${event.title} 以複製到其他日期`}
           >
             {event.title}
+            {isExpanded && (event.startTime || event.endTime) && (
+              <span className="block text-[11px] font-medium opacity-90 tabular-nums">
+                {[event.startTime, event.endTime].filter(Boolean).join('–')}
+              </span>
+            )}
           </div>
         ))}
-        {events.length > 3 && (
+        {!isExpanded && events.length > 3 && (
           <span className="text-[11px] font-medium text-[#3d3a36] pl-1">
             還有 {events.length - 3} 個...
           </span>
@@ -169,6 +181,7 @@ const DayCell = memo(function DayCell({
 // 自訂比較函式：只有真正影響外觀的 props 改變時才重繪
 // 這讓「選擇其他日期」時只更新前後兩個格子，而非全部 35+ 個
 (prev, next) =>
+  prev.isExpanded === next.isExpanded &&
   prev.isSelected === next.isSelected &&
   prev.isTodayDate === next.isTodayDate &&
   prev.isMultiSelected === next.isMultiSelected &&
@@ -180,6 +193,8 @@ const DayCell = memo(function DayCell({
 );
 
 export default function CalendarWidget({ 
+  isExpanded = false,
+  onExpandedToggle,
   events, 
   onAddEvent, 
   onDelete, 
@@ -200,6 +215,7 @@ export default function CalendarWidget({
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [currentPage, setCurrentPage] = useState(1);
+  const [isExporting, setIsExporting] = useState(false);
   const itemsPerPage = 5;
   
   // 拖曳相關狀態
@@ -256,6 +272,33 @@ export default function CalendarWidget({
     });
     return groups;
   }, [events]);
+
+  const handleExport = async (copy: boolean) => {
+    if (isExporting) return;
+    setIsExporting(true);
+    const imagePromise = createCalendarImage(currentMonth, days, eventsByDate, categoryColors);
+    try {
+      if (copy && navigator.clipboard?.write && typeof ClipboardItem !== 'undefined') {
+        try {
+          // 在點擊當下交付圖片 Promise，避免產圖完成後失去瀏覽器的使用者操作授權。
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': imagePromise })]);
+          toast.success('已複製月曆圖片');
+          return;
+        } catch {
+          downloadCalendarImage(await imagePromise, currentMonth);
+          toast('無法複製圖片，已改為下載 PNG');
+          return;
+        }
+      }
+      downloadCalendarImage(await imagePromise, currentMonth);
+      toast.success(copy ? '瀏覽器不支援複製圖片，已下載 PNG' : '已下載月曆圖片');
+    } catch (error) {
+      console.error('月曆圖片產生失敗:', error);
+      toast.error('無法產生月曆圖片，請再試一次');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const handleDayClick = useCallback((day: Date) => {
     const dateKey = format(day, 'yyyy-MM-dd');
@@ -347,11 +390,11 @@ export default function CalendarWidget({
   return (
     <div className="glass-card p-4 md:p-6 select-none h-full flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4 md:mb-6 shrink-0">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4 md:mb-6 shrink-0">
         
         {/* ✨ 修改這裡：將標題和重整按鈕包在一起 */}
         <div className="flex items-center gap-3">
-          <h2 className="text-lg md:text-2xl font-bold text-[#3d3a36] tracking-wide">
+          <h2 className="text-lg md:text-2xl font-bold text-[#3d3a36] tracking-wide whitespace-nowrap">
             {format(currentMonth, 'yyyy年 M月', { locale: zhTW })}
           </h2>
           {onRefresh && (
@@ -369,11 +412,30 @@ export default function CalendarWidget({
            )}
         </div>
 
-        <div className="flex gap-2">
-           <button onClick={prevMonth} className="p-1.5 md:p-2 hover:bg-[#dcd0c2]/50 rounded-full text-[#3d3a36] transition-all duration-200">
+        <div className="flex items-center gap-2 flex-wrap">
+           {isExpanded && <>
+             <button onClick={() => handleExport(true)} disabled={isExporting} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#b87e6b] text-[#f0ece1] text-xs font-bold disabled:opacity-50">
+               <Copy size={16} />{isExporting ? '產生圖片中…' : '複製圖片'}
+             </button>
+             <button onClick={() => handleExport(false)} disabled={isExporting} aria-label="下載月曆圖片" title="下載 PNG" className="p-2 rounded-full hover:bg-[#dcd0c2]/50 text-[#3d3a36] disabled:opacity-50"><Download size={18} /></button>
+           </>}
+           {onExpandedToggle && (
+             <button
+               type="button"
+               onClick={onExpandedToggle}
+               aria-label={isExpanded ? '收合月曆' : '展開月曆'}
+               aria-expanded={isExpanded}
+               aria-controls="overview-calendar"
+               title={isExpanded ? '收合月曆（Esc）' : '展開月曆'}
+               className="p-1.5 md:p-2 hover:bg-[#dcd0c2]/50 rounded-full text-[#3d3a36] transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#b87e6b]"
+             >
+               {isExpanded ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+             </button>
+           )}
+           <button onClick={prevMonth} aria-label="上個月" className="p-1.5 md:p-2 hover:bg-[#dcd0c2]/50 rounded-full text-[#3d3a36] transition-all duration-200">
              <ChevronLeft size={20} />
            </button>
-           <button onClick={nextMonth} className="p-1.5 md:p-2 hover:bg-[#dcd0c2]/50 rounded-full text-[#3d3a36] transition-all duration-200">
+           <button onClick={nextMonth} aria-label="下個月" className="p-1.5 md:p-2 hover:bg-[#dcd0c2]/50 rounded-full text-[#3d3a36] transition-all duration-200">
              <ChevronRight size={20} />
            </button>
         </div>
@@ -449,6 +511,9 @@ export default function CalendarWidget({
       )}
 
       {/* Week Days */}
+      {isExpanded && <p className="md:hidden text-xs text-[#5f7186] mb-2">左右滑動查看日期</p>}
+      <div className="overflow-x-auto min-w-0">
+      <div className={clsx(isExpanded && 'min-w-[875px] md:min-w-0')}>
       <div className="grid grid-cols-7 mb-2 text-center shrink-0 border-b border-dashed border-[#dcd0c2]/50 pb-2">
         {weekDays.map(day => (
           <div key={day} className="text-xs md:text-sm font-bold text-[#3d3a36]">
@@ -458,7 +523,7 @@ export default function CalendarWidget({
       </div>
 
       {/* Days Grid */}
-      <div className="grid grid-cols-7 gap-px md:gap-1 bg-[#dcd0c2]/30 rounded-lg overflow-hidden border-2 border-dashed border-dashed border-[#dcd0c2]/50 shrink-0">
+      <div className="grid grid-cols-7 gap-px md:gap-1 bg-[#dcd0c2]/30 rounded-lg overflow-hidden border-2 border-dashed border-[#dcd0c2]/50 shrink-0">
         {days.map((day) => {
           const dateKey = format(day, 'yyyy-MM-dd');
           const dayEvents = eventsByDate[dateKey] || [];
@@ -466,6 +531,7 @@ export default function CalendarWidget({
           return (
             <DayCell
               key={dateKey}
+              isExpanded={isExpanded}
               day={day}
               events={dayEvents}
               isCurrentMonth={isSameMonth(day, currentMonth)}
@@ -486,6 +552,8 @@ export default function CalendarWidget({
         })}
       </div>
 
+      </div>
+      </div>
       {/* Selected Date Details */}
       <div className="mt-4 pt-4 border-t border-dashed border-[#dcd0c2]/50 flex-1 flex flex-col min-h-0">
          <h3 className="text-sm font-bold text-[#3d3a36] mb-3 flex items-center gap-2 shrink-0">

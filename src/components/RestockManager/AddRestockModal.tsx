@@ -3,13 +3,15 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Check, RotateCcw, X } from 'lucide-react';
 import { useImmersiveMode } from '@/hooks/useImmersiveMode';
+import { useFormSubmission } from '@/hooks/useFormSubmission';
+import SaveButton from '@/components/SaveButton';
 import { RestockItem } from '@/types';
 import { getTodayDateString, normalizePurchaseHistory } from '@/lib/restock';
 
 interface AddRestockModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: Omit<RestockItem, 'id'>) => void;
+  onSubmit: (data: Omit<RestockItem, 'id'>) => Promise<boolean>;
   initialData?: RestockItem | null;
 }
 
@@ -20,6 +22,8 @@ export default function AddRestockModal({
   initialData,
 }: AddRestockModalProps) {
   useImmersiveMode(isOpen);
+
+  const { isSubmitting, submit, close } = useFormSubmission(onClose);
 
   const [name, setName] = useState(() => initialData?.name ?? '');
   const [currentStock, setCurrentStock] = useState(() => String(initialData?.currentStock ?? 0));
@@ -37,19 +41,19 @@ export default function AddRestockModal({
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        onClose();
+        close();
       }
     };
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+  }, [isOpen, close]);
 
   if (!isOpen) {
     return null;
   }
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const normalizedName = name.trim();
@@ -74,7 +78,7 @@ export default function AddRestockModal({
       return;
     }
 
-    onSubmit({
+    await submit(() => onSubmit({
       name: normalizedName,
       currentStock: stock,
       stockUnit: normalizedUnit,
@@ -87,7 +91,7 @@ export default function AddRestockModal({
         : [{ purchasedOn: lastPurchasedOn }],
       lastNotifiedDueOn: initialData?.lastNotifiedDueOn ?? '',
       note: note.trim(),
-    });
+    }));
   };
 
   return (
@@ -95,12 +99,13 @@ export default function AddRestockModal({
       className="fixed inset-0 z-[100] flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center"
       role="dialog"
       aria-modal="true"
+      aria-busy={isSubmitting}
       aria-labelledby="restock-modal-title"
     >
       <button
         type="button"
         className="absolute inset-0 cursor-default"
-        onClick={onClose}
+        disabled={isSubmitting} onClick={close}
         aria-label={'\u95dc\u9589\u88dc\u8ca8\u9805\u76ee\u8996\u7a97'}
       />
 
@@ -116,7 +121,7 @@ export default function AddRestockModal({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            disabled={isSubmitting} onClick={close}
             className="rounded-lg p-2 text-[#3d3a36] transition-all duration-200 hover:bg-[#dcd0c2]/50 hover:text-[#b87e6b]"
             aria-label={'\u95dc\u9589'}
           >
@@ -125,6 +130,7 @@ export default function AddRestockModal({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-2.5 overflow-y-auto p-4 sm:overflow-y-visible sm:p-5">
+          <fieldset disabled={isSubmitting} className="min-w-0 space-y-2.5 border-0 p-0">
           <div className="space-y-1">
             <label htmlFor="restock-name" className="block text-sm font-medium text-[#3d3a36]">
               {'\u7269\u54c1\u540d\u7a31'}
@@ -272,19 +278,20 @@ export default function AddRestockModal({
           <div className="flex justify-end gap-2 pt-0">
             <button
               type="button"
-              onClick={onClose}
+              disabled={isSubmitting} onClick={close}
               className="rounded-xl px-4 py-2 text-sm font-medium text-[#3d3a36] transition-all duration-200 hover:bg-[#dcd0c2]/40 hover:text-[#b87e6b]"
             >
               {'\u53d6\u6d88'}
             </button>
-            <button
+            <SaveButton isSubmitting={isSubmitting}
               type="submit"
               className="flex items-center gap-2 rounded-xl bg-[#b87e6b] px-5 py-2.5 text-sm font-bold text-[#f0ece1] shadow-[0_8px_20px_rgba(139,121,101,0.08)] transition-all active:scale-[0.98] hover:bg-[#a66a58]"
             >
               <Check size={16} />
               {initialData ? '儲存修改' : '加入庫存'}
-            </button>
+            </SaveButton>
           </div>
+          </fieldset>
         </form>
       </div>
     </div>

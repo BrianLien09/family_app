@@ -1,15 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSharedCollection } from '@/hooks/useSharedCollection';
 import {
   addDoc,
   collection,
   deleteDoc,
   doc,
-  getDocs,
-  orderBy,
-  query,
   updateDoc,
 } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
 import toast from 'react-hot-toast';
 import { auth, db } from '@/lib/firebase';
 import { omitId } from '@/lib/object';
@@ -69,78 +65,21 @@ function sanitizeRestockItem(id: string, raw: Record<string, unknown>): RestockI
   };
 }
 
+const collectionOptions = {
+  collectionName: 'restockItems',
+  cachePrefix: 'restock_cache_v1_',
+  orderField: 'name',
+  orderDirection: 'asc' as const,
+  deserialize: sanitizeRestockItem,
+};
+
 export function useRestockItems() {
-  const [items, setItems] = useState<RestockItem[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const isLoadedRef = useRef(false);
-
-  const getCacheKey = (uid: string) => `restock_cache_v1_${uid}`;
-
-  const updateCache = useCallback((nextItems: RestockItem[]) => {
-    if (auth.currentUser) {
-      localStorage.setItem(getCacheKey(auth.currentUser.uid), JSON.stringify(nextItems));
-    }
-  }, []);
-
-  const fetchItems = useCallback(async (user: { uid: string }) => {
-    if (isLoadedRef.current) {
-      setIsRefreshing(true);
-    }
-
-    try {
-      const itemsQuery = query(collection(db, 'restockItems'), orderBy('name', 'asc'));
-      const snapshot = await getDocs(itemsQuery);
-      const nextItems = snapshot.docs.map((snapshotItem) => (
-        sanitizeRestockItem(snapshotItem.id, snapshotItem.data() as Record<string, unknown>)
-      ));
-
-      setItems(nextItems);
-      localStorage.setItem(getCacheKey(user.uid), JSON.stringify(nextItems));
-    } catch (error) {
-      console.error('Failed to load restock items', error);
-      toast.error('\u88dc\u8ca8\u6e05\u55ae\u8b80\u53d6\u5931\u6557\uff0c\u8acb\u7a0d\u5f8c\u518d\u8a66');
-    } finally {
-      isLoadedRef.current = true;
-      setIsLoaded(true);
-      setIsRefreshing(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const cached = localStorage.getItem(getCacheKey(user.uid));
-        if (cached) {
-          try {
-            setItems(JSON.parse(cached) as RestockItem[]);
-            setIsLoaded(true);
-          } catch (error) {
-            console.error('Failed to parse restock cache', error);
-          }
-        }
-
-        fetchItems(user);
-      } else {
-        setItems([]);
-        setIsLoaded(true);
-      }
-    });
-
-    return () => unsubscribeAuth();
-  }, [fetchItems]);
-
-  const refresh = () => {
-    if (auth.currentUser) {
-      fetchItems(auth.currentUser);
-    }
-  };
+  const { data: items, setData: setItems, isLoaded, isRefreshing, refresh, updateCache, restoreData } = useSharedCollection<RestockItem>(collectionOptions);
 
   const addItem = async (newItem: Omit<RestockItem, 'id'>) => {
     if (!auth.currentUser) {
       toast.error('\u8acb\u5148\u767b\u5165\u624d\u80fd\u65b0\u589e\u88dc\u8ca8\u9805\u76ee');
-      return;
+      return false;
     }
 
     const normalizedItem: Omit<RestockItem, 'id'> = {
@@ -160,27 +99,29 @@ export function useRestockItems() {
       const savedItem: RestockItem = { ...normalizedItem, id: docRef.id };
 
       setItems((prev) => {
-        const nextItems = [...prev, savedItem].sort((left, right) => left.name.localeCompare(right.name, 'zh-Hant'));
+        const nextItems = [...prev.filter(item => item.id !== savedItem.id), savedItem].sort((left, right) => left.name.localeCompare(right.name, 'zh-Hant'));
         updateCache(nextItems);
         return nextItems;
       });
 
       toast.success('\u88dc\u8ca8\u9805\u76ee\u5df2\u52a0\u5165\u6e05\u55ae');
+      return true;
     } catch (error) {
       console.error('Failed to add restock item', error);
       toast.error('\u65b0\u589e\u88dc\u8ca8\u9805\u76ee\u5931\u6557');
+      return false;
     }
   };
 
   const updateItem = async (id: string, updatedFields: Partial<Omit<RestockItem, 'id'>>) => {
     if (!auth.currentUser) {
       toast.error('\u8acb\u5148\u767b\u5165\u624d\u80fd\u66f4\u65b0\u88dc\u8ca8\u9805\u76ee');
-      return;
+      return false;
     }
 
     const currentItem = items.find((item) => item.id === id);
     if (!currentItem) {
-      return;
+      return false;
     }
 
     const lastPurchasedOn = updatedFields.lastPurchasedOn ?? currentItem.lastPurchasedOn;
@@ -219,9 +160,11 @@ export function useRestockItems() {
       });
 
       toast.success('\u88dc\u8ca8\u9805\u76ee\u5df2\u66f4\u65b0');
+      return true;
     } catch (error) {
       console.error('Failed to update restock item', error);
       toast.error('\u66f4\u65b0\u88dc\u8ca8\u9805\u76ee\u5931\u6557');
+      return false;
     }
   };
 
@@ -235,7 +178,6 @@ export function useRestockItems() {
       return;
     }
 
-    const previousItems = [...items];
 
     setItems((prev) => {
       const nextItems = prev.filter((item) => item.id !== id);
@@ -263,7 +205,7 @@ export function useRestockItems() {
 
                 setItems((prev) => {
                   const restoredItem: RestockItem = { ...dataToRestore, id: docRef.id };
-                  const nextItems = [...prev, restoredItem].sort((left, right) => (
+                  const nextItems = [...prev.filter(item => item.id !== restoredItem.id), restoredItem].sort((left, right) => (
                     left.name.localeCompare(right.name, 'zh-Hant')
                   ));
                   updateCache(nextItems);
@@ -288,8 +230,7 @@ export function useRestockItems() {
     } catch (error) {
       console.error('Failed to delete restock item', error);
       toast.error('\u522a\u9664\u88dc\u8ca8\u9805\u76ee\u5931\u6557');
-      setItems(previousItems);
-      updateCache(previousItems);
+      restoreData();
     }
   };
 
@@ -363,7 +304,6 @@ export function useRestockItems() {
       return;
     }
 
-    const previousItems = [...items];
     setItems((prev) => {
       const nextItems = prev.map((item) => (
         item.id === id ? { ...item, currentStock: nextStock } : item
@@ -380,8 +320,7 @@ export function useRestockItems() {
     } catch (error) {
       console.error('Failed to adjust stock', error);
       toast.error('\u66f4\u65b0\u5eab\u5b58\u5931\u6557');
-      setItems(previousItems);
-      updateCache(previousItems);
+      restoreData();
     }
   };
 

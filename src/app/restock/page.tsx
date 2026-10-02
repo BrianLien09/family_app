@@ -138,14 +138,8 @@ export default function RestockPage() {
             setEditingItem(null);
           }}
           initialData={editingItem}
-          onSubmit={(data) => {
-            if (editingItem) {
-              updateItem(editingItem.id, data);
-            } else {
-              addItem(data);
-            }
-            setIsModalOpen(false);
-            setEditingItem(null);
+          onSubmit={async (data) => {
+            return editingItem ? updateItem(editingItem.id, data) : addItem(data);
           }}
         />
       )}

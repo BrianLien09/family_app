@@ -229,20 +229,15 @@ export default function Home() {
     setIsModalOpen(true);
   };
 
-  const handleModalSubmit = (data: Omit<DateItem, 'id'>) => {
-    if (editingDate) {
-      updateDate(editingDate.id, data);
-    } else if (batchAddDates.length > 0) {
-      // 批次新增模式
-      addDateToMultipleDates(batchAddDates, data);
-      setBatchAddDates([]);
-    } else {
-      addDate({ ...data, id: '' });
+  const handleModalSubmit = async (data: Omit<DateItem, 'id'>): Promise<boolean> => {
+    if (editingDate) return updateDate(editingDate.id, data);
+    if (batchAddDates.length > 0) {
+      const saved = await addDateToMultipleDates(batchAddDates, data);
+      if (saved) setBatchAddDates([]);
+      return saved;
     }
-    setIsModalOpen(false);
-    setEditingDate(null);
+    return addDate({ ...data, id: '' });
   };
-
   // 拖曳複製行程處理
   const handleDuplicateDate = (sourceId: string, targetDate: string) => {
     duplicateDate(sourceId, targetDate);

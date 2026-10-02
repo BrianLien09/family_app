@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { useImmersiveMode } from '@/hooks/useImmersiveMode';
+import { useFormSubmission } from '@/hooks/useFormSubmission';
+import SaveButton from '@/components/SaveButton';
 import { FamilyMember, FAMILY_MEMBERS, EXPENSE_CATEGORIES, INCOME_CATEGORIES, ExpenseItem, MEMBER_COLORS } from '@/types';
+import { getTodayDateString } from '@/lib/restock';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 
@@ -9,7 +12,7 @@ import toast from 'react-hot-toast';
 interface AddExpenseModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: Omit<ExpenseItem, 'id'>) => void;
+  onSubmit: (data: Omit<ExpenseItem, 'id'>) => Promise<boolean>;
   initialData?: ExpenseItem | null;
   defaultMember?: FamilyMember;
 }
@@ -17,52 +20,47 @@ interface AddExpenseModalProps {
 export default function AddExpenseModal({ isOpen, onClose, onSubmit, initialData, defaultMember }: AddExpenseModalProps) {
   useImmersiveMode(isOpen);
 
+  const { isSubmitting, submit, close } = useFormSubmission(onClose);
+
   const [type, setType] = useState<'expense' | 'income'>(() => initialData?.type ?? 'expense');
   const [amount, setAmount] = useState(() => initialData?.amount.toString() ?? '');
   const [category, setCategory] = useState<string>(() => initialData?.category ?? EXPENSE_CATEGORIES[0]);
   const [member, setMember] = useState<FamilyMember>(() => initialData?.member ?? defaultMember ?? '共同');
-  const [date, setDate] = useState(() => {
-    if (initialData) return initialData.date;
-    const today = new Date();
-    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  });
+  const [date, setDate] = useState(() => initialData?.date ?? getTodayDateString());
   const [description, setDescription] = useState(() => initialData?.description ?? '');
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
       toast.error('請輸入有效的金額');
       return;
     }
     
-    onSubmit({
+    await submit(() => onSubmit({
       type,
       amount: Number(amount),
       category: type === 'income' ? '收入' : category,
       member,
       date,
       description: description.trim()
-    });
-    
-    // Reset form
-    setAmount('');
-    setDescription('');
+    }));
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={close} />
       <div className="relative w-full max-w-md bg-[#f0ece1] rounded-2xl shadow-2xl border-2 border-dashed border-dashed border-[#dcd0c2]/50 overflow-hidden animate-scale-in">
         <div className="flex items-center justify-between px-4 py-3 border-b border-dashed border-[#dcd0c2]/50">
           <h2 className="text-xl font-bold text-[#3d3a36]">{initialData ? '編輯紀錄' : '新增紀錄'}</h2>
-          <button onClick={onClose} className="p-1.5 text-[#3d3a36] hover:text-[#b87e6b] rounded-lg hover:bg-[#dcd0c2]/50 transition-all duration-200">
+          <button disabled={isSubmitting} onClick={close} className="p-1.5 text-[#3d3a36] hover:text-[#b87e6b] rounded-lg hover:bg-[#dcd0c2]/50 transition-all duration-200">
             <X size={20} />
           </button>
         </div>
         
         <form onSubmit={handleSubmit} className="p-4 sm:px-6 sm:py-4 space-y-3">
+          <fieldset disabled={isSubmitting} className="min-w-0 space-y-3 border-0 p-0">
           {/* 收支切換 */}
           <div className="flex bg-[#dcd0c2]/30 rounded-xl p-1">
             <button
@@ -176,12 +174,13 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, initialData
             />
           </div>
 
-          <button
+          <SaveButton isSubmitting={isSubmitting}
             type="submit"
             className="w-full py-2.5 mt-2 bg-[#b87e6b] hover:bg-[#a66a58] text-[#f0ece1] font-bold rounded-xl shadow-[0_8px_20px_rgba(139,121,101,0.08)] shadow-[#b87e6b]/20 transition-all active:scale-[0.98]"
           >
             {initialData ? '儲存修改' : '儲存紀錄'}
-          </button>
+          </SaveButton>
+          </fieldset>
         </form>
       </div>
     </div>

@@ -5,15 +5,18 @@ import {
   X, Type, Calendar, Clock, AlignLeft, Hash, Check, Plus, Settings2, Trash2
 } from 'lucide-react';
 import { DateItem, DateCategory } from '@/types';
+import { getTodayDateString } from '@/lib/restock';
 import { useCategories } from '@/hooks/useCategories';
 import { useCategoryTimePresets } from '@/hooks/useCategoryTimePresets';
 import clsx from 'clsx';
 import { useImmersiveMode } from '@/hooks/useImmersiveMode';
+import { useFormSubmission } from '@/hooks/useFormSubmission';
+import SaveButton from '@/components/SaveButton';
 
 interface AddDateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: Omit<DateItem, 'id'>) => void;
+  onSubmit: (data: Omit<DateItem, 'id'>) => Promise<boolean>;
   initialData?: DateItem | null;
   presetDate?: string | null; // 從月曆點擊傳入的預設日期 (YYYY-MM-DD)
 }
@@ -50,15 +53,20 @@ export default function AddDateModal({
   initialData,
   presetDate,
 }: AddDateModalProps) {
-  const { categories, addCategory, deleteCategory, isDefaultCategory } = useCategories();
+  const { categories: syncedCategories, addCategory, deleteCategory, isDefaultCategory } = useCategories();
+  const categories = initialData?.category && !syncedCategories.includes(initialData.category)
+    ? [...syncedCategories, initialData.category]
+    : syncedCategories;
   const { getDefaultTime, saveDefaultTime, getSubCategories, saveSubCategory, deleteSubCategory } =
     useCategoryTimePresets();
   const initialCategory = initialData?.category
     ?? (typeof window === 'undefined' ? '其它' : localStorage.getItem('last_selected_category') || '其它');
   const resolvedInitialCategory = categories.includes(initialCategory) ? initialCategory : '其它';
 
+  const { isSubmitting, submit, close } = useFormSubmission(onClose);
+
   const [title, setTitle] = useState(() => initialData?.title ?? resolvedInitialCategory);
-  const [date, setDate] = useState(() => initialData?.date ?? presetDate ?? new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(() => initialData?.date ?? presetDate ?? getTodayDateString());
   const [startTime, setStartTime] = useState(() => initialData?.startTime ?? (getDefaultTime(resolvedInitialCategory).startTime || getRoundedHourString()));
   const [endTime, setEndTime] = useState(() => initialData?.endTime ?? (getDefaultTime(resolvedInitialCategory).endTime || ''));
   const [category, setCategory] = useState<DateCategory>(() => resolvedInitialCategory);
@@ -82,11 +90,11 @@ export default function AddDateModal({
   useEffect(() => {
     if (!isOpen) return;
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') close();
     };
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+  }, [isOpen, close]);
 
   if (!isOpen) return null;
 
@@ -122,40 +130,50 @@ export default function AddDateModal({
       return;
     }
 
-    onSubmit({ title, date, startTime, endTime, category, description });
-
-    // 只有新增模式才自動記憶時間與分類（編輯模式不覆蓋）
-    if (!initialData) {
-      localStorage.setItem('last_selected_category', category);
-      if (startTime) {
-        await saveDefaultTime(category, startTime, endTime);
+    await submit(async () => {
+      const saved = await onSubmit({ title, date, startTime, endTime, category, description });
+      if (saved && !initialData) {
+        try {
+          localStorage.setItem('last_selected_category', category);
+        } catch (error) {
+          console.error('儲存上次分類失敗：', error);
+        }
+        if (startTime) await saveDefaultTime(category, startTime, endTime);
       }
-    }
-
-    onClose();
+      return saved;
+    });
   };
 
   // 新增自訂類別
-  const handleAddCategory = () => {
-    if (addCategory(newCategoryName)) {
+  const handleAddCategory = async () => {
+    await submit(async () => {
+      const saved = await addCategory(newCategoryName);
+      if (!saved) return false;
       setCategory(newCategoryName.trim());
       setNewCategoryName('');
       setShowAddCategory(false);
-    }
+      return true;
+    }, false);
   };
 
   // 刪除類別
-  const handleDeleteCategory = (categoryToDelete: string) => {
-    if (deleteCategory(categoryToDelete)) {
+  const handleDeleteCategory = async (categoryToDelete: string) => {
+    await submit(async () => {
+      const saved = await deleteCategory(categoryToDelete);
+      if (!saved) return false;
       if (category === categoryToDelete) setCategory('其它');
-    }
+      return true;
+    }, false);
   };
 
   // 儲存子分類
   const handleSaveSubCat = async () => {
     if (!subCatForm.name.trim() || !subCatForm.startTime) return;
-    await saveSubCategory(category, subCatForm.name, subCatForm.startTime, subCatForm.endTime);
-    setSubCatForm({ name: '', startTime: '', endTime: '' });
+    await submit(async () => {
+      const saved = await saveSubCategory(category, subCatForm.name, subCatForm.startTime, subCatForm.endTime);
+      if (saved) setSubCatForm({ name: '', startTime: '', endTime: '' });
+      return saved;
+    }, false);
   };
 
   const subCategories = getSubCategories(category);
@@ -165,6 +183,7 @@ export default function AddDateModal({
       className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in"
       role="dialog"
       aria-modal="true"
+      aria-busy={isSubmitting}
       aria-labelledby="modal-title"
     >
       <div className="w-full sm:max-w-md max-h-[92vh] bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] shadow-2xl rounded-t-2xl sm:rounded-xl overflow-hidden flex flex-col animate-slide-up">
@@ -181,7 +200,7 @@ export default function AddDateModal({
             {initialData ? '編輯行程' : '新增行程'}
           </h2>
           <button
-            onClick={onClose}
+            disabled={isSubmitting} onClick={close}
             className="text-[#3d3a36] hover:text-[#b87e6b] transition-all duration-200"
             aria-label="關閉對話框"
           >
@@ -191,6 +210,7 @@ export default function AddDateModal({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="px-5 pb-6 space-y-3 overflow-y-auto flex-1">
+          <fieldset disabled={isSubmitting} className="min-w-0 space-y-3 border-0 p-0">
 
           {/* 標題 */}
           <div className="group relative">
@@ -385,7 +405,7 @@ export default function AddDateModal({
                         </span>
                         <button
                           type="button"
-                          onClick={() => deleteSubCategory(category, sub.name)}
+                          onClick={() => submit(() => deleteSubCategory(category, sub.name), false)}
                           className="ml-auto text-slate-600 hover:text-[#b87e6b] transition-all duration-200"
                           aria-label={`刪除子分類 ${sub.name}`}
                         >
@@ -452,22 +472,23 @@ export default function AddDateModal({
           <div className="pt-1 flex justify-end gap-2">
             <button
               type="button"
-              onClick={onClose}
+              disabled={isSubmitting} onClick={close}
               className="px-5 py-2 rounded-lg text-[#3d3a36] hover:text-[#b87e6b] hover:bg-[#dcd0c2]/30 transition-all duration-200 font-medium text-sm"
               aria-label="取消"
             >
               取消
             </button>
-            <button
+            <SaveButton isSubmitting={isSubmitting}
               type="submit"
               className="px-6 py-2 rounded-lg bg-[#b87e6b] hover:bg-[#a66a58] text-[#f0ece1] shadow-[0_8px_20px_rgba(139,121,101,0.08)] shadow-[#b87e6b]/20 transition-all font-bold flex items-center gap-1.5 text-sm"
               aria-label={initialData ? '確認修改' : '確認新增'}
             >
               <Check size={16} />
               {initialData ? '確認修改' : '確認新增'}
-            </button>
+            </SaveButton>
           </div>
 
+          </fieldset>
         </form>
       </div>
     </div>

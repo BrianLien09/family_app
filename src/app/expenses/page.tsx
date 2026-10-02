@@ -186,14 +186,8 @@ export default function ExpensesPage() {
           }}
           initialData={editingExpense}
           defaultMember={selectedMember === '全體' ? '共同' : selectedMember}
-          onSubmit={(data) => {
-            if (editingExpense) {
-              updateExpense(editingExpense.id, data);
-            } else {
-              addExpense(data);
-            }
-            setIsModalOpen(false);
-            setEditingExpense(null);
+          onSubmit={async (data) => {
+            return editingExpense ? updateExpense(editingExpense.id, data) : addExpense(data);
           }}
         />
       )}

@@ -1,95 +1,32 @@
+import { useSharedCollection } from '@/hooks/useSharedCollection';
 // src/hooks/useExpenses.tsx
-import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   collection,
   addDoc,
   deleteDoc,
   doc,
-  getDocs,
-  query,
-  orderBy,
   updateDoc,
 } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from '@/lib/firebase';
 import { omitId } from '@/lib/object';
 import { ExpenseItem } from '@/types';
 import toast from 'react-hot-toast';
 
+const collectionOptions = {
+  collectionName: 'expenses',
+  cachePrefix: 'expense_cache_v1_',
+  orderField: 'date',
+  orderDirection: 'desc' as const,
+  deserialize: (id: string, data: Record<string, unknown>): ExpenseItem => ({ ...data, id } as unknown as ExpenseItem),
+};
+
 export function useExpenses() {
-  const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { data: expenses, setData: setExpenses, isLoaded, isRefreshing, refresh, updateCache, restoreData } = useSharedCollection<ExpenseItem>(collectionOptions);
 
-  // 用 ref 追蹤載入狀態，避免把 isLoaded 列入 useCallback 依賴
-  const isLoadedRef = useRef(false);
-
-  // 每個使用者獨立的快取 Key（版本號方便未來升版清除）
-  const getCacheKey = (uid: string) => `expense_cache_v1_${uid}`;
-
-  const fetchExpenses = useCallback(async (user: { uid: string }) => {
-    // 只有手動重新整理時才顯示轉圈圈
-    if (isLoadedRef.current) setIsRefreshing(true);
-
-    try {
-      const q = query(collection(db, 'expenses'), orderBy('date', 'desc'));
-      const snapshot = await getDocs(q);
-
-      const data = snapshot.docs.map(d => ({
-        id: d.id,
-        ...d.data(),
-      })) as ExpenseItem[];
-
-      setExpenses(data);
-      localStorage.setItem(getCacheKey(user.uid), JSON.stringify(data));
-    } catch (error) {
-      console.error('讀取帳本失敗:', error);
-      toast.error('連線不穩，目前顯示的是舊資料');
-    } finally {
-      isLoadedRef.current = true;
-      setIsLoaded(true);
-      setIsRefreshing(false);
-    }
-  }, []);
-
-  // 監聽登入狀態，登入後先顯示快取再背景更新
-  useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const cached = localStorage.getItem(getCacheKey(user.uid));
-        if (cached) {
-          try {
-            setExpenses(JSON.parse(cached));
-            setIsLoaded(true);
-          } catch (e) {
-            console.error('快取解析失敗', e);
-          }
-        }
-        fetchExpenses(user);
-      } else {
-        setExpenses([]);
-        setIsLoaded(true);
-      }
-    });
-    return () => unsubscribeAuth();
-  }, [fetchExpenses]);
-
-  const refresh = () => {
-    if (auth.currentUser) fetchExpenses(auth.currentUser);
-  };
-
-  // 同步快取的輔助函式
-  const updateCache = (newExpenses: ExpenseItem[]) => {
-    if (auth.currentUser) {
-      localStorage.setItem(getCacheKey(auth.currentUser.uid), JSON.stringify(newExpenses));
-    }
-  };
-
-  // 新增記錄
   const addExpense = async (newItem: Omit<ExpenseItem, 'id'>) => {
     if (!auth.currentUser) {
       toast.error('請先登入才能新增記錄');
-      return;
+      return false;
     }
 
     try {
@@ -102,7 +39,7 @@ export function useExpenses() {
 
       setExpenses(prev => {
         // 依日期降冪排列
-        const newState = [savedItem, ...prev].sort(
+        const newState = [savedItem, ...prev.filter(item => item.id !== savedItem.id)].sort(
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         );
         updateCache(newState);
@@ -110,9 +47,11 @@ export function useExpenses() {
       });
 
       toast.success('記錄新增成功！💰');
+      return true;
     } catch (error) {
       console.error('新增失敗:', error);
       toast.error('新增失敗，請稍後再試');
+      return false;
     }
   };
 
@@ -123,7 +62,6 @@ export function useExpenses() {
     const itemToDelete = expenses.find(item => item.id === id);
     if (!itemToDelete) return;
 
-    const previousExpenses = [...expenses];
 
     // 樂觀更新
     setExpenses(prev => {
@@ -150,7 +88,7 @@ export function useExpenses() {
                   });
                   setExpenses(prev => {
                     const restored: ExpenseItem = { ...itemToDelete, id: docRef.id };
-                    const newState = [restored, ...prev].sort(
+                    const newState = [restored, ...prev.filter(item => item.id !== restored.id)].sort(
                       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
                     );
                     updateCache(newState);
@@ -173,8 +111,7 @@ export function useExpenses() {
     } catch (error) {
       console.error('刪除失敗:', error);
       toast.error('刪除失敗');
-      setExpenses(previousExpenses);
-      updateCache(previousExpenses);
+      restoreData();
     }
   };
 
@@ -182,7 +119,7 @@ export function useExpenses() {
   const updateExpense = async (id: string, updatedFields: Partial<ExpenseItem>) => {
     if (!auth.currentUser) {
       toast.error('請先登入才能修改記錄');
-      return;
+      return false;
     }
 
     try {
@@ -200,9 +137,11 @@ export function useExpenses() {
       });
 
       toast.success('記錄更新完成 ✨');
+      return true;
     } catch (error) {
       console.error('更新失敗:', error);
       toast.error('更新失敗');
+      return false;
     }
   };
 
@@ -210,7 +149,6 @@ export function useExpenses() {
   const deleteExpenses = async (ids: string[]) => {
     if (!auth.currentUser || ids.length === 0) return;
 
-    const previousExpenses = [...expenses];
 
     setExpenses(prev => {
       const newState = prev.filter(item => !ids.includes(item.id));
@@ -224,8 +162,7 @@ export function useExpenses() {
     } catch (error) {
       console.error('批次刪除失敗:', error);
       toast.error('批次刪除失敗');
-      setExpenses(previousExpenses);
-      updateCache(previousExpenses);
+      restoreData();
     }
   };
 

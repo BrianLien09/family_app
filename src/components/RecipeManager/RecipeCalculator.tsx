@@ -5,6 +5,8 @@ import { Recipe } from '@/types';
 import { Minus, Plus, Utensils, X, Save, Scale as ScaleIcon, Calculator, Edit, Trash2, FileDown } from 'lucide-react';
 import clsx from 'clsx';
 import { useImmersiveMode } from '@/hooks/useImmersiveMode';
+import { useFormSubmission } from '@/hooks/useFormSubmission';
+import SaveButton from '@/components/SaveButton';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -12,13 +14,14 @@ interface RecipeCalculatorProps {
   recipe: Recipe;
   onClose: () => void;
   onDelete: (id: string) => void;
-  onAdd: (recipe: Recipe) => void;
+  onAdd: (recipe: Recipe) => Promise<boolean>;
   onEdit: () => void;
 }
 
 type ScaleMode = 'servings' | 'ingredient';
 
 export default function RecipeCalculator({ recipe, onClose, onDelete, onAdd, onEdit }: RecipeCalculatorProps) {
+  const { isSubmitting, submit, close } = useFormSubmission(onClose);
   const [mode, setMode] = useState<ScaleMode>('servings');
   const [scale, setScale] = useState(1);
   const [customServings, setCustomServings] = useState(recipe.baseServings);
@@ -49,22 +52,20 @@ export default function RecipeCalculator({ recipe, onClose, onDelete, onAdd, onE
     setCustomServings(Math.round(recipe.baseServings * newScale * 10) / 10);
   };
 
-  const handleSaveAsNew = () => {
+  const handleSaveAsNew = async () => {
     const newTitle = `${recipe.title} (${customServings}人份)`;
     const newIngredients = recipe.ingredients.map(ing => ({
       ...ing,
       amount: parseFloat((ing.amount * scale).toFixed(1))
     }));
 
-    onAdd({
+    await submit(() => onAdd({
       id: Date.now().toString(),
       title: newTitle,
       description: `由 ${recipe.title} 依比例調整而來`,
       baseServings: customServings,
       ingredients: newIngredients
-    });
-    alert('已另存為新食譜！');
-    onClose();
+    }));
   };
 
   const formatAmount = (num: number) => {
@@ -128,9 +129,9 @@ export default function RecipeCalculator({ recipe, onClose, onDelete, onAdd, onE
         {/* Header */}
         <div className="relative p-6 pb-4 bg-[#b87e6b]/10 border-b border-[#b87e6b]/50">
             <div className="absolute top-4 right-4 flex gap-2">
-                <button onClick={onEdit} className="p-2 bg-[#dcd0c2]/30 rounded-full text-[#3d3a36] hover:text-[#b87e6b] hover:bg-[#dcd0c2]/30 transition-all"><Edit size={18} /></button>
-                <button onClick={() => onDelete(recipe.id)} className="p-2 bg-[#dcd0c2]/30 rounded-full text-[#3d3a36] hover:text-[#b87e6b] hover:bg-[#b87e6b]/20 transition-all"><Trash2 size={18} /></button>
-                <button onClick={onClose} className="p-2 bg-[#dcd0c2]/30 rounded-full text-[#3d3a36] hover:text-[#b87e6b] hover:bg-[#dcd0c2]/30 transition-all"><X size={18} /></button>
+                <button disabled={isSubmitting} onClick={onEdit} className="p-2 bg-[#dcd0c2]/30 rounded-full text-[#3d3a36] hover:text-[#b87e6b] hover:bg-[#dcd0c2]/30 transition-all"><Edit size={18} /></button>
+                <button disabled={isSubmitting} onClick={() => onDelete(recipe.id)} className="p-2 bg-[#dcd0c2]/30 rounded-full text-[#3d3a36] hover:text-[#b87e6b] hover:bg-[#b87e6b]/20 transition-all"><Trash2 size={18} /></button>
+                <button disabled={isSubmitting} onClick={close} className="p-2 bg-[#dcd0c2]/30 rounded-full text-[#3d3a36] hover:text-[#b87e6b] hover:bg-[#dcd0c2]/30 transition-all"><X size={18} /></button>
             </div>
             <div className="flex items-center gap-2 text-[#b87e6b] mb-2">
                 <Calculator size={20} />
@@ -214,8 +215,8 @@ export default function RecipeCalculator({ recipe, onClose, onDelete, onAdd, onE
         {/* Footer */}
         <div className="p-4 border-t border-[#dcd0c2] bg-[#f0ece1] flex justify-end gap-3">
             <button onClick={handleExportPDF} className="btn bg-blue-600 hover:bg-blue-500 text-[#3d3a36] px-4 flex items-center gap-2" title="匯出為 PDF"><FileDown size={18} /> PDF</button>
-            <button onClick={handleSaveAsNew} className="btn bg-[#dcd0c2]/50 hover:bg-[#dcd0c2]/80 text-[#3d3a36] px-4 flex items-center gap-2"><Save size={18} /> 另存新食譜</button>
-            <button onClick={onClose} className="btn bg-[#b87e6b] hover:bg-[#b87e6b] text-[#f0ece1] px-6">關閉</button>
+            <SaveButton isSubmitting={isSubmitting} onClick={handleSaveAsNew} className="btn bg-[#dcd0c2]/50 hover:bg-[#dcd0c2]/80 text-[#3d3a36] px-4 flex items-center gap-2"><Save size={18} /> 另存新食譜</SaveButton>
+            <button disabled={isSubmitting} onClick={close} className="btn bg-[#b87e6b] hover:bg-[#b87e6b] text-[#f0ece1] px-6">關閉</button>
         </div>
     </div>
   );
@@ -243,9 +244,9 @@ export default function RecipeCalculator({ recipe, onClose, onDelete, onAdd, onE
            </div>
 
            <div className="flex gap-3">
-             <button onClick={onEdit} className="p-3 bg-[#dcd0c2]/30 hover:bg-[#dcd0c2]/50 rounded-full text-[#3d3a36] hover:text-[#b87e6b] transition-all" title="編輯"><Edit size={20} /></button>
-             <button onClick={() => onDelete(recipe.id)} className="p-3 bg-[#dcd0c2]/30 hover:bg-[#b87e6b]/20 rounded-full text-[#3d3a36] hover:text-[#b87e6b] transition-all" title="刪除"><Trash2 size={20} /></button>
-             <button onClick={onClose} className="p-3 bg-[#dcd0c2]/30 hover:bg-[#dcd0c2]/30 rounded-full text-[#3d3a36] transition-all"><X size={24} /></button>
+             <button disabled={isSubmitting} onClick={onEdit} className="p-3 bg-[#dcd0c2]/30 hover:bg-[#dcd0c2]/50 rounded-full text-[#3d3a36] hover:text-[#b87e6b] transition-all" title="編輯"><Edit size={20} /></button>
+             <button disabled={isSubmitting} onClick={() => onDelete(recipe.id)} className="p-3 bg-[#dcd0c2]/30 hover:bg-[#b87e6b]/20 rounded-full text-[#3d3a36] hover:text-[#b87e6b] transition-all" title="刪除"><Trash2 size={20} /></button>
+             <button disabled={isSubmitting} onClick={close} className="p-3 bg-[#dcd0c2]/30 hover:bg-[#dcd0c2]/30 rounded-full text-[#3d3a36] transition-all"><X size={24} /></button>
            </div>
         </div>
 
@@ -329,8 +330,8 @@ export default function RecipeCalculator({ recipe, onClose, onDelete, onAdd, onE
                   {/* Desktop Footer Actions */}
                   <div className="mt-8 flex justify-end gap-4 border-t border-dashed border-[#dcd0c2]/50 pt-8">
                       <button onClick={handleExportPDF} className="btn bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 px-8 h-12 rounded-xl font-bold flex items-center justify-center gap-2 border-2 border-dashed border-blue-500/30"><FileDown size={18} />匯出 PDF</button>
-                      <button onClick={handleSaveAsNew} className="btn bg-[#dcd0c2]/30 hover:bg-[#dcd0c2]/30 text-[#3d3a36] px-8 h-12 rounded-xl font-bold flex items-center justify-center gap-2 border-2 border-dashed border-dashed border-[#dcd0c2]/50"><Save size={18} />另存為新食譜</button>
-                      <button onClick={onClose} className="btn bg-gradient-to-r bg-[#b87e6b] to-pink-600 hover:bg-[#a66a58] text-[#f0ece1] px-10 h-12 rounded-xl font-bold shadow-[0_8px_20px_rgba(139,121,101,0.08)] shadow-[#b87e6b]/30">完成</button>
+                      <SaveButton isSubmitting={isSubmitting} onClick={handleSaveAsNew} className="btn bg-[#dcd0c2]/30 hover:bg-[#dcd0c2]/30 text-[#3d3a36] px-8 h-12 rounded-xl font-bold flex items-center justify-center gap-2 border-2 border-dashed border-dashed border-[#dcd0c2]/50"><Save size={18} />另存為新食譜</SaveButton>
+                      <button disabled={isSubmitting} onClick={close} className="btn bg-gradient-to-r bg-[#b87e6b] to-pink-600 hover:bg-[#a66a58] text-[#f0ece1] px-10 h-12 rounded-xl font-bold shadow-[0_8px_20px_rgba(139,121,101,0.08)] shadow-[#b87e6b]/30">完成</button>
                   </div>
               </div>
            </div>

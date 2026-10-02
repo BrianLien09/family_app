@@ -41,7 +41,7 @@ export default function RecipesPage() {
     currentPage * itemsPerPage
   );
   
-  const handleModalSubmit = (recipeData: Recipe) => {
+  const handleModalSubmit = async (recipeData: Recipe): Promise<boolean> => {
     if (editingRecipe) {
       const fieldsToUpdate = {
         title: recipeData.title,
@@ -50,12 +50,10 @@ export default function RecipesPage() {
         ingredients: recipeData.ingredients,
         cookingTime: recipeData.cookingTime,
       };
-      updateRecipe(editingRecipe.id, fieldsToUpdate);
+      return updateRecipe(editingRecipe.id, fieldsToUpdate);
     } else {
-      addRecipe(recipeData);
+      return addRecipe(recipeData);
     }
-    setIsAddModalOpen(false);
-    setEditingRecipe(null);
   };
 
   // ✨✨✨ 2. 修改這裡：在打開視窗前就先擋下來 ✨✨✨

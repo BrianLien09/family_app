@@ -71,7 +71,7 @@ export default function PurchaseModal({ item, categories, choiceOptions, onClose
       <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto">
         <fieldset disabled={isSubmitting} className="grid min-w-0 grid-cols-1 items-start gap-x-8 gap-y-6 p-6 sm:p-8 md:grid-cols-2">
-          <label className="flex min-w-0 flex-col gap-3 text-sm font-bold leading-5"><span>品名／型號</span><input autoFocus required maxLength={120} className={inputStyle} value={name} onChange={e => setName(e.target.value)} placeholder="例如：iPhone、Galaxy 手機型號" /></label>
+          <label className="flex min-w-0 flex-col gap-3 text-sm font-bold leading-5"><span>品名／型號</span><input autoFocus={!item} required maxLength={120} className={inputStyle} value={name} onChange={e => setName(e.target.value)} placeholder="例如：iPhone、Galaxy 手機型號" /></label>
           <fieldset className="min-w-0">
             <legend className="mb-3 text-sm font-bold leading-5">購買價格</legend>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

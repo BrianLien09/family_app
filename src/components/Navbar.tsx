@@ -46,7 +46,7 @@ export default function Navbar() {
     { name: '總覽', href: '/' },
     { name: '食譜神器', href: '/recipes' },
     { name: '家庭帳本', href: '/expenses' },
-    { name: '庫存與補貨', href: '/restock' },
+    { name: '家庭購買紀錄', href: '/purchases' },
     { name: '冥夜小助手', href: 'https://brianlien09.github.io/schedule_app/' },
   ];
 

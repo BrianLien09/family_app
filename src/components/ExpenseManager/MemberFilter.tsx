@@ -11,6 +11,7 @@ export default function MemberFilter({ selectedMember, onChange }: MemberFilterP
     <div className="flex flex-wrap gap-2 mb-6">
       <button
         onClick={() => onChange('全體')}
+        aria-pressed={selectedMember === '全體'}
         className={clsx(
           "px-4 py-2 rounded-xl text-sm font-bold transition-all border",
           selectedMember === '全體' ? "bg-[#5f7186] text-[#f0ece1] border-[#5f7186] shadow-[0_8px_20px_rgba(139,121,101,0.08)]"
@@ -23,6 +24,7 @@ export default function MemberFilter({ selectedMember, onChange }: MemberFilterP
         <button
           key={member}
           onClick={() => onChange(member)}
+          aria-pressed={selectedMember === member}
           className={clsx(
             "px-4 py-2 rounded-xl text-sm font-bold transition-all border-2 border-dashed flex items-center gap-2",
             selectedMember === member

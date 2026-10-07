@@ -1,36 +1,26 @@
 import { useEffect } from 'react';
 
+const immersiveOwners = new Set<symbol>();
+let previousOverflow = '';
+
 export function useImmersiveMode(enable: boolean) {
   useEffect(() => {
     if (!enable) return;
-
-    // 1. 鎖定滾動，避免背景滑動
-    document.body.style.overflow = 'hidden';
-
-    // 2. 抓取導航列
-    const navbar = document.getElementById('navbar');
-
-    if (navbar) {
-      // 強制隱藏 (加上 !important 確保權重)
-      navbar.style.cssText = `
-        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        transform: translateY(-100%) !important;
-      `;
-
-      // 3. 清理函式：元件關閉時執行
-      return () => {
-        document.body.style.overflow = 'unset'; // 解鎖滾動
-        
-        // 復原樣式
-        navbar.style.cssText = ''; 
-        // 讓 Navbar 透過原本的 class 控制是否顯示
-        // 如果原本是顯示的，移除 style 後它就會滑回來
-      };
-    } else {
-      // 找不到導航列，至少也要復原滾動
-      return () => {
-        document.body.style.overflow = 'unset';
-      };
+    const owner = Symbol('immersive');
+    if (immersiveOwners.size === 0) {
+      previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      document.body.dataset.immersive = 'true';
     }
+    immersiveOwners.add(owner);
+
+    return () => {
+      immersiveOwners.delete(owner);
+      // 多個沉浸視窗共用鎖定，最後一個關閉後才還原頁面。
+      if (immersiveOwners.size === 0) {
+        document.body.style.overflow = previousOverflow;
+        delete document.body.dataset.immersive;
+      }
+    };
   }, [enable]);
 }

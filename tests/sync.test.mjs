@@ -286,7 +286,7 @@ test('台灣凌晨、月底與年底均使用本地日期', () => {
   const previous = process.env.TZ; process.env.TZ = 'Asia/Taipei';
   try {
     const h = createHarness();
-    const { getTodayDateString } = h.load('src/lib/restock.ts');
+    const { getTodayDateString } = h.load('src/lib/date.ts');
     assert.equal(getTodayDateString(new Date('2026-09-29T16:01:00Z')), '2026-09-30');
     assert.equal(getTodayDateString(new Date('2026-09-30T16:01:00Z')), '2026-10-01');
     assert.equal(getTodayDateString(new Date('2026-12-31T16:01:00Z')), '2027-01-01');

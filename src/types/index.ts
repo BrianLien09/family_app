@@ -85,21 +85,3 @@ export interface ExpenseItem {
   description?: string;         // 備註（選填）
   date: string;                 // YYYY-MM-DD
 }
-
-export interface RestockPurchaseRecord {
-  purchasedOn: string; // YYYY-MM-DD
-}
-
-export interface RestockItem {
-  id: string;
-  name: string;
-  currentStock?: number;
-  stockUnit?: string;
-  lowStockThreshold?: number;
-  restockAmount?: number;
-  targetIntervalDays: number;
-  lastPurchasedOn: string;
-  purchaseHistory: RestockPurchaseRecord[];
-  lastNotifiedDueOn?: string;
-  note?: string;
-}

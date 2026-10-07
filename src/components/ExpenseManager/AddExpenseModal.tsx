@@ -4,7 +4,7 @@ import { useImmersiveMode } from '@/hooks/useImmersiveMode';
 import { useFormSubmission } from '@/hooks/useFormSubmission';
 import SaveButton from '@/components/SaveButton';
 import { FamilyMember, FAMILY_MEMBERS, EXPENSE_CATEGORIES, INCOME_CATEGORIES, ExpenseItem, MEMBER_COLORS } from '@/types';
-import { getTodayDateString } from '@/lib/restock';
+import { getTodayDateString } from '@/lib/date';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 

@@ -5,7 +5,7 @@ import {
   X, Type, Calendar, Clock, AlignLeft, Hash, Check, Plus, Settings2, Trash2
 } from 'lucide-react';
 import { DateItem, DateCategory } from '@/types';
-import { getTodayDateString } from '@/lib/restock';
+import { getTodayDateString } from '@/lib/date';
 import { useCategories } from '@/hooks/useCategories';
 import { useCategoryTimePresets } from '@/hooks/useCategoryTimePresets';
 import clsx from 'clsx';

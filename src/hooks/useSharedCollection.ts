@@ -18,6 +18,7 @@ export function useSharedCollection<T>(options: SharedCollectionOptions<T>) {
   const [data, setData] = useState<T[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [hasSyncError, setHasSyncError] = useState(false);
   const restartRef = useRef<(() => void) | null>(null);
   const confirmedDataRef = useRef<T[]>([]);
   const sessionRef = useRef(0);
@@ -54,6 +55,7 @@ export function useSharedCollection<T>(options: SharedCollectionOptions<T>) {
       setData([]);
       confirmedDataRef.current = [];
       setIsRefreshing(false);
+      setHasSyncError(false);
       if (!user) {
         setIsLoaded(true);
         return;
@@ -95,6 +97,7 @@ export function useSharedCollection<T>(options: SharedCollectionOptions<T>) {
             return;
           }
           hasCache = true;
+          setHasSyncError(false);
           confirmedDataRef.current = items;
           setData(items);
           updateCache(items, user.uid);
@@ -103,6 +106,7 @@ export function useSharedCollection<T>(options: SharedCollectionOptions<T>) {
         }, (error) => {
           if (!isCurrent()) return;
           console.error(`${collectionName} 即時同步失敗：`, error);
+          setHasSyncError(true);
           toast.error('同步失敗，目前保留已載入資料，請重新整理再試');
           setIsLoaded(true);
           setIsRefreshing(false);
@@ -146,5 +150,5 @@ export function useSharedCollection<T>(options: SharedCollectionOptions<T>) {
     if (isCurrentSession()) restoreData();
   };
 
-  return { data, setData: setVisibleData, isLoaded, isRefreshing, refresh, updateCache: updateVisibleCache, restoreData: restoreVisibleData };
+  return { data, setData: setVisibleData, isLoaded, isRefreshing, hasSyncError, refresh, updateCache: updateVisibleCache, restoreData: restoreVisibleData };
 }

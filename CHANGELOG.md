@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1](https://github.com/BrianLien09/family_app/compare/v0.2.0...v0.2.1) (2026-10-16)
+
+
+### Bug Fixes
+
+* **calendar:** 穩定手機新增行程視窗 ([f67e7e2](https://github.com/BrianLien09/family_app/commit/f67e7e22f031f6182f4b8d71cc99c4cae4578f1d))
+* **purchases:** 停用編輯時標題自動聚焦 ([9afb0a2](https://github.com/BrianLien09/family_app/commit/9afb0a2c6127323b9a29d763b7ec704d49635c4c))
+
 ## [0.2.0](https://github.com/BrianLien09/family_app/compare/v0.1.0...v0.2.0) (2026-10-07)
 
 

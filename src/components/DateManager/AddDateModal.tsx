@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import {
   X, Type, Calendar, Clock, AlignLeft, Hash, Check, Plus, Settings2, Trash2
 } from 'lucide-react';
@@ -10,6 +10,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { useCategoryTimePresets } from '@/hooks/useCategoryTimePresets';
 import clsx from 'clsx';
 import { useImmersiveMode } from '@/hooks/useImmersiveMode';
+import { useModalViewport } from '@/hooks/useModalViewport';
 import { useFormSubmission } from '@/hooks/useFormSubmission';
 import SaveButton from '@/components/SaveButton';
 
@@ -64,6 +65,8 @@ export default function AddDateModal({
   const resolvedInitialCategory = categories.includes(initialCategory) ? initialCategory : '其它';
 
   const { isSubmitting, submit, close } = useFormSubmission(onClose);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const [title, setTitle] = useState(() => initialData?.title ?? resolvedInitialCategory);
   const [date, setDate] = useState(() => initialData?.date ?? presetDate ?? getTodayDateString());
@@ -85,6 +88,21 @@ export default function AddDateModal({
   });
 
   useImmersiveMode(isOpen);
+  useModalViewport(viewportRef, isOpen);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const activeElement = document.activeElement;
+    const previousFocus = activeElement instanceof HTMLElement ? activeElement : null;
+    panelRef.current?.focus({ preventScroll: true });
+
+    return () => {
+      if (previousFocus?.isConnected) {
+        previousFocus.focus({ preventScroll: true });
+      }
+    };
+  }, [isOpen]);
 
   // 2. ESC 關閉
   useEffect(() => {
@@ -180,13 +198,18 @@ export default function AddDateModal({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in"
+      ref={viewportRef}
+      className="fixed inset-x-0 top-[var(--modal-viewport-top,0px)] z-[100] flex h-[var(--modal-viewport-height,100vh)] flex-col items-stretch justify-start overflow-hidden bg-black/80 pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-sm motion-safe:animate-fade-in motion-reduce:animate-none sm:top-0 sm:h-screen sm:flex-row sm:items-center sm:justify-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-busy={isSubmitting}
       aria-labelledby="modal-title"
     >
-      <div className="w-full sm:max-w-md max-h-[92vh] bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] shadow-2xl rounded-t-2xl sm:rounded-xl overflow-hidden flex flex-col animate-slide-up">
+      <div
+        ref={panelRef}
+        tabIndex={-1}
+        className="flex min-h-0 w-full max-h-full flex-1 flex-col overflow-hidden rounded-t-2xl border-2 border-dashed border-[#dcd0c2] bg-[#f0ece1] shadow-2xl sm:h-auto sm:max-h-[calc(100vh-2rem)] sm:max-w-md sm:flex-none sm:rounded-xl sm:motion-safe:animate-scale-in"
+      >
 
         {/* 手機版拖曳把手 */}
         <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
@@ -194,14 +217,14 @@ export default function AddDateModal({
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3">
+        <div className="flex shrink-0 items-center justify-between border-b border-dashed border-[#dcd0c2] px-5 py-3">
           <h2 id="modal-title" className="text-lg font-bold text-[#3d3a36] flex items-center gap-2.5">
             <span className="w-1 h-5 bg-[#5f7186] rounded-full" />
             {initialData ? '編輯行程' : '新增行程'}
           </h2>
           <button
             disabled={isSubmitting} onClick={close}
-            className="text-[#3d3a36] hover:text-[#b87e6b] transition-all duration-200"
+            className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-[#3d3a36] hover:text-[#b87e6b] transition-colors duration-200"
             aria-label="關閉對話框"
           >
             <X size={22} />
@@ -209,8 +232,9 @@ export default function AddDateModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="px-5 pb-6 space-y-3 overflow-y-auto flex-1">
-          <fieldset disabled={isSubmitting} className="min-w-0 space-y-3 border-0 p-0">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
+            <fieldset disabled={isSubmitting} className="min-w-0 space-y-3 border-0 p-0">
 
           {/* 標題 */}
           <div className="group relative">
@@ -219,8 +243,7 @@ export default function AddDateModal({
             </div>
             <input
               required
-              autoFocus
-              className="w-full bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg pl-10 pr-4 py-2.5 text-[#3d3a36] placeholder-[#78716c]/70 focus:outline-none focus:border-[#b87e6b] focus:ring-2 focus:ring-[#b87e6b]/30 transition-all text-sm"
+              className="w-full bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg pl-10 pr-4 py-2.5 text-[#3d3a36] placeholder-[#78716c]/70 focus:outline-none focus:border-[#b87e6b] focus:ring-2 focus:ring-[#b87e6b]/30 transition-all text-base lg:text-sm"
               placeholder="行程標題 (例如：阿弟排班)"
               value={title}
               onChange={e => setTitle(e.target.value)}
@@ -238,7 +261,7 @@ export default function AddDateModal({
               <input
                 type="date"
                 required
-                className="w-full bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg pl-10 pr-4 py-2.5 text-[#3d3a36] focus:outline-none focus:border-[#b87e6b] focus:ring-2 focus:ring-[#b87e6b]/30 transition-all  text-sm"
+                className="w-full bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg pl-10 pr-4 py-2.5 text-[#3d3a36] focus:outline-none focus:border-[#b87e6b] focus:ring-2 focus:ring-[#b87e6b]/30 transition-all text-base lg:text-sm"
                 value={date}
                 onChange={e => setDate(e.target.value)}
                 aria-label="日期"
@@ -254,7 +277,7 @@ export default function AddDateModal({
                   </div>
                   <input
                     type="time"
-                    className="w-full bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg pl-10 pr-3 py-2.5 text-[#3d3a36] focus:outline-none focus:border-[#b87e6b] focus:ring-2 focus:ring-[#b87e6b]/30 transition-all  text-sm"
+                    className="w-full bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg pl-10 pr-3 py-2.5 text-[#3d3a36] focus:outline-none focus:border-[#b87e6b] focus:ring-2 focus:ring-[#b87e6b]/30 transition-all text-base lg:text-sm"
                     value={i === 0 ? startTime : endTime}
                     onChange={e => i === 0 ? setStartTime(e.target.value) : setEndTime(e.target.value)}
                     aria-label={label}
@@ -330,8 +353,7 @@ export default function AddDateModal({
                       if (e.key === 'Enter') { e.preventDefault(); handleAddCategory(); }
                     }}
                     placeholder="類別名稱"
-                    className="px-2.5 py-1.5 bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg text-[#3d3a36] text-xs focus:outline-none focus:border-[#b87e6b] w-24"
-                    autoFocus
+                    className="px-2.5 py-1.5 bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg text-[#3d3a36] text-base lg:text-xs focus:outline-none focus:border-[#b87e6b] w-36 lg:w-24"
                   />
                   <button
                     type="button"
@@ -424,20 +446,20 @@ export default function AddDateModal({
                     value={subCatForm.name}
                     onChange={e => setSubCatForm(f => ({ ...f, name: e.target.value }))}
                     placeholder="名稱（如週六班）"
-                    className="flex-1 min-w-0 px-2.5 py-1.5 bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg text-[#3d3a36] text-xs focus:outline-none focus:border-[#b87e6b]"
+                    className="flex-1 min-w-0 px-2.5 py-1.5 bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg text-[#3d3a36] text-base lg:text-xs focus:outline-none focus:border-[#b87e6b]"
                   />
                   <input
                     type="time"
                     value={subCatForm.startTime}
                     onChange={e => setSubCatForm(f => ({ ...f, startTime: e.target.value }))}
-                    className="px-2 py-1.5 bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg text-[#3d3a36] text-xs focus:outline-none focus:border-[#b87e6b] "
+                    className="px-2 py-1.5 bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg text-[#3d3a36] text-base lg:text-xs focus:outline-none focus:border-[#b87e6b] "
                     aria-label="子分類開始時間"
                   />
                   <input
                     type="time"
                     value={subCatForm.endTime}
                     onChange={e => setSubCatForm(f => ({ ...f, endTime: e.target.value }))}
-                    className="px-2 py-1.5 bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg text-[#3d3a36] text-xs focus:outline-none focus:border-[#b87e6b] "
+                    className="px-2 py-1.5 bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg text-[#3d3a36] text-base lg:text-xs focus:outline-none focus:border-[#b87e6b] "
                     aria-label="子分類結束時間（選填）"
                   />
                   <button
@@ -460,7 +482,7 @@ export default function AddDateModal({
               <AlignLeft size={16} />
             </div>
             <textarea
-              className="w-full bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg pl-10 pr-4 py-2.5 text-[#3d3a36] placeholder-[#78716c]/70 focus:outline-none focus:border-[#b87e6b] focus:ring-2 focus:ring-[#b87e6b]/30 transition-all resize-none h-16 text-sm"
+              className="w-full bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg pl-10 pr-4 py-2.5 text-[#3d3a36] placeholder-[#78716c]/70 focus:outline-none focus:border-[#b87e6b] focus:ring-2 focus:ring-[#b87e6b]/30 transition-all resize-none h-16 text-base lg:text-sm"
               placeholder="備註 (選填)"
               value={description}
               onChange={e => setDescription(e.target.value)}
@@ -468,27 +490,29 @@ export default function AddDateModal({
             />
           </div>
 
-          {/* 底部按鈕 */}
-          <div className="pt-1 flex justify-end gap-2">
+            </fieldset>
+          </div>
+
+          <div className="flex shrink-0 justify-end gap-2 border-t border-dashed border-[#dcd0c2] px-5 py-3">
             <button
               type="button"
-              disabled={isSubmitting} onClick={close}
-              className="px-5 py-2 rounded-lg text-[#3d3a36] hover:text-[#b87e6b] hover:bg-[#dcd0c2]/30 transition-all duration-200 font-medium text-sm"
+              disabled={isSubmitting}
+              onClick={close}
+              className="flex min-h-11 items-center rounded-lg px-5 py-2 text-sm font-medium text-[#3d3a36] transition-colors duration-200 hover:bg-[#dcd0c2]/30 hover:text-[#b87e6b]"
               aria-label="取消"
             >
               取消
             </button>
-            <SaveButton isSubmitting={isSubmitting}
+            <SaveButton
+              isSubmitting={isSubmitting}
               type="submit"
-              className="px-6 py-2 rounded-lg bg-[#b87e6b] hover:bg-[#a66a58] text-[#f0ece1] shadow-[0_8px_20px_rgba(139,121,101,0.08)] shadow-[#b87e6b]/20 transition-all font-bold flex items-center gap-1.5 text-sm"
+              className="flex min-h-11 items-center gap-1.5 rounded-lg bg-[#b87e6b] px-6 py-2 text-sm font-bold text-[#f0ece1] shadow-[0_8px_20px_rgba(139,121,101,0.08)] shadow-[#b87e6b]/20 transition-all hover:bg-[#a66a58]"
               aria-label={initialData ? '確認修改' : '確認新增'}
             >
               <Check size={16} />
               {initialData ? '確認修改' : '確認新增'}
             </SaveButton>
           </div>
-
-          </fieldset>
         </form>
       </div>
     </div>

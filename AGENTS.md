@@ -317,3 +317,10 @@ type: 簡短描述
 - 收入分類選單的值必須直接提交，不能被固定的「收入」字串覆蓋。舊紀錄的現有分類仍須能在編輯時顯示；回歸測試確認「薪水」原值完整送出。
 - 驗證指令：`node --test --experimental-test-isolation=none tests/*.test.mjs`、`npx tsc --noEmit --incremental false`、`npm run lint`、`npm run build`。無隔離測試可避免受限 Windows 環境的測試子程序 `spawn EPERM`；型別檢查關閉增量寫入可避開既有快取檔寫入限制。
 - 已在瀏覽器模擬 360／390／768／1440px 檢查六類彈窗，以及 Tab 循環、ESC、焦點還原、失敗保留輸入與 PDF 下載。瀏覽器尺寸模擬不等於 iOS／Android 實體鍵盤驗收。
+
+## Turbopack 開發環境除錯（2026-10-23）
+
+- 本地開發使用 `npm run dev`（`next dev`），不要自行加入 `--webpack`。
+- 遇到 `Failed to write app endpoint` 時先讀取 panic log 的 `Caused by`。本次實際原因為 `Next.js package not found`，但 `require('next/package.json').version` 與檔案檢查確認 Next.js 16.1.1 已安裝，不能僅依回報連結中的 `0.0.0` 判定套件版本或直接重裝。
+- `next.config.ts` 透過 `turbopack.root: __dirname` 明確指定模組解析邊界。修改設定後若仍反覆重載，先確認並停止此專案的開發程序，再清除產生的 `.next/dev` 快取後重新啟動；不要同時啟動兩個程序共用快取，也不要停止其他專案的 Node 程序。
+- 本次指定根目錄、清除快取並重啟後，已在一般 Turbopack 模式確認首頁與食譜頁完成載入，未再出現 panic 或反覆重載；型別檢查與設定檔 Lint 通過。這證明本次恢復步驟有效，並不單獨證明原始根因一定是根目錄推斷。

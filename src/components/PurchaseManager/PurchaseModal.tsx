@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useId, useRef, useState, type FormEvent } from 'react';
 import { Hash, Plus } from 'lucide-react';
 import { useFormSubmission } from '@/hooks/useFormSubmission';
 import Modal, { ModalActions } from '@/components/Modal';
@@ -23,6 +23,10 @@ export default function PurchaseModal({ item, categories, choiceOptions, onClose
   const [name, setName] = useState(item?.name ?? '');
   const [price, setPrice] = useState(item?.price?.toString() ?? '');
   const [priceCny, setPriceCny] = useState(item?.priceCny?.toString() ?? '');
+  // 已填人民幣的紀錄直接展開，零元也視為已填，避免編輯時隱藏既有資料。
+  const [isCnyVisible, setIsCnyVisible] = useState(item?.priceCny != null);
+  const cnyFieldId = useId();
+  const cnyFocusTarget = useRef<'input' | 'button' | null>(null);
   const [category, setCategory] = useState(item?.category ?? '手機');
   const [customCategory, setCustomCategory] = useState('');
   const [beneficiary, setBeneficiary] = useState<FamilyMember>(item?.beneficiary ?? '共同');
@@ -46,15 +50,26 @@ export default function PurchaseModal({ item, categories, choiceOptions, onClose
           <label className="flex min-w-0 flex-col gap-3 text-sm font-bold leading-5"><span>品名／型號</span><input required maxLength={120} className={inputStyle} value={name} onChange={e => setName(e.target.value)} placeholder="例如：iPhone、Galaxy 手機型號" /></label>
           <fieldset className="min-w-0">
             <legend className="mb-3 text-sm font-bold leading-5">購買價格</legend>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-3">
               <label className="relative block min-w-0">
                 <span className="sr-only">台幣 NT$</span><span aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold">NT$</span>
                 <input type="number" inputMode="decimal" required={!priceCny.trim()} min="0" max={Number.MAX_SAFE_INTEGER} step="0.01" className={`${inputStyle} pl-12`} value={price} onChange={e => setPrice(e.target.value)} placeholder="台幣金額" />
               </label>
-              <label className="relative block min-w-0">
-                <span className="sr-only">人民幣 ¥</span><span aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold">¥</span>
-                <input type="number" inputMode="decimal" required={!price.trim()} min="0" max={Number.MAX_SAFE_INTEGER} step="0.01" className={`${inputStyle} pl-8`} value={priceCny} onChange={e => setPriceCny(e.target.value)} placeholder="人民幣金額" />
-              </label>
+              {!isCnyVisible ? <button type="button" className="modal-secondary w-full border-dashed"
+                ref={element => { if (element && cnyFocusTarget.current === 'button') { cnyFocusTarget.current = null; element.focus(); } }}
+                aria-expanded={false} aria-controls={cnyFieldId} onClick={() => { cnyFocusTarget.current = 'input'; setIsCnyVisible(true); }}>
+                <Plus size={16} />填寫人民幣價格
+              </button> : <div id={cnyFieldId} className="space-y-2">
+                <div className="flex min-w-0 items-center justify-between gap-2">
+                  <label htmlFor={`${cnyFieldId}-input`} className="text-sm font-medium">人民幣價格（選填）</label>
+                  <button type="button" className="modal-secondary shrink-0" aria-label="移除人民幣價格"
+                    onClick={() => { cnyFocusTarget.current = 'button'; setIsCnyVisible(false); setPriceCny(''); }}>移除</button>
+                </div>
+                <div className="relative min-w-0">
+                  <span aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold">¥</span>
+                  <input id={`${cnyFieldId}-input`} ref={element => { if (element && cnyFocusTarget.current === 'input') { cnyFocusTarget.current = null; element.focus(); } }} type="number" inputMode="decimal" min="0" max={Number.MAX_SAFE_INTEGER} step="0.01" className={`${inputStyle} pl-8`} value={priceCny} onChange={e => setPriceCny(e.target.value)} placeholder="人民幣金額" />
+                </div>
+              </div>}
             </div>
           </fieldset>
           <fieldset className="min-w-0 md:col-span-2">

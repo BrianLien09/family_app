@@ -9,6 +9,7 @@ function createForm(path, props, extraModules = {}) {
   const slots = [];
   let cursor = 0;
   const react = {
+    useId: () => 'test-field',
     useState(initial) {
       const index = cursor++;
       if (!(index in slots)) slots[index] = typeof initial === 'function' ? initial() : initial;
@@ -25,6 +26,8 @@ function createForm(path, props, extraModules = {}) {
     '@/hooks/useFormSubmission': { useFormSubmission: onClose => ({ isSubmitting: false, close: onClose, submit: save => save() }) },
     '@/components/Modal': { __esModule: true, default: 'Modal', ModalActions: 'ModalActions' },
     '@/components/SaveButton': { __esModule: true, default: 'SaveButton' },
+    '@/components/PurchaseManager/PurchaseChoiceField': { __esModule: true, default: 'PurchaseChoiceField' },
+    '@/lib/purchases': { PHONE_MEMORY: ['8GB'], PHONE_STORAGE: ['256GB'], PURCHASE_PLATFORMS: ['門市'] },
     'lucide-react': {},
     'clsx': { __esModule: true, default: (...values) => values.filter(Boolean).join(' ') },
     'react-hot-toast': { __esModule: true, default: { error() {} } },
@@ -106,4 +109,29 @@ test('反推重量失效後不會另存上一組結果', async () => {
     await saveButton.props.onClick();
   }
   assert.equal(saves, 0);
+});
+
+test('人民幣價格按需展開，空白選填不影響台幣儲存', async () => {
+  let saved;
+  const render = createForm('../src/components/PurchaseManager/PurchaseModal.tsx', { item: null, categories: ['手機'], onClose() {}, onSave: async value => { saved = value; return true; } });
+  const cnyInput = () => find(render(), node => node.type === 'input' && node.props.placeholder === '人民幣金額');
+  assert.equal(cnyInput(), undefined);
+  find(render(), node => node.type === 'button' && node.props['aria-expanded'] === false).props.onClick();
+  assert.ok(cnyInput());
+  assert.equal(Boolean(cnyInput().props.required), false);
+  find(render(), node => node.type === 'input' && node.props.placeholder === '台幣金額').props.onChange({ target: { value: '500' } });
+  await render().props.onSubmit({ preventDefault() {} });
+  assert.equal(saved.price, 500);
+  assert.equal(saved.priceCny, null);
+});
+
+test('編輯人民幣零元紀錄直接展開，移除後不會提交隱藏價格', async () => {
+  let saved;
+  const render = createForm('../src/components/PurchaseManager/PurchaseModal.tsx', { item: { name: '手機', category: '手機', price: 100, priceCny: 0, beneficiary: '共同', purchaser: '共同', date: '2026-10-23', platform: '門市' }, categories: ['手機'], onClose() {}, onSave: async value => { saved = value; return true; } });
+  const input = find(render(), node => node.type === 'input' && node.props.placeholder === '人民幣金額');
+  assert.equal(input.props.value, '0');
+  find(render(), node => node.type === 'button' && node.props['aria-label'] === '移除人民幣價格').props.onClick();
+  assert.equal(find(render(), node => node.type === 'input' && node.props.placeholder === '人民幣金額'), undefined);
+  await render().props.onSubmit({ preventDefault() {} });
+  assert.equal(saved.priceCny, null);
 });

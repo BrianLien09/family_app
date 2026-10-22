@@ -6,9 +6,10 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  // 添加空的 turbopack 配置以抑制警告
-  // 實際建置時會使用 --webpack 旗標
-  turbopack: {},
+  // 固定模組解析邊界，避免開發程序將其他目錄誤認為工作區根目錄。
+  turbopack: {
+    root: __dirname,
+  },
   // 部署到 GitHub Pages 子路徑時需要設定 basePath
   basePath: '/family_app',
 };

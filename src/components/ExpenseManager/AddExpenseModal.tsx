@@ -1,8 +1,8 @@
+'use client';
+
 import { useState } from 'react';
-import { X } from 'lucide-react';
-import { useImmersiveMode } from '@/hooks/useImmersiveMode';
 import { useFormSubmission } from '@/hooks/useFormSubmission';
-import SaveButton from '@/components/SaveButton';
+import Modal, { ModalActions } from '@/components/Modal';
 import { FamilyMember, FAMILY_MEMBERS, EXPENSE_CATEGORIES, INCOME_CATEGORIES, ExpenseItem, MEMBER_COLORS } from '@/types';
 import { getTodayDateString } from '@/lib/date';
 import clsx from 'clsx';
@@ -18,7 +18,6 @@ interface AddExpenseModalProps {
 }
 
 export default function AddExpenseModal({ isOpen, onClose, onSubmit, initialData, defaultMember }: AddExpenseModalProps) {
-  useImmersiveMode(isOpen);
 
   const { isSubmitting, submit, close } = useFormSubmission(onClose);
 
@@ -33,7 +32,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, initialData
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+    if (!amount || !Number.isFinite(Number(amount)) || Number(amount) <= 0) {
       toast.error('請輸入有效的金額');
       return;
     }
@@ -41,7 +40,8 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, initialData
     await submit(() => onSubmit({
       type,
       amount: Number(amount),
-      category: type === 'income' ? '收入' : category,
+      // 選單的選擇就是儲存值，避免填寫收入分類後被固定文字覆蓋。
+      category,
       member,
       date,
       description: description.trim()
@@ -49,22 +49,15 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, initialData
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={close} />
-      <div className="relative w-full max-w-md bg-[#f0ece1] rounded-2xl shadow-2xl border-2 border-dashed border-dashed border-[#dcd0c2]/50 overflow-hidden animate-scale-in">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-dashed border-[#dcd0c2]/50">
-          <h2 className="text-xl font-bold text-[#3d3a36]">{initialData ? '編輯紀錄' : '新增紀錄'}</h2>
-          <button disabled={isSubmitting} onClick={close} className="p-1.5 text-[#3d3a36] hover:text-[#b87e6b] rounded-lg hover:bg-[#dcd0c2]/50 transition-all duration-200">
-            <X size={20} />
-          </button>
-        </div>
-        
-        <form onSubmit={handleSubmit} className="p-4 sm:px-6 sm:py-4 space-y-3">
-          <fieldset disabled={isSubmitting} className="min-w-0 space-y-3 border-0 p-0">
+    <Modal isOpen={isOpen} title={initialData ? '編輯紀錄' : '新增紀錄'} onClose={close} closeOnBackdrop
+      isBusy={isSubmitting} onSubmit={handleSubmit}
+      footer={<ModalActions onClose={close} isSubmitting={isSubmitting}>{initialData ? '儲存修改' : '儲存紀錄'}</ModalActions>}>
+      <fieldset disabled={isSubmitting} className="min-w-0 space-y-5 border-0 p-0">
           {/* 收支切換 */}
           <div className="flex bg-[#dcd0c2]/30 rounded-xl p-1">
             <button
               type="button"
+              aria-pressed={type === 'expense'}
               onClick={() => {
                 if (type !== 'expense') {
                   setType('expense');
@@ -72,7 +65,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, initialData
                 }
               }}
               className={clsx(
-                "flex-1 py-1.5 text-sm font-bold rounded-lg transition-all",
+                "flex-1 min-h-11 py-2 text-sm font-bold rounded-lg transition-all",
                 type === 'expense' ? "bg-[#b87e6b] text-[#f0ece1] shadow-[0_4px_12px_rgba(139,121,101,0.06)]" : "text-[#3d3a36] hover:text-[#b87e6b]"
               )}
             >
@@ -80,6 +73,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, initialData
             </button>
             <button
               type="button"
+              aria-pressed={type === 'income'}
               onClick={() => {
                 if (type !== 'income') {
                   setType('income');
@@ -87,7 +81,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, initialData
                 }
               }}
               className={clsx(
-                "flex-1 py-1.5 text-sm font-bold rounded-lg transition-all",
+                "flex-1 min-h-11 py-2 text-sm font-bold rounded-lg transition-all",
                 type === 'income' ? "bg-[#5f7186] text-[#f0ece1] shadow-[0_4px_12px_rgba(139,121,101,0.06)]" : "text-[#3d3a36] hover:text-[#b87e6b]"
               )}
             >
@@ -96,33 +90,33 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, initialData
           </div>
 
           {/* 金額 */}
-          <div>
-            <label className="block text-sm font-medium text-[#3d3a36] mb-1">金額</label>
+          <label className="modal-field"><span>金額</span>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#3d3a36]">$</span>
               <input
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full pl-8 pr-4 py-2.5 bg-[#dcd0c2]/30 border-2 border-dashed border-dashed border-[#dcd0c2]/50 rounded-xl text-[#3d3a36] placeholder-slate-500 focus:outline-none focus:border-[#b87e6b] transition-all duration-200"
+                className="modal-input pl-8"
+                inputMode="decimal"
                 placeholder="0"
                 required
                 min="1"
               />
             </div>
-          </div>
+          </label>
 
           {/* 誰的消費 */}
-          <div>
-            <label className="block text-sm font-medium text-[#3d3a36] mb-1">成員</label>
+          <fieldset className="min-w-0"><legend className="mb-2 text-sm font-medium">成員</legend>
             <div className="flex flex-wrap gap-2">
               {FAMILY_MEMBERS.map(m => (
                 <button
                   key={m}
+                  aria-pressed={member === m}
                   type="button"
                   onClick={() => setMember(m)}
                   className={clsx(
-                    "px-3 py-1.5 rounded-lg text-sm font-medium transition-all border",
+                    "min-h-11 px-3 py-2 rounded-xl text-sm font-medium transition-all border",
                     member === m ? "text-[#f0ece1]" : "bg-[#dcd0c2]/30 text-[#3d3a36] border-transparent hover:bg-[#dcd0c2]/50"
                   )}
                   style={{
@@ -134,55 +128,47 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, initialData
                 </button>
               ))}
             </div>
-          </div>
+          </fieldset>
 
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {/* 分類 */}
-          <div>
-            <label className="block text-sm font-medium text-[#3d3a36] mb-1">分類</label>
+          <label className="modal-field"><span>分類</span>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-4 py-2.5 bg-[#dcd0c2]/30 border-2 border-dashed border-dashed border-[#dcd0c2]/50 rounded-xl text-[#3d3a36] focus:outline-none focus:border-[#b87e6b] transition-all duration-200 appearance-none"
+              className="modal-input"
             >
+              {initialData && !(type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES).some(value => value === category) && <option value={category}>{category}</option>}
               {(type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES).map(c => (
                 <option key={c} value={c} className="bg-[#f0ece1]">{c}</option>
               ))}
             </select>
-          </div>
+          </label>
 
           {/* 日期 */}
-          <div>
-            <label className="block text-sm font-medium text-[#3d3a36] mb-1">日期</label>
+          <label className="modal-field"><span>日期</span>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full px-4 py-2.5 bg-[#dcd0c2]/30 border-2 border-dashed border-dashed border-[#dcd0c2]/50 rounded-xl text-[#3d3a36] focus:outline-none focus:border-[#b87e6b] transition-all duration-200"
+              className="modal-input"
               required
             />
+          </label>
           </div>
 
           {/* 備註 */}
-          <div>
-            <label className="block text-sm font-medium text-[#3d3a36] mb-1">備註 (選填)</label>
+          <label className="modal-field"><span>備註 (選填)</span>
             <input
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-2.5 bg-[#dcd0c2]/30 border-2 border-dashed border-dashed border-[#dcd0c2]/50 rounded-xl text-[#3d3a36] placeholder-slate-500 focus:outline-none focus:border-[#b87e6b] transition-all duration-200"
+              className="modal-input"
               placeholder="例如：午餐買便當"
             />
-          </div>
+          </label>
 
-          <SaveButton isSubmitting={isSubmitting}
-            type="submit"
-            className="w-full py-2.5 mt-2 bg-[#b87e6b] hover:bg-[#a66a58] text-[#f0ece1] font-bold rounded-xl shadow-[0_8px_20px_rgba(139,121,101,0.08)] shadow-[#b87e6b]/20 transition-all active:scale-[0.98]"
-          >
-            {initialData ? '儲存修改' : '儲存紀錄'}
-          </SaveButton>
-          </fieldset>
-        </form>
-      </div>
-    </div>
+      </fieldset>
+    </Modal>
   );
 }

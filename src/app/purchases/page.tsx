@@ -65,7 +65,7 @@ export default function PurchasesPage() {
     </section>
 
     {isOpen && <PurchaseModal key={editing?.id ?? 'new'} item={editing} categories={categories} choiceOptions={choiceOptions} onClose={() => setIsOpen(false)} onSave={data => savePurchase(data, editing?.id)} />}
-    <ConfirmDialog isOpen={Boolean(deleting)} title="刪除購買紀錄？" description={`「${deleting?.name ?? ''}」將永久刪除。`} confirmLabel={isDeleting ? '刪除中…' : '刪除紀錄'} onClose={() => { if (!deletePending.current) setDeleting(null); }} onConfirm={async () => {
+    <ConfirmDialog isOpen={Boolean(deleting)} isBusy={isDeleting} title="刪除購買紀錄？" description={`「${deleting?.name ?? ''}」將永久刪除。`} confirmLabel={isDeleting ? '刪除中…' : '刪除紀錄'} onClose={() => { if (!deletePending.current) setDeleting(null); }} onConfirm={async () => {
       if (!deleting || deletePending.current) return;
       deletePending.current = true; setIsDeleting(true);
       try { if (await deletePurchase(deleting.id)) setDeleting(null); }

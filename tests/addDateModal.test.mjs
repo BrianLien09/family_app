@@ -163,15 +163,11 @@ test('停用時不註冊事件，卸載會取消待處理更新並清除樣式',
   assert.equal(element.properties.has('--modal-viewport-top'), false);
 });
 
-test('行程表單固定標頭與操作列，只讓欄位區捲動且不自動聚焦輸入框', () => {
-  const formStart = modalSource.indexOf('<form onSubmit={handleSubmit}');
-  const bodyStart = modalSource.indexOf('overflow-y-auto overscroll-contain', formStart);
-  const footerStart = modalSource.indexOf('flex shrink-0 justify-end', bodyStart);
-  const formEnd = modalSource.indexOf('</form>', footerStart);
-
-  assert.doesNotMatch(modalSource, /\bautoFocus\b/);
-  assert.ok(formStart >= 0 && bodyStart > formStart && footerStart > bodyStart && formEnd > footerStart);
+test('行程表單透過共用彈窗送出，沿用提交鎖定與手機視口管理', () => {
+  const sharedSource = fs.readFileSync(new URL('../src/components/Modal.tsx', import.meta.url), 'utf8');
+  assert.match(modalSource, /<Modal[\s\S]*?onSubmit=\{handleSubmit\}/);
   assert.match(modalSource, /<fieldset disabled=\{isSubmitting\}/);
-  assert.match(modalSource, /<SaveButton[\s\S]*?isSubmitting=\{isSubmitting\}[\s\S]*?type="submit"/);
-  assert.match(modalSource, /disabled=\{isSubmitting\}[\s\S]*?onClick=\{close\}/);
+  assert.match(sharedSource, /useModalViewport\(viewportRef, isOpen\)/);
+  assert.match(sharedSource, /<form[^>]+onSubmit=/);
+  assert.match(sharedSource, /<SaveButton[^>]+type="submit"/);
 });

@@ -1,18 +1,16 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
-  X, Type, Calendar, Clock, AlignLeft, Hash, Check, Plus, Settings2, Trash2
+  X, Hash, Check, Plus, Settings2, Trash2
 } from 'lucide-react';
 import { DateItem, DateCategory } from '@/types';
 import { getTodayDateString } from '@/lib/date';
 import { useCategories } from '@/hooks/useCategories';
 import { useCategoryTimePresets } from '@/hooks/useCategoryTimePresets';
 import clsx from 'clsx';
-import { useImmersiveMode } from '@/hooks/useImmersiveMode';
-import { useModalViewport } from '@/hooks/useModalViewport';
 import { useFormSubmission } from '@/hooks/useFormSubmission';
-import SaveButton from '@/components/SaveButton';
+import Modal, { ModalActions } from '@/components/Modal';
 
 interface AddDateModalProps {
   isOpen: boolean;
@@ -54,7 +52,7 @@ export default function AddDateModal({
   initialData,
   presetDate,
 }: AddDateModalProps) {
-  const { categories: syncedCategories, addCategory, deleteCategory, isDefaultCategory } = useCategories();
+  const { categories: syncedCategories, addCategory } = useCategories();
   const categories = initialData?.category && !syncedCategories.includes(initialData.category)
     ? [...syncedCategories, initialData.category]
     : syncedCategories;
@@ -65,8 +63,6 @@ export default function AddDateModal({
   const resolvedInitialCategory = categories.includes(initialCategory) ? initialCategory : '其它';
 
   const { isSubmitting, submit, close } = useFormSubmission(onClose);
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
 
   const [title, setTitle] = useState(() => initialData?.title ?? resolvedInitialCategory);
   const [date, setDate] = useState(() => initialData?.date ?? presetDate ?? getTodayDateString());
@@ -86,33 +82,6 @@ export default function AddDateModal({
     startTime: '',
     endTime: '',
   });
-
-  useImmersiveMode(isOpen);
-  useModalViewport(viewportRef, isOpen);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const activeElement = document.activeElement;
-    const previousFocus = activeElement instanceof HTMLElement ? activeElement : null;
-    panelRef.current?.focus({ preventScroll: true });
-
-    return () => {
-      if (previousFocus?.isConnected) {
-        previousFocus.focus({ preventScroll: true });
-      }
-    };
-  }, [isOpen]);
-
-  // 2. ESC 關閉
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
-    };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, close]);
 
   if (!isOpen) return null;
 
@@ -174,16 +143,6 @@ export default function AddDateModal({
     }, false);
   };
 
-  // 刪除類別
-  const handleDeleteCategory = async (categoryToDelete: string) => {
-    await submit(async () => {
-      const saved = await deleteCategory(categoryToDelete);
-      if (!saved) return false;
-      if (category === categoryToDelete) setCategory('其它');
-      return true;
-    }, false);
-  };
-
   // 儲存子分類
   const handleSaveSubCat = async () => {
     if (!subCatForm.name.trim() || !subCatForm.startTime) return;
@@ -197,118 +156,36 @@ export default function AddDateModal({
   const subCategories = getSubCategories(category);
 
   return (
-    <div
-      ref={viewportRef}
-      className="fixed inset-x-0 top-[var(--modal-viewport-top,0px)] z-[100] flex h-[var(--modal-viewport-height,100vh)] flex-col items-stretch justify-start overflow-hidden bg-black/80 pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-sm motion-safe:animate-fade-in motion-reduce:animate-none sm:top-0 sm:h-screen sm:flex-row sm:items-center sm:justify-center sm:p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-busy={isSubmitting}
-      aria-labelledby="modal-title"
-    >
-      <div
-        ref={panelRef}
-        tabIndex={-1}
-        className="flex min-h-0 w-full max-h-full flex-1 flex-col overflow-hidden rounded-t-2xl border-2 border-dashed border-[#dcd0c2] bg-[#f0ece1] shadow-2xl sm:h-auto sm:max-h-[calc(100vh-2rem)] sm:max-w-md sm:flex-none sm:rounded-xl sm:motion-safe:animate-scale-in"
-      >
-
-        {/* 手機版拖曳把手 */}
-        <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
-          <div className="w-10 h-1 rounded-full bg-[#dcd0c2]" />
+    <Modal isOpen={isOpen} title={initialData ? '編輯行程' : '新增行程'} onClose={close}
+      isBusy={isSubmitting} onSubmit={handleSubmit}
+      footer={<ModalActions onClose={close} isSubmitting={isSubmitting}>{initialData ? '確認修改' : '確認新增'}</ModalActions>}>
+      <fieldset disabled={isSubmitting} className="min-w-0 space-y-5 border-0 p-0">
+        <label className="modal-field">行程標題
+          <input required className="modal-input" placeholder="例如：阿弟排班" value={title} onChange={e => setTitle(e.target.value)} />
+        </label>
+        <label className="modal-field">日期
+          <input type="date" required className="modal-input" value={date} onChange={e => setDate(e.target.value)} />
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="modal-field">開始時間<input type="time" className="modal-input" value={startTime} onChange={e => setStartTime(e.target.value)} /></label>
+          <label className="modal-field">結束時間（選填）<input type="time" className="modal-input" value={endTime} onChange={e => setEndTime(e.target.value)} /></label>
         </div>
-
-        {/* Header */}
-        <div className="flex shrink-0 items-center justify-between border-b border-dashed border-[#dcd0c2] px-5 py-3">
-          <h2 id="modal-title" className="text-lg font-bold text-[#3d3a36] flex items-center gap-2.5">
-            <span className="w-1 h-5 bg-[#5f7186] rounded-full" />
-            {initialData ? '編輯行程' : '新增行程'}
-          </h2>
-          <button
-            disabled={isSubmitting} onClick={close}
-            className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-[#3d3a36] hover:text-[#b87e6b] transition-colors duration-200"
-            aria-label="關閉對話框"
-          >
-            <X size={22} />
-          </button>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
-            <fieldset disabled={isSubmitting} className="min-w-0 space-y-3 border-0 p-0">
-
-          {/* 標題 */}
-          <div className="group relative">
-            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#3d3a36] group-focus-within:text-[#5f7186] transition-all duration-200">
-              <Type size={16} />
-            </div>
-            <input
-              required
-              className="w-full bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg pl-10 pr-4 py-2.5 text-[#3d3a36] placeholder-[#78716c]/70 focus:outline-none focus:border-[#b87e6b] focus:ring-2 focus:ring-[#b87e6b]/30 transition-all text-base lg:text-sm"
-              placeholder="行程標題 (例如：阿弟排班)"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              aria-label="行程標題"
-            />
-          </div>
-
-          {/* 日期 & 時間 */}
-          <div className="space-y-2">
-            {/* 日期 */}
-            <div className="group relative">
-              <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#3d3a36] group-focus-within:text-[#5f7186] transition-all duration-200">
-                <Calendar size={16} />
-              </div>
-              <input
-                type="date"
-                required
-                className="w-full bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg pl-10 pr-4 py-2.5 text-[#3d3a36] focus:outline-none focus:border-[#b87e6b] focus:ring-2 focus:ring-[#b87e6b]/30 transition-all text-base lg:text-sm"
-                value={date}
-                onChange={e => setDate(e.target.value)}
-                aria-label="日期"
-              />
-            </div>
-
-            {/* 時間區段 */}
-            <div className="grid grid-cols-2 gap-2">
-              {(['開始時間', '結束時間'] as const).map((label, i) => (
-                <div key={label} className="group relative">
-                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#3d3a36] group-focus-within:text-[#5f7186] transition-all duration-200">
-                    <Clock size={16} />
-                  </div>
-                  <input
-                    type="time"
-                    className="w-full bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg pl-10 pr-3 py-2.5 text-[#3d3a36] focus:outline-none focus:border-[#b87e6b] focus:ring-2 focus:ring-[#b87e6b]/30 transition-all text-base lg:text-sm"
-                    value={i === 0 ? startTime : endTime}
-                    onChange={e => i === 0 ? setStartTime(e.target.value) : setEndTime(e.target.value)}
-                    aria-label={label}
-                  />
-                </div>
-              ))}
-            </div>
-
-            {startTime && endTime && (
-              <p className="text-xs text-[#3d3a36] pl-0.5">
-                時間區段：{startTime} ~ {endTime}
-              </p>
-            )}
-          </div>
-
           {/* 分類選擇 */}
           <div className="space-y-1.5">
             <div className="flex items-center gap-1.5 text-[#3d3a36]">
               <Hash size={13} />
-              <span className="text-xs font-bold uppercase tracking-wider">選擇分類</span>
+              <span className="text-sm font-medium">選擇分類</span>
             </div>
 
             {/* 分類按鈕列 */}
             <div className="flex flex-wrap gap-1.5" role="group" aria-label="行程分類">
               {categories.map((cat: string) => (
-                <div key={cat} className="relative group/category">
                   <button
+                    key={cat}
                     type="button"
                     onClick={() => handleSelectCategory(cat)}
                     className={clsx(
-                      'px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
+                      'modal-choice',
                       category === cat
                         ? 'bg-[#5f7186] border-[#5f7186]/50 text-[#f0ece1] shadow-[0_8px_20px_rgba(139,121,101,0.08)] shadow-[#b87e6b]/20'
                         : 'bg-[#f0ece1] border-[#dcd0c2] text-[#3d3a36] hover:border-[#5f7186]/50 hover:text-[#5f7186]'
@@ -318,18 +195,6 @@ export default function AddDateModal({
                   >
                     {cat}
                   </button>
-                  {/* 刪除按鈕（自訂類別才有） */}
-                  {!isDefaultCategory(cat) && (
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteCategory(cat)}
-                      className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 hover:bg-red-600 text-[#3d3a36] rounded-full flex items-center justify-center opacity-0 group-hover/category:opacity-100 transition-opacity"
-                      aria-label={`刪除類別 ${cat}`}
-                    >
-                      <X size={10} />
-                    </button>
-                  )}
-                </div>
               ))}
 
               {/* 新增類別按鈕 */}
@@ -337,14 +202,14 @@ export default function AddDateModal({
                 <button
                   type="button"
                   onClick={() => setShowAddCategory(true)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#f0ece1] border-2 border-dashed border-dashed border-[#dcd0c2] text-[#3d3a36] hover:border-[#5f7186]/50 hover:text-[#5f7186] transition-all"
+                  className="min-h-11 px-3 py-2 rounded-xl text-sm font-medium bg-[#f0ece1] border-2 border-dashed border-dashed border-[#dcd0c2] text-[#3d3a36] hover:border-[#5f7186]/50 hover:text-[#5f7186] transition-all"
                   aria-label="新增自訂類別"
                 >
                   <Plus size={13} className="inline mr-0.5" />
                   自訂類別
                 </button>
               ) : (
-                <div className="flex items-center gap-1.5">
+                <div className="flex w-full min-w-0 flex-wrap items-center gap-2">
                   <input
                     type="text"
                     value={newCategoryName}
@@ -353,19 +218,22 @@ export default function AddDateModal({
                       if (e.key === 'Enter') { e.preventDefault(); handleAddCategory(); }
                     }}
                     placeholder="類別名稱"
-                    className="px-2.5 py-1.5 bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg text-[#3d3a36] text-base lg:text-xs focus:outline-none focus:border-[#b87e6b] w-36 lg:w-24"
+                    className="modal-input"
+                    aria-label="自訂類別名稱"
                   />
                   <button
                     type="button"
                     onClick={handleAddCategory}
-                    className="px-2 py-1.5 bg-[#5f7186] hover:bg-[#5f7186] text-[#f0ece1] rounded-lg text-xs transition-all duration-200"
+                    aria-label="儲存自訂類別"
+                    className="min-h-11 px-3 py-2 bg-[#5f7186] hover:bg-[#5f7186] text-[#f0ece1] rounded-lg text-xs transition-all duration-200"
                   >
-                    <Check size={13} />
+                    <Check size={16} />
                   </button>
                   <button
                     type="button"
+                    aria-label="取消新增類別"
                     onClick={() => { setShowAddCategory(false); setNewCategoryName(''); }}
-                    className="px-2 py-1.5 bg-[#dcd0c2]/50 hover:bg-[#dcd0c2]/80 text-[#3d3a36] rounded-lg text-xs transition-all duration-200"
+                    className="min-h-11 px-3 py-2 bg-[#dcd0c2]/50 hover:bg-[#dcd0c2]/80 text-[#3d3a36] rounded-lg text-xs transition-all duration-200"
                   >
                     <X size={13} />
                   </button>
@@ -377,7 +245,7 @@ export default function AddDateModal({
                 type="button"
                 onClick={() => setShowSubCatManager(v => !v)}
                 className={clsx(
-                  'px-2.5 py-1.5 rounded-lg text-xs transition-all border',
+                  'min-h-11 px-3 py-2 rounded-xl text-sm transition-all border',
                   showSubCatManager
                     ? 'bg-[#5f7186] border-[#5f7186] text-[#f0ece1]'
                     : 'bg-[#f0ece1] border-[#dcd0c2] text-[#3d3a36] hover:text-[#5f7186] hover:border-[#5f7186]'
@@ -397,7 +265,7 @@ export default function AddDateModal({
                     key={sub.name}
                     type="button"
                     onClick={() => handleSelectSubCategory(sub.name, sub.startTime, sub.endTime)}
-                    className="px-2.5 py-1 rounded-md text-xs font-medium bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] text-[#3d3a36] hover:border-[#5f7186]/50 hover:text-[#5f7186] transition-all"
+                    className="min-h-11 px-3 py-2 rounded-xl text-sm font-medium bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] text-[#3d3a36] hover:border-[#5f7186]/50 hover:text-[#5f7186] transition-all"
                     title={`${sub.startTime}${sub.endTime ? ` ~ ${sub.endTime}` : ''}`}
                   >
                     {sub.name}
@@ -428,7 +296,7 @@ export default function AddDateModal({
                         <button
                           type="button"
                           onClick={() => submit(() => deleteSubCategory(category, sub.name), false)}
-                          className="ml-auto text-slate-600 hover:text-[#b87e6b] transition-all duration-200"
+                          className="ml-auto modal-icon-button"
                           aria-label={`刪除子分類 ${sub.name}`}
                         >
                           <Trash2 size={12} />
@@ -440,81 +308,52 @@ export default function AddDateModal({
                 )}
 
                 {/* 新增子分類表單 */}
-                <div className="flex items-center gap-1.5 flex-wrap">
+                <div className="grid grid-cols-2 gap-2">
                   <input
                     type="text"
                     value={subCatForm.name}
                     onChange={e => setSubCatForm(f => ({ ...f, name: e.target.value }))}
+                    onKeyDown={e => {
+                      // 子分類屬於局部設定，Enter 不應誤送出整份行程。
+                      if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); handleSaveSubCat(); }
+                    }}
                     placeholder="名稱（如週六班）"
-                    className="flex-1 min-w-0 px-2.5 py-1.5 bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg text-[#3d3a36] text-base lg:text-xs focus:outline-none focus:border-[#b87e6b]"
+                    className="modal-input col-span-2"
+                    aria-label="子分類名稱"
                   />
                   <input
                     type="time"
                     value={subCatForm.startTime}
                     onChange={e => setSubCatForm(f => ({ ...f, startTime: e.target.value }))}
-                    className="px-2 py-1.5 bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg text-[#3d3a36] text-base lg:text-xs focus:outline-none focus:border-[#b87e6b] "
+                    className="modal-input"
                     aria-label="子分類開始時間"
                   />
                   <input
                     type="time"
                     value={subCatForm.endTime}
                     onChange={e => setSubCatForm(f => ({ ...f, endTime: e.target.value }))}
-                    className="px-2 py-1.5 bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg text-[#3d3a36] text-base lg:text-xs focus:outline-none focus:border-[#b87e6b] "
+                    className="modal-input"
                     aria-label="子分類結束時間（選填）"
                   />
                   <button
                     type="button"
                     onClick={handleSaveSubCat}
                     disabled={!subCatForm.name.trim() || !subCatForm.startTime}
-                    className="px-2.5 py-1.5 bg-[#5f7186] hover:bg-[#5f7186] disabled:opacity-40 disabled:cursor-not-allowed text-[#f0ece1] rounded-lg text-xs transition-all duration-200"
+                    className="min-h-11 px-3 py-2 bg-[#5f7186] hover:bg-[#5f7186] disabled:opacity-40 disabled:cursor-not-allowed text-[#f0ece1] rounded-lg text-xs transition-all duration-200"
                     aria-label="儲存子分類"
                   >
-                    <Check size={13} />
+                    <Check size={16} />
                   </button>
                 </div>
               </div>
             )}
           </div>
 
-          {/* 備註 */}
-          <div className="group relative">
-            <div className="absolute left-3.5 top-3.5 text-[#3d3a36] group-focus-within:text-[#5f7186] transition-all duration-200">
-              <AlignLeft size={16} />
-            </div>
-            <textarea
-              className="w-full bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-lg pl-10 pr-4 py-2.5 text-[#3d3a36] placeholder-[#78716c]/70 focus:outline-none focus:border-[#b87e6b] focus:ring-2 focus:ring-[#b87e6b]/30 transition-all resize-none h-16 text-base lg:text-sm"
-              placeholder="備註 (選填)"
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              aria-label="備註"
-            />
-          </div>
 
-            </fieldset>
-          </div>
-
-          <div className="flex shrink-0 justify-end gap-2 border-t border-dashed border-[#dcd0c2] px-5 py-3">
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={close}
-              className="flex min-h-11 items-center rounded-lg px-5 py-2 text-sm font-medium text-[#3d3a36] transition-colors duration-200 hover:bg-[#dcd0c2]/30 hover:text-[#b87e6b]"
-              aria-label="取消"
-            >
-              取消
-            </button>
-            <SaveButton
-              isSubmitting={isSubmitting}
-              type="submit"
-              className="flex min-h-11 items-center gap-1.5 rounded-lg bg-[#b87e6b] px-6 py-2 text-sm font-bold text-[#f0ece1] shadow-[0_8px_20px_rgba(139,121,101,0.08)] shadow-[#b87e6b]/20 transition-all hover:bg-[#a66a58]"
-              aria-label={initialData ? '確認修改' : '確認新增'}
-            >
-              <Check size={16} />
-              {initialData ? '確認修改' : '確認新增'}
-            </SaveButton>
-          </div>
-        </form>
-      </div>
-    </div>
+        <label className="modal-field">備註（選填）
+          <textarea rows={3} className="modal-input resize-y" value={description} onChange={e => setDescription(e.target.value)} placeholder="其他行程資訊" />
+        </label>
+      </fieldset>
+    </Modal>
   );
 }

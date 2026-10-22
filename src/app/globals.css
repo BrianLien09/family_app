@@ -199,3 +199,54 @@ body[data-immersive='true'] #navbar {
     height: 0;
   }
 }
+
+/* 彈窗以同一個可視視口為邊界，鍵盤開啟後仍保留標題與操作列。 */
+@layer components {
+  .modal-viewport {
+    position: fixed;
+    inset-inline: 0;
+    top: var(--modal-viewport-top, 0px);
+    height: var(--modal-viewport-height, 100dvh);
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: max(.5rem, env(safe-area-inset-top)) .5rem max(.5rem, env(safe-area-inset-bottom));
+    isolation: isolate;
+  }
+  .modal-backdrop { @apply absolute inset-0 bg-[#3d3a36]/50 backdrop-blur-sm; }
+  .modal-panel {
+    @apply relative flex min-h-0 w-full flex-col overflow-hidden rounded-2xl border-2 border-dashed border-[#dcd0c2] bg-[#f0ece1] text-[#3d3a36];
+    height: 100%;
+    max-height: 100%;
+    box-shadow: 0 24px 64px rgba(61, 58, 54, .2);
+  }
+  .modal-viewport-compact { padding-inline: 1rem; }
+  .modal-compact { @apply max-w-sm; height: auto; }
+  .modal-header { @apply flex shrink-0 items-center gap-3 border-b border-dashed border-[#dcd0c2] px-5 py-3; }
+  .modal-form { @apply flex min-h-0 flex-1 flex-col overflow-hidden; }
+  .modal-body { @apply min-h-0 flex-1 overflow-y-auto overscroll-contain p-5; }
+  .modal-footer { @apply flex shrink-0 flex-wrap items-center justify-end gap-3 border-t border-dashed border-[#dcd0c2] bg-[#f0ece1] px-5 py-3; }
+  .modal-icon-button { @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[#5f6368] transition-colors hover:bg-[#dcd0c2]/40 hover:text-[#b87e6b] disabled:opacity-50; }
+  .modal-secondary { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#dcd0c2] px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-[#dcd0c2]/30 disabled:opacity-50; }
+  .modal-primary { @apply inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#b87e6b] px-5 py-2.5 text-sm font-bold text-[#f0ece1] transition-colors hover:bg-[#a66a58] disabled:opacity-50; }
+  .modal-field { @apply flex min-w-0 flex-col gap-2 text-sm font-medium; }
+  .modal-input { @apply block min-h-12 w-full min-w-0 rounded-xl border-2 border-dashed border-[#dcd0c2]/70 bg-[#dcd0c2]/30 px-4 py-3 text-base font-normal text-[#3d3a36] placeholder:text-[#78716c]/70 transition-colors hover:bg-[#dcd0c2]/40 focus:border-[#b87e6b] focus:bg-[#f0ece1] focus:ring-2 focus:ring-[#b87e6b]/20; }
+  .modal-choice { @apply min-h-11 max-w-full break-words rounded-xl border border-[#dcd0c2] px-3 py-2 text-sm font-medium transition-colors hover:bg-[#dcd0c2]/30; }
+  .modal-choice[aria-pressed='true'] { @apply border-[#5f7186] bg-[#5f7186] text-[#f0ece1]; }
+  .modal-error { @apply text-sm font-medium text-[#9b4436]; }
+  @media (min-width: 768px) {
+    .modal-viewport { padding: 1.5rem; }
+    .modal-panel { height: auto; max-height: 100%; border-radius: 1.5rem; }
+    .modal-regular { max-width: 32rem; }
+    .modal-wide { max-width: 48rem; }
+    .modal-workspace { max-width: 64rem; }
+    .modal-header { @apply px-6 py-4; }
+    .modal-body { @apply p-6; }
+    .modal-footer { @apply px-6 py-4; }
+    .modal-primary { flex: none; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .modal-panel { animation: scaleIn 180ms ease-out; }
+  }
+}

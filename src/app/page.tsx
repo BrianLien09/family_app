@@ -264,7 +264,7 @@ export default function Home() {
   if (!isLoaded) return <CapybaraLoader label="正在整理家庭行程..." />;
 
   return (
-    <div className={clsx('overview-page mx-auto px-4 py-8 pt-20', isCalendarExpanded && 'is-calendar-expanded')}>
+    <div className={clsx('overview-page page-enter mx-auto px-4 py-8 pt-20', isCalendarExpanded && 'is-calendar-expanded')}>
       {/* 搜尋與篩選區 */}
       <div className="glass-card p-4 mb-6">
         {/* 搜尋欄 */}

@@ -106,7 +106,7 @@ export default function RecipesPage() {
   if (!isLoaded) return <CapybaraLoader label="正在整理家庭食譜..." />;
 
   return (
-    <div className="container min-h-screen pb-32 pt-28">
+    <div className="page-enter container min-h-screen pb-32 pt-28">
       <header className="mb-8 px-4">
         <div className="flex items-center gap-3 mb-4">
             <h1 className="text-4xl font-extrabold tracking-tight  text-[#b87e6b] drop-shadow-[0_2px_8px_rgba(139,121,101,0.04)]">

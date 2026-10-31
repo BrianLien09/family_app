@@ -82,7 +82,7 @@ export default function ExpensesPage() {
   if (!isLoaded) return <CapybaraLoader label="正在整理家庭帳本..." />;
 
   return (
-    <div className="container mx-auto px-4 py-8 pt-20 max-w-3xl min-h-screen">
+    <div className="page-enter container mx-auto px-4 py-8 pt-20 max-w-3xl min-h-screen">
       {/* 頂部標題與月份切換 */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div className="flex items-center gap-4 bg-[#dcd0c2]/30 rounded-2xl p-2 border-2 border-dashed border-dashed border-[#dcd0c2]/50">

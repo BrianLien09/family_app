@@ -31,7 +31,7 @@ export default function PurchasesPage() {
 
   if (!isLoaded) return <CapybaraLoader label="正在整理家庭購買紀錄…" />;
 
-  return <div className="container mx-auto min-h-screen max-w-3xl space-y-5 px-4 pb-10 pt-24 text-[#3d3a36] motion-safe:animate-fade-in">
+  return <div className="page-enter container mx-auto min-h-screen max-w-3xl space-y-5 px-4 pb-10 pt-24 text-[#3d3a36]">
     <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
       <div><h1 className="text-2xl font-bold tracking-tight">家庭購買紀錄</h1><p className="mt-1 text-sm text-[#5f6368]">記下全家的重要添購。</p></div>
       <div className="flex items-center gap-2">

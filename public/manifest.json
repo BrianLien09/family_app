@@ -1,6 +1,6 @@
 {
-  "name": "我們家的小助手",
-  "short_name": "家庭助手",
+  "name": "Famly Hub",
+  "short_name": "Famly Hub",
   "description": "紀錄重要日期與食譜轉換的家庭工具",
   "start_url": "/family_app/",
   "scope": "/family_app/",

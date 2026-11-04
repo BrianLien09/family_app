@@ -1,11 +1,13 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 import { Menu, X, ExternalLink } from 'lucide-react';
 import Login from '@/components/Login';
+import siteIcon from '../../public/icon-192x192.png';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -61,17 +63,20 @@ export default function Navbar() {
     >
        <div className="mx-auto flex w-full max-w-[80rem] items-center justify-between px-4 sm:px-8 lg:px-12 h-[70px]">
           {/* Logo Section */}
-          <div className="flex items-center gap-3">
-             <div className="w-8 h-8 rounded-full bg-[#b87e6b] flex items-center justify-center overflow-hidden shrink-0">
-                <span className="text-[#f0ece1] text-xs font-bold">B</span>
-             </div>
-             <span className="text-lg font-bold text-[#3d3a36] hidden sm:block">
-                我們家的小助手
+          <Link href="/" className="flex items-center gap-3">
+             {/* 使用與 PWA／favicon 相同的網站圖標，維持品牌一致 */}
+             <Image
+                src={siteIcon}
+                alt="Famly Hub 圖標"
+                width={36}
+                height={36}
+                priority
+                className="h-9 w-9 shrink-0 rounded-xl"
+             />
+             <span className="text-lg font-bold text-[#3d3a36]">
+                Famly Hub
              </span>
-             <span className="text-lg font-bold text-[#3d3a36] sm:hidden">
-                小助手
-             </span>
-          </div>
+          </Link>
 
           {/* Desktop Nav + Login */}
           <div className="flex items-center gap-4">

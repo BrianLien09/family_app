@@ -1,7 +1,7 @@
-# 我們家的小助手
+# Famly Hub
 
 <p align="center">
-  <img src="./assets/readme/hero.svg" width="100%" alt="我們家的小助手：整合行事曆、食譜、家庭帳本與購買紀錄的家庭共用工具" />
+  <img src="./assets/readme/hero.svg" width="100%" alt="Famly Hub：整合行事曆、食譜、家庭帳本與購買紀錄的家庭共用工具" />
 </p>
 
 > 一個為家庭日常設計的網頁工具：把行程、食譜比例、收支與重要購買放在同一個可共用的空間。

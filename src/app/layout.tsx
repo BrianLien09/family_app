@@ -8,13 +8,13 @@ import PWAUpdateProvider from '@/components/PWAUpdateProvider';
 const outfit = Outfit({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "我們家的小助手",
+  title: "Famly Hub",
   description: "紀錄重要日期與食譜轉換",
   manifest: "/family_app/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "家庭助手",
+    title: "Famly Hub",
   },
 };
 

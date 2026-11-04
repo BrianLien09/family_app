@@ -1,13 +1,23 @@
+"""家庭行程 LINE 提醒。
+
+兩種模式（由環境變數 NOTIFY_MODE 決定）：
+- tomorrow：每晚提醒「明天」的行程（預設）
+- weekly：每週日晚上提醒「下週一～週日」的行程
+
+提醒的目的是事先通知，因此不再顯示已完成的當天行程。
+"""
+
 import json
 import os
+import sys
+import time
 from datetime import date, datetime, timedelta
 from typing import Optional, TypedDict
 from zoneinfo import ZoneInfo
 
-import firebase_admin
-from firebase_admin import credentials, firestore
-from linebot import LineBotApi
-from linebot.models import TextSendMessage
+TIMEZONE = "Asia/Taipei"
+WEEKDAY_NAMES = ["一", "二", "三", "四", "五", "六", "日"]
+DIVIDER = "━━━━━━━━━━━━"
 
 
 class ScheduleEvent(TypedDict):
@@ -17,140 +27,192 @@ class ScheduleEvent(TypedDict):
     sort_time: str
 
 
-def zh(text: str) -> str:
-    return text.encode("utf-8").decode("unicode_escape")
+def to_schedule_event(data: dict) -> Optional[ScheduleEvent]:
+    """把 Firestore 文件轉成提醒用的行程；缺少日期的資料無法歸類，直接略過。"""
+    event_date = data.get("date")
+    if not isinstance(event_date, str) or not event_date:
+        return None
+
+    start_time = data.get("startTime")
+    end_time = data.get("endTime")
+    # 舊資料只有 time 欄位，維持相容讀取
+    legacy_time = data.get("time")
+
+    display_time = "全天"
+    sort_time = ""
+
+    if isinstance(start_time, str) and start_time:
+        sort_time = start_time
+        if isinstance(end_time, str) and end_time:
+            display_time = f"{start_time} ~ {end_time}"
+        else:
+            display_time = start_time
+    elif isinstance(legacy_time, str) and legacy_time:
+        sort_time = legacy_time
+        display_time = legacy_time
+
+    return {
+        "date": event_date,
+        "display_time": display_time,
+        "title": data.get("title") or "未命名行程",
+        "sort_time": sort_time,
+    }
 
 
-cred_json = os.getenv("FIREBASE_CREDENTIALS")
-
-if not cred_json:
-    print(zh("\\u627e\\u4e0d\\u5230 Firebase \\u91d1\\u9470\\uff0c\\u7121\\u6cd5\\u57f7\\u884c\\u901a\\u77e5"))
-    raise SystemExit(1)
-
-cred_dict = json.loads(cred_json)
-cred = credentials.Certificate(cred_dict)
-firebase_admin.initialize_app(cred)
-db = firestore.client()
-
-CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
-USER_ID = os.getenv("LINE_USER_ID")
+def sort_events(events: list[ScheduleEvent]) -> list[ScheduleEvent]:
+    # 全天行程 sort_time 為空字串，會自然排在最前面
+    return sorted(events, key=lambda e: (e["date"], e["sort_time"], e["title"]))
 
 
-def get_schedule_events(reference_date: date) -> list[ScheduleEvent]:
-    today_str = reference_date.isoformat()
-    tomorrow_str = (reference_date + timedelta(days=1)).isoformat()
+def format_date_label(day: date) -> str:
+    return f"{day.month:02d}/{day.day:02d}（{WEEKDAY_NAMES[day.weekday()]}）"
+
+
+def format_event(event: ScheduleEvent) -> str:
+    # 時間與標題分兩行：標題過長時 LINE 的自動換行才不會把時間擠得難讀
+    return f"🕒 {event['display_time']}\n　{event['title']}"
+
+
+def build_tomorrow_message(events: list[ScheduleEvent], today: date) -> Optional[str]:
+    """隔日提醒：只列明天的行程。"""
+    tomorrow = today + timedelta(days=1)
+    tomorrow_events = [e for e in sort_events(events) if e["date"] == tomorrow.isoformat()]
+    if not tomorrow_events:
+        return None
+
+    return "\n".join(
+        [
+            "🌙 明日行程提醒",
+            DIVIDER,
+            f"📅 {format_date_label(tomorrow)}",
+            "",
+            "\n\n".join(format_event(e) for e in tomorrow_events),
+            DIVIDER,
+            "⏰ 記得設鬧鐘喔！",
+        ]
+    )
+
+
+def build_weekly_message(events: list[ScheduleEvent], week_start: date) -> Optional[str]:
+    """每週提醒：依日期分組列出整週（週一～週日）有行程的日子。"""
+    week_end = week_start + timedelta(days=6)
+    by_date: dict[str, list[ScheduleEvent]] = {}
+    for event in sort_events(events):
+        if week_start.isoformat() <= event["date"] <= week_end.isoformat():
+            by_date.setdefault(event["date"], []).append(event)
+
+    if not by_date:
+        return None
+
+    day_blocks: list[str] = []
+    for offset in range(7):
+        day = week_start + timedelta(days=offset)
+        day_events = by_date.get(day.isoformat())
+        if not day_events:
+            continue
+        day_blocks.append(
+            "\n".join([f"📅 {format_date_label(day)}", *(format_event(e) for e in day_events)])
+        )
+
+    total = sum(len(v) for v in by_date.values())
+    return "\n".join(
+        [
+            "🗓️ 本週行程總覽",
+            f"{week_start.month:02d}/{week_start.day:02d} ~ {week_end.month:02d}/{week_end.day:02d}　共 {total} 項",
+            DIVIDER,
+            "\n\n".join(day_blocks),
+            DIVIDER,
+            "祝大家有美好的一週 ✨",
+        ]
+    )
+
+
+def fetch_events(start: date, end: date) -> list[ScheduleEvent]:
+    """讀取 [start, end] 區間行程。失敗時直接拋出例外，讓 workflow 顯示失敗而非靜默略過。"""
+    # 延遲載入，讓純格式化函式可在沒安裝 Firebase 套件的環境下測試
+    import firebase_admin
+    from firebase_admin import credentials, firestore
+
+    cred_json = os.getenv("FIREBASE_CREDENTIALS")
+    if not cred_json:
+        raise RuntimeError("找不到 Firebase 金鑰，無法執行通知")
+
+    firebase_admin.initialize_app(credentials.Certificate(json.loads(cred_json)))
+    db = firestore.client()
+
+    # 單欄位範圍查詢不需要建立複合索引
+    query = (
+        db.collection("schedules")
+        .where("date", ">=", start.isoformat())
+        .where("date", "<=", end.isoformat())
+    )
     events: list[ScheduleEvent] = []
-
-    try:
-        query = db.collection("schedules").where("date", "in", [today_str, tomorrow_str])
-        for snapshot in query.stream():
-            event = snapshot.to_dict()
-            title = event.get("title", zh("\\u672a\\u547d\\u540d\\u884c\\u7a0b"))
-            event_date = event.get("date")
-
-            start_time = event.get("startTime")
-            end_time = event.get("endTime")
-            legacy_time = event.get("time")
-
-            display_time = zh("\\u5168\\u5929")
-            sort_time = ""
-
-            if isinstance(start_time, str) and start_time:
-                sort_time = start_time
-                if isinstance(end_time, str) and end_time:
-                    display_time = f"{start_time} ~ {end_time}"
-                else:
-                    display_time = start_time
-            elif isinstance(legacy_time, str) and legacy_time:
-                sort_time = legacy_time
-                display_time = legacy_time
-
-            if isinstance(event_date, str):
-                events.append(
-                    {
-                        "date": event_date,
-                        "display_time": display_time,
-                        "title": title,
-                        "sort_time": sort_time,
-                    }
-                )
-    except Exception as error:
-        message = zh("\\u8b80\\u53d6\\u884c\\u7a0b\\u8cc7\\u6599\\u5931\\u6557")
-        print(f"{message}: {error}")
-
-    events.sort(key=lambda event: (event["date"], event["sort_time"], event["title"]))
+    for snapshot in query.stream():
+        event = to_schedule_event(snapshot.to_dict() or {})
+        if event:
+            events.append(event)
     return events
 
 
-def build_schedule_section(events: list[ScheduleEvent], reference_date: date) -> str:
-    if not events:
-        return ""
+def push_line_message(message: str) -> None:
+    from linebot import LineBotApi
+    from linebot.models import TextSendMessage
 
-    today_str = reference_date.isoformat()
-    tomorrow_str = (reference_date + timedelta(days=1)).isoformat()
+    token = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
+    user_id = os.getenv("LINE_USER_ID")
+    if not token or not user_id:
+        raise RuntimeError("LINE Token 或 User ID 未設定")
 
-    today_lines: list[str] = []
-    tomorrow_lines: list[str] = []
-
-    for event in events:
-        line = f"\U0001f539 {event['display_time']}\uff5c{event['title']}"
-        if event["date"] == today_str:
-            today_lines.append(line)
-        elif event["date"] == tomorrow_str:
-            tomorrow_lines.append(line)
-
-    sections: list[str] = []
-
-    if tomorrow_lines:
-        sections.append(
-            "\n".join(
-                [
-                    zh(f"\\U0001f4c5 {tomorrow_str} (\\u660e\\u5929)"),
-                    *tomorrow_lines,
-                ]
-            )
-        )
-
-    if today_lines:
-        sections.append(
-            "\n".join(
-                [
-                    zh(f"\\U0001f4c5 {today_str} (\\u4eca\\u5929\\u5df2\\u5b8c\\u6210)"),
-                    *today_lines,
-                ]
-            )
-        )
-
-    return "\n\n".join(sections)
+    LineBotApi(token).push_message(user_id, TextSendMessage(text=message))
 
 
-def build_message(reference_date: date) -> Optional[str]:
-    schedule_section = build_schedule_section(get_schedule_events(reference_date), reference_date)
-    if not schedule_section:
-        return None
-    return '\n\n'.join([
-        'Hi 大家晚安，我是小管家 🤖\n今天辛苦了！來看看明天的行程吧～',
-        schedule_section,
-        '記得設鬧鐘喔！⏰',
-    ])
+def seconds_until_send(now: datetime) -> float:
+    """距離當天 SEND_AT（台灣時間，預設 22:00）還有幾秒；已超過就回傳 0 立刻發送。"""
+    hour, minute = (int(part) for part in os.getenv("SEND_AT", "22:00").split(":"))
+    target = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+    return max(0.0, (target - now).total_seconds())
+
+
+def wait_until_send_time() -> None:
+    # GitHub 免費排程延遲不穩定：workflow 刻意提早啟動，再由腳本等到整點才發送。
+    # 這樣只要延遲沒超過提早量，訊息都會準時；公開 repo 的 Actions 分鐘數免費，等待不計費。
+    wait = seconds_until_send_time(datetime.now(ZoneInfo(TIMEZONE)))
+    if wait > 0:
+        print(f"提早啟動，等待 {int(wait // 60)} 分鐘後發送")
+        time.sleep(wait)
 
 
 def main() -> None:
-    if not CHANNEL_ACCESS_TOKEN or not USER_ID:
-        print('LINE Token 或 User ID 未設定')
-        return
-    today = datetime.now(ZoneInfo('Asia/Taipei')).date()
-    message = build_message(today)
+    mode = os.getenv("NOTIFY_MODE", "tomorrow")
+    if os.getenv("SEND_AT"):
+        wait_until_send_time()
+    today = datetime.now(ZoneInfo(TIMEZONE)).date()
+
+    if mode == "weekly":
+        # 週日晚上提醒「下週」：一律以下一個週一為起點（週日 +1 天即週一）
+        week_start = today + timedelta(days=7 - today.weekday())
+        message = build_weekly_message(
+            fetch_events(week_start, week_start + timedelta(days=6)), week_start
+        )
+        empty_hint = "下週沒有行程，略過 LINE 推播"
+    elif mode == "tomorrow":
+        tomorrow = today + timedelta(days=1)
+        message = build_tomorrow_message(fetch_events(tomorrow, tomorrow), today)
+        empty_hint = "明天沒有行程，略過 LINE 推播"
+    else:
+        raise RuntimeError(f"未知的 NOTIFY_MODE: {mode}")
+
     if not message:
-        print('今天與明天沒有行程，略過 LINE 推播')
+        print(empty_hint)
         return
+
+    push_line_message(message)
+    print(f"已送出提醒（模式：{mode}）")
+
+
+if __name__ == "__main__":
     try:
-        line_bot_api = LineBotApi(CHANNEL_ACCESS_TOKEN)
-        line_bot_api.push_message(USER_ID, TextSendMessage(text=message))
-        print('已送出今日與明日行程提醒')
+        main()
     except Exception as error:
-        print(f'LINE 推播失敗: {error}')
-
-
-if __name__ == '__main__':
-    main()
+        print(f"通知執行失敗: {error}", file=sys.stderr)
+        raise SystemExit(1)

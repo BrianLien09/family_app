@@ -2,32 +2,48 @@ name: Daily Schedule Check
 
 on:
   schedule:
-    # 台灣 17:50 = UTC 09:50
-    # 提前執行並避開整點高峰，降低免費 GitHub Actions 排隊延遲到午夜的機率
-    - cron: '50 9 * * *'
-  # 允許你手動按按鈕測試
+    # 兩種提醒都「提早啟動、由腳本等到台灣 22:00 才發送」，吸收 GitHub 排程的延遲。
+    # 單一 job 上限 6 小時，所以最早只能提早約 6 小時：台灣 16:10 = UTC 08:10。
+    # 隔日行程提醒：週一～週六（週日改由下面的週報涵蓋隔天週一，避免重複）
+    - cron: '10 8 * * 1-6'
+    # 下週行程總覽：每週日（分鐘數錯開，才能用 cron 字串區分兩種模式）
+    - cron: '25 8 * * 0'
+  # 允許手動測試，可選擇要發送哪一種提醒（手動觸發會立刻發送，不等待）
   workflow_dispatch:
+    inputs:
+      mode:
+        description: '提醒類型'
+        type: choice
+        options:
+          - tomorrow
+          - weekly
+        default: tomorrow
 
 jobs:
   notify:
     runs-on: ubuntu-latest
-    
+    # 腳本最久會等約 5 小時 50 分；GitHub 託管 runner 的硬上限為 360 分鐘，不可再調高
+    timeout-minutes: 360
+
     steps:
     - name: 下載程式碼
       uses: actions/checkout@v3
-      
+
     - name: 設定 Python 環境
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
-        
+
     - name: 安裝套件
       run: |
         pip install -r requirements.txt
-        
+
     - name: 執行提醒腳本
       env:
-        # 這裡會去讀取你在 GitHub 網頁上設定的 Secrets
+        # 手動觸發用選單的值；排程觸發時依 cron 判斷是週報還是隔日提醒
+        NOTIFY_MODE: ${{ github.event.inputs.mode || (github.event.schedule == '25 8 * * 0' && 'weekly') || 'tomorrow' }}
+        # 只有排程觸發才等到 22:00 發送；手動測試時此值為空，會立刻發送
+        SEND_AT: ${{ github.event_name == 'schedule' && '22:00' || '' }}
         LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
         LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
         FIREBASE_CREDENTIALS: ${{ secrets.FIREBASE_CREDENTIALS }}

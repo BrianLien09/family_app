@@ -1,16 +1,20 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { auth, googleProvider } from '@/lib/firebase';
 import { signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/auth';
 
 export default function Login() {
   const [user, setUser] = useState<User | null>(null);
+  // 頭像載入失敗時退回顯示名字首字，避免整個頭像區塊空白
+  const [photoFailed, setPhotoFailed] = useState(false);
 
   useEffect(() => {
     // 監聽登入狀態改變
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      setPhotoFailed(false);
     });
     return () => unsubscribe();
   }, []);
@@ -33,16 +37,23 @@ export default function Login() {
       <div className="flex items-center gap-2">
         {/* 顯示頭像或名字 */}
         <span
-          role="img"
-          aria-label="使用者頭像"
-          className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-dashed border-[#dcd0c2]/50 bg-[#e6e2d8] text-xs font-bold text-[#3d3a36]"
-          style={{
-            backgroundImage: user.photoURL ? `url("${user.photoURL}")` : undefined,
-            backgroundPosition: 'center',
-            backgroundSize: 'cover',
-          }}
+          className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-[#dcd0c2]/50 bg-[#e6e2d8] text-xs font-bold text-[#3d3a36]"
         >
-          {!user.photoURL && user.displayName?.slice(0, 1)}
+          {user.photoURL && !photoFailed ? (
+            // 為何不帶 Referer：Google 頭像網址在帶來源網址時常被限流（403/429）導致不顯示
+            <Image
+              src={user.photoURL}
+              alt="使用者頭像"
+              width={32}
+              height={32}
+              unoptimized
+              referrerPolicy="no-referrer"
+              onError={() => setPhotoFailed(true)}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <span aria-label="使用者頭像">{user.displayName?.slice(0, 1) ?? 'B'}</span>
+          )}
         </span>
         <button onClick={handleLogout} className="text-sm text-[#3d3a36] hover:text-[#b87e6b]">
           登出

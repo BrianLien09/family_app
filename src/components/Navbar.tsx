@@ -8,6 +8,10 @@ import { useEffect, useState } from 'react';
 import { Menu, X, ExternalLink } from 'lucide-react';
 import Login from '@/components/Login';
 import siteIcon from '../../public/icon-192x192.png';
+import { Caveat } from 'next/font/google';
+
+// 品牌名稱改用手寫草寫體，呼應織物手作質感；僅載入 700 字重以減少字型體積
+const brandFont = Caveat({ subsets: ['latin'], weight: ['700'] });
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -73,7 +77,7 @@ export default function Navbar() {
                 priority
                 className="h-9 w-9 shrink-0 rounded-xl"
              />
-             <span className="text-lg font-bold text-[#3d3a36]">
+             <span className={clsx(brandFont.className, "text-3xl font-bold leading-none text-[#3d3a36]")}>
                 Famly Hub
              </span>
           </Link>

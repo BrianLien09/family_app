@@ -59,7 +59,7 @@ export default function Navbar() {
         !isVisible && "-translate-y-full" // 控制顯示/隱藏
       )}
     >
-       <div className="container flex items-center justify-between !max-w-7xl px-4 h-[70px]">
+       <div className="mx-auto flex w-full max-w-[80rem] items-center justify-between px-4 sm:px-8 lg:px-12 h-[70px]">
           {/* Logo Section */}
           <div className="flex items-center gap-3">
              <div className="w-8 h-8 rounded-full bg-[#b87e6b] flex items-center justify-center overflow-hidden shrink-0">

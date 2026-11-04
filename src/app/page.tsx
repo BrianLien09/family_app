@@ -249,7 +249,7 @@ export default function Home() {
   if (!isLoaded) return <CapybaraLoader label="正在整理家庭行程..." />;
 
   return (
-    <div className="page-enter mx-auto w-full max-w-[100rem] px-4 pb-6 pt-20">
+    <div className="page-enter mx-auto w-full max-w-[80rem] px-4 sm:px-8 lg:px-12 pb-8 pt-20">
       {/* 搜尋與篩選區 */}
       <div className="glass-card p-3 md:p-4 mb-4">
         <div className="flex flex-col lg:flex-row lg:items-center gap-3">
@@ -533,13 +533,13 @@ export default function Home() {
             <span className="w-1 h-3 bg-[#5f7186] rounded-full"></span>
             最近行程
           </span>
-          <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1 min-w-0">
-            {upcomingDates.slice(0, 6).map(item => (
+          <div className="flex flex-wrap items-center gap-2 min-w-0">
+            {upcomingDates.slice(0, 5).map(item => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => handleOpenEdit(item)}
-                className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#f0ece1] border border-dashed border-[#dcd0c2] hover:border-[#b87e6b] text-xs text-[#3d3a36] transition-colors duration-200"
+                className="flex min-w-0 items-center gap-2 px-3 py-1.5 rounded-full bg-[#f0ece1] border border-dashed border-[#dcd0c2] hover:border-[#b87e6b] text-xs text-[#3d3a36] transition-colors duration-200"
                 title={item.title}
               >
                 <span className="font-bold text-[#b87e6b] tabular-nums">{new Date(item.date).getMonth() + 1}/{new Date(item.date).getDate()}</span>

@@ -5,6 +5,9 @@ import { CategoryColorMap, getCategoryColorStyles } from '@/lib/categoryColors';
 const FONT_FAMILY = '"Microsoft JhengHei", "Noto Sans TC", sans-serif';
 const TITLE_FONT_SIZE = 22;
 const MIN_TITLE_FONT_SIZE = 16;
+const CHIP_BASE_COLOR = '#faf8f2';
+const TITLE_COLOR = '#2b2825';
+const TIME_COLOR = '#4a4640';
 
 interface ImageEvent {
   event: DateItem;
@@ -75,7 +78,7 @@ export async function createCalendarImage(
   const columnWidth = (width - padding * 2 - gap * 6) / 7;
   const gridTop = 136;
   const contents: ImageEvent[][] = days.map(day => (eventsByDate[format(day, 'yyyy-MM-dd')] ?? []).map(event => {
-    const layout = fitTitle(context, event.title, columnWidth - 36);
+    const layout = fitTitle(context, event.title, columnWidth - 42);
     const time = [event.startTime, event.endTime].filter(Boolean).join('–');
     return { event, ...layout, time, height: 12 + layout.lines.length * layout.lineHeight + (time ? 24 : 0) };
   }));
@@ -116,21 +119,32 @@ export async function createCalendarImage(
     drawText(context, format(day, 'd'), x + 10, rowTop + 10);
     let itemTop = rowTop + 36;
     for (const item of contents[index]) {
-      const colors = getCategoryColorStyles(item.event.category, categoryColors).event;
+      const styles = getCategoryColorStyles(item.event.category, categoryColors);
+      const colors = styles.event;
       context.beginPath();
       context.roundRect(x + 10, itemTop, columnWidth - 20, item.height, 6);
+      // 先鋪不透明底色再疊分類色，避免半透明色在灰底上讓文字對比不足
+      context.fillStyle = CHIP_BASE_COLOR;
+      context.fill();
       context.fillStyle = colors.backgroundColor;
       context.fill();
       context.strokeStyle = colors.borderColor;
       context.lineWidth = 2;
       context.setLineDash([5, 4]);
       context.stroke();
-      context.fillStyle = colors.color;
+      context.setLineDash([]);
+      // 左側分類色條：文字改用深色後，仍可靠色條辨識分類
+      context.fillStyle = styles.dot.backgroundColor;
+      context.beginPath();
+      context.roundRect(x + 10, itemTop, 6, item.height, [6, 0, 0, 6]);
+      context.fill();
+      context.fillStyle = TITLE_COLOR;
       context.font = `700 ${item.fontSize}px ${FONT_FAMILY}`;
-      item.lines.forEach((line, lineIndex) => drawText(context, line, x + 18, itemTop + 6 + lineIndex * item.lineHeight));
+      item.lines.forEach((line, lineIndex) => drawText(context, line, x + 24, itemTop + 6 + lineIndex * item.lineHeight));
       if (item.time) {
-        context.font = `400 18px ${FONT_FAMILY}`;
-        drawText(context, item.time, x + 18, itemTop + 8 + item.lines.length * item.lineHeight);
+        context.font = `600 18px ${FONT_FAMILY}`;
+        context.fillStyle = TIME_COLOR;
+        drawText(context, item.time, x + 24, itemTop + 8 + item.lines.length * item.lineHeight);
       }
       itemTop += item.height + 6;
     }

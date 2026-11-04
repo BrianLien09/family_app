@@ -65,12 +65,12 @@ def sort_events(events: list[ScheduleEvent]) -> list[ScheduleEvent]:
 
 
 def format_date_label(day: date) -> str:
-    return f"{day.month:02d}/{day.day:02d}（{WEEKDAY_NAMES[day.weekday()]}）"
+    return f"【{day.month:02d}/{day.day:02d}（{WEEKDAY_NAMES[day.weekday()]}）】"
 
 
 def format_event(event: ScheduleEvent) -> str:
     # 時間與標題分兩行：標題過長時 LINE 的自動換行才不會把時間擠得難讀
-    return f"🕒 {event['display_time']}\n　{event['title']}"
+    return f"{event['display_time']}\n{event['title']}"
 
 
 def build_tomorrow_message(events: list[ScheduleEvent], today: date) -> Optional[str]:
@@ -84,9 +84,11 @@ def build_tomorrow_message(events: list[ScheduleEvent], today: date) -> Optional
         [
             "🌙 明日行程提醒",
             DIVIDER,
-            f"📅 {format_date_label(tomorrow)}",
+            "",
+            format_date_label(tomorrow),
             "",
             "\n\n".join(format_event(e) for e in tomorrow_events),
+            "",
             DIVIDER,
             "⏰ 記得設鬧鐘喔！",
         ]
@@ -111,18 +113,21 @@ def build_weekly_message(events: list[ScheduleEvent], week_start: date) -> Optio
         if not day_events:
             continue
         day_blocks.append(
-            "\n".join([f"📅 {format_date_label(day)}", *(format_event(e) for e in day_events)])
+            "\n\n".join([format_date_label(day), *(format_event(e) for e in day_events)])
         )
 
     total = sum(len(v) for v in by_date.values())
     return "\n".join(
         [
-            "🗓️ 本週行程總覽",
+            "🗓️ 下週行程總覽",
             f"{week_start.month:02d}/{week_start.day:02d} ~ {week_end.month:02d}/{week_end.day:02d}　共 {total} 項",
             DIVIDER,
-            "\n\n".join(day_blocks),
+            "",
+            # 日與日之間空兩行，比同一天內事件間的一行更明顯，不靠 emoji 區隔
+            "\n\n\n".join(day_blocks),
+            "",
             DIVIDER,
-            "祝大家有美好的一週 ✨",
+            "祝大家有美好的一週",
         ]
     )
 

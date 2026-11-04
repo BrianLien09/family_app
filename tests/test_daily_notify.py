@@ -43,12 +43,12 @@ class WeeklyMessageTest(unittest.TestCase):
         events = [
             make_event("2026-11-08", "08:00", title="週日班"),
             make_event("2026-11-02", "10:00", "11:30", "期中開書考"),
-            make_event("2026-11-09", "08:00", title="下週"),
+            make_event("2026-11-09", "08:00", title="範圍外事件"),
             make_event("2026-11-02", title="全天事項"),
         ]
         msg = dn.build_weekly_message(events, date(2026, 11, 2))
         self.assertIn("共 3 項", msg)
-        self.assertNotIn("下週", msg)
+        self.assertNotIn("範圍外事件", msg)
         self.assertLess(msg.index("11/02（一）"), msg.index("11/08（日）"))
         self.assertLess(msg.index("全天事項"), msg.index("期中開書考"))
         print("\n" + msg)

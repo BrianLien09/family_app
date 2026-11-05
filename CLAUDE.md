@@ -32,7 +32,7 @@ node --test --test-name-pattern="即時更新" tests/sync.test.mjs
 - Firebase Auth 的用戶端檢查不是資料安全邊界，實際存取權由 Firestore Rules 控制；Rules 未納入此 repository，新增或變更集合時需確認已部署的 Rules 允許家庭帳號存取。
 - `next.config.ts` 使用 `output: "export"` 與 `basePath: "/family_app"`，沒有 Next.js server runtime。`NEXT_PUBLIC_FIREBASE_*` 設定放在本機 `.env.local` 或 GitHub Actions；完整變數清單見 `README.md`。
 - PWA 由 `@ducanh2912/next-pwa` 建置，開發模式停用；驗證 Service Worker 請執行 production build。`public/sw.js` 與 `public/workbox-*.js` 為產生檔，不要手動修改。
-- 每日行程 LINE 提醒是獨立於前端的 Python 工作：`.github/workflows/schedule_job.yml` 在台灣時間每日 17:50 執行 `daily_notify.py`。
+- 每日行程 LINE 提醒是獨立於前端的 Cloudflare Worker（`notify-worker/`，不屬於根目錄 tsconfig）：Cron 在台灣時間 23:30 觸發（`wrangler.toml` 為 UTC 15:30；Cloudflare 的星期欄位 1 為週日，所以只設每天一條、由程式判斷週日），週一至週六提醒隔日行程、週日提醒下週總覽；沒有行程也會發送，並附隨機小叮嚀（行程與叮嚀必須合成同一則訊息，LINE 以收件人數計費）；以 Firestore REST 讀取 `schedules`。訊息格式化的純函式在 `notify-worker/src/messages.ts`，由 `tests/notifyWorker.test.mjs` 驗證。
 - `Immersive Mode`（`useImmersiveMode`）：Modal 開啟時鎖定 body 捲動並隱藏 Navbar，卸載時還原。
 
 ## 程式碼規範

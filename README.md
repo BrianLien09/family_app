@@ -136,7 +136,22 @@ npm run deploy
 
 - Firebase 設定值與 GitHub Actions Secrets 不會提交到儲存庫。
 - `public/sw.js` 與 `public/workbox-*.js` 由 PWA 建置流程產生，無須手動編輯。
-- 每日行程提醒工作流程會讀取獨立的 LINE 與 Firebase 憑證 Secrets。
+- 每日行程 LINE 提醒由 `notify-worker/`（Cloudflare Worker）執行，台灣時間 23:30 觸發：週一至週六提醒隔日行程，週日提醒下週總覽；沒有行程也會發送，並附上隨機小叮嚀（清單在 `notify-worker/src/messages.ts` 的 `TIPS`）。憑證存放於 Cloudflare Secrets，不放在儲存庫。
+
+## 部署 LINE 提醒 Worker
+
+```bash
+cd notify-worker
+npm install
+npx wrangler login
+npx wrangler secret put LINE_CHANNEL_ACCESS_TOKEN
+npx wrangler secret put LINE_USER_ID
+npx wrangler secret put FIREBASE_CREDENTIALS   # 貼上 Firebase 服務帳戶 JSON
+npx wrangler secret put TRIGGER_SECRET         # 自訂的手動觸發密鑰
+npx wrangler deploy
+```
+
+手動測試（會立即推播）：`curl -H "Authorization: Bearer <TRIGGER_SECRET>" "https://<worker網址>/?mode=tomorrow"`，`mode` 可為 `tomorrow` 或 `weekly`。
 
 ## 歷史更新
 

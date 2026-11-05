@@ -1,0 +1,9 @@
+name = "family-notify"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+
+# Cron 以 UTC 計算：台灣 23:30 = UTC 15:30（台灣無日光節約，全年固定，且與台灣同一天）。
+# Cloudflare 的星期欄位是 1-7（1 為週日），與標準 cron 不同，容易寫錯；
+# 因此每天觸發一次，由程式依台灣日期決定發明日提醒或週日的下週總覽。
+[triggers]
+crons = ["30 15 * * *"]

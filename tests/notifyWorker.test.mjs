@@ -37,8 +37,9 @@ test('隔日提醒只列明天且全天行程排在最前', () => {
   assert.ok(message.includes('11/03（二）'));
   assert.ok(!message.includes('期中開書考'));
   assert.ok(message.indexOf('繳費') < message.indexOf('洗牙'));
-  assert.ok(message.includes('🕒 09:00 ~ 10:00\n　洗牙'));
-  assert.ok(message.includes('⏰ 記得設鬧鐘喔！'));
+  assert.ok(message.includes('09:00 ~ 10:00\n　洗牙'));
+  assert.ok(message.includes('記得設鬧鐘喔'));
+  assert.ok(message.startsWith('🌙 明日行程提醒\n11/03（二）\n'));
   assert.ok(message.endsWith('💬 測試叮嚀'));
 });
 

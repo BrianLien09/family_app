@@ -98,7 +98,7 @@ function formatShortDate(iso: string): string {
 
 // 時間與標題分兩行：標題過長時 LINE 的自動換行才不會把時間擠得難讀
 function formatEvent(event: ScheduleEvent): string {
-  return `🕒 ${event.displayTime}\n　${event.title}`;
+  return `${event.displayTime}\n　${event.title}`;
 }
 
 const TIPS = [
@@ -125,15 +125,15 @@ export function buildTomorrowMessage(events: ScheduleEvent[], today: string, tip
   const body =
     tomorrowEvents.length > 0
       ? tomorrowEvents.map(formatEvent).join('\n\n')
-      : '🍃 明天沒有行程，好好休息～';
+      : '明天沒有行程，好好休息～';
   // 只有真的有行程才提醒設鬧鐘，沒行程時不必打擾
-  const alarmLines = tomorrowEvents.length > 0 ? ['⏰ 記得設鬧鐘喔！'] : [];
+  const alarmLines = tomorrowEvents.length > 0 ? ['記得設鬧鐘喔'] : [];
 
+  // emoji 只留標題與小叮嚀各一個，其餘靠分隔線與換行區分層次，避免訊息過於花俏
   return [
     '🌙 明日行程提醒',
+    formatDateLabel(tomorrow),
     DIVIDER,
-    `📅 ${formatDateLabel(tomorrow)}`,
-    '',
     body,
     DIVIDER,
     ...alarmLines,
@@ -151,16 +151,16 @@ export function buildWeeklyMessage(events: ScheduleEvent[], weekStart: string, t
     const day = addDays(weekStart, offset);
     const dayEvents = inWeek.filter(event => event.date === day);
     if (dayEvents.length === 0) continue;
-    dayBlocks.push([`📅 ${formatDateLabel(day)}`, ...dayEvents.map(formatEvent)].join('\n'));
+    dayBlocks.push([formatDateLabel(day), ...dayEvents.map(formatEvent)].join('\n'));
   }
 
   return [
     '🗓️ 下週行程總覽',
     `${formatShortDate(weekStart)} ~ ${formatShortDate(weekEnd)}　共 ${inWeek.length} 項`,
     DIVIDER,
-    dayBlocks.length > 0 ? dayBlocks.join('\n\n') : '🍃 下週沒有行程，輕鬆過～',
+    dayBlocks.length > 0 ? dayBlocks.join('\n\n') : '下週沒有行程，輕鬆過～',
     DIVIDER,
-    '祝大家有美好的一週 ✨',
+    '祝大家有美好的一週',
     `💬 ${tip}`,
   ].join('\n');
 }

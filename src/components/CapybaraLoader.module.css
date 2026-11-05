@@ -196,3 +196,11 @@
   --color: rgb(204, 125, 45);
   --color2: rgb(83, 56, 28);
 }
+
+/* 減少動態效果：停止無限循環動畫，僅保留靜態水豚與文字提示 */
+@media (prefers-reduced-motion: reduce) {
+  .capybaraloader,
+  .capybaraloader * {
+    animation: none !important;
+  }
+}

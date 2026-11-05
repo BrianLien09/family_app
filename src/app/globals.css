@@ -58,95 +58,33 @@ body[data-immersive='true'] #navbar {
 @layer components {
   .glass-card {
     /* Stitched container */
-    @apply bg-[#f0ece1]/95 backdrop-blur-sm border-2 border-dashed border-[#dcd0c2] rounded-2xl p-6 shadow-[0_4px_12px_rgba(61,58,54,0.04)] text-[#3d3a36];
+    @apply bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] rounded-2xl p-6 shadow-[0_4px_12px_rgba(61,58,54,0.04)] text-[#3d3a36];
   }
 
-  .glass-input {
-    /* Muted input field */
-    @apply w-full bg-[#e6e2d8] border-b-2 border-dashed border-[#dcd0c2] px-4 py-3 outline-none transition-all focus:border-[#b87e6b] focus:bg-[#f0ece1] rounded-t-lg text-[#3d3a36] shadow-inner;
-  }
 
-  .btn-primary {
-    /* Rust colored button */
-    @apply bg-[#b87e6b] hover:bg-[#a66a58] text-[#f0ece1] font-medium py-3 px-6 rounded-xl shadow-[0_4px_12px_rgba(184,126,107,0.2)] border border-[#a66a58] transition-all duration-200 active:translate-y-[2px] active:shadow-inner;
-  }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* 頁面進場只提示內容切換，不延遲操作或逐項播放。 */
-@keyframes pageEnter {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
+/* 按鈕按壓回饋：motion 管理進出場，簡單的 hover／active 回饋保留在 CSS，避免多餘的 JS */
 @media (prefers-reduced-motion: no-preference) {
-  .page-enter { animation: pageEnter 380ms cubic-bezier(.16, 1, .3, 1); }
   .modal-primary, .modal-secondary, .modal-icon-button, .modal-choice {
     transition-property: color, background-color, border-color, opacity, scale;
     transition-duration: 160ms;
+    transition-timing-function: cubic-bezier(.16, 1, .3, 1);
   }
   .modal-primary:active:not(:disabled),
   .modal-secondary:active:not(:disabled),
   .modal-icon-button:active:not(:disabled),
-  .modal-choice:active:not(:disabled) { scale: .98; }
+  .modal-choice:active:not(:disabled) { scale: .97; }
 }
 
+/* 全域兜底：使用者要求減少動態效果時，所有 CSS 動畫與過渡幾乎瞬間完成
+   （motion 元件另由 MotionConfig reducedMotion="user" 處理） */
 @media (prefers-reduced-motion: reduce) {
-  .animate-fade-in, .animate-scale-in, .animate-slide-up { animation: none; }
-  .btn-primary { transition: none; }
-  .btn-primary:active { transform: none; }
-  #navbar, #navbar * { transition-duration: 0s; animation-duration: 0s; }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.animate-fade-in {
-  will-change: opacity;
-  animation: fadeIn 0.3s ease-out forwards;
-}
-
-.animate-scale-in {
-  will-change: transform, opacity;
-  animation: scaleIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* 手機：從底部滑入；桌面（sm+）：切回 scaleIn 效果 */
-.animate-slide-up {
-  will-change: transform, opacity;
-  animation: slideUp 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-}
-
-@media (min-width: 640px) {
-  .animate-slide-up {
-    animation: scaleIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -198,7 +136,7 @@ body[data-immersive='true'] #navbar {
     padding: max(.5rem, env(safe-area-inset-top)) .5rem max(.5rem, env(safe-area-inset-bottom));
     isolation: isolate;
   }
-  .modal-backdrop { @apply absolute inset-0 bg-[#3d3a36]/50 backdrop-blur-sm; }
+  .modal-backdrop { @apply absolute inset-0 bg-[#3d3a36]/50; }
   .modal-panel {
     @apply relative flex min-h-0 w-full flex-col overflow-hidden rounded-2xl border-2 border-dashed border-[#dcd0c2] bg-[#f0ece1] text-[#3d3a36];
     height: 100%;
@@ -214,6 +152,7 @@ body[data-immersive='true'] #navbar {
   .modal-icon-button { @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[#5f6368] transition-colors hover:bg-[#dcd0c2]/40 hover:text-[#b87e6b] disabled:opacity-50; }
   .modal-secondary { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#dcd0c2] px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-[#dcd0c2]/30 disabled:opacity-50; }
   .modal-primary { @apply inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#b87e6b] px-5 py-2.5 text-sm font-bold text-[#f0ece1] transition-colors hover:bg-[#a66a58] disabled:opacity-50; }
+  .modal-danger { @apply bg-[#9b4436] hover:bg-[#7f3529]; }
   .modal-field { @apply flex min-w-0 flex-col gap-2 text-sm font-medium; }
   .modal-input { @apply block min-h-12 w-full min-w-0 rounded-xl border-2 border-dashed border-[#dcd0c2]/70 bg-[#dcd0c2]/30 px-4 py-3 text-base font-normal text-[#3d3a36] placeholder:text-[#78716c]/70 transition-colors hover:bg-[#dcd0c2]/40 focus:border-[#b87e6b] focus:bg-[#f0ece1] focus:ring-2 focus:ring-[#b87e6b]/20; }
   .modal-choice { @apply min-h-11 max-w-full break-words rounded-xl border border-[#dcd0c2] px-3 py-2 text-sm font-medium transition-colors hover:bg-[#dcd0c2]/30; }
@@ -229,8 +168,5 @@ body[data-immersive='true'] #navbar {
     .modal-body { @apply p-6; }
     .modal-footer { @apply px-6 py-4; }
     .modal-primary { flex: none; }
-  }
-  @media (prefers-reduced-motion: no-preference) {
-    .modal-panel { animation: scaleIn 320ms cubic-bezier(.16, 1, .3, 1); }
   }
 }

@@ -65,7 +65,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, initialData
                 }
               }}
               className={clsx(
-                "flex-1 min-h-11 py-2 text-sm font-bold rounded-lg transition-all",
+                "flex-1 min-h-11 py-2 text-sm font-bold rounded-lg transition-colors",
                 type === 'expense' ? "bg-[#b87e6b] text-[#f0ece1] shadow-[0_4px_12px_rgba(139,121,101,0.06)]" : "text-[#3d3a36] hover:text-[#b87e6b]"
               )}
             >
@@ -81,7 +81,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, initialData
                 }
               }}
               className={clsx(
-                "flex-1 min-h-11 py-2 text-sm font-bold rounded-lg transition-all",
+                "flex-1 min-h-11 py-2 text-sm font-bold rounded-lg transition-colors",
                 type === 'income' ? "bg-[#5f7186] text-[#f0ece1] shadow-[0_4px_12px_rgba(139,121,101,0.06)]" : "text-[#3d3a36] hover:text-[#b87e6b]"
               )}
             >
@@ -116,7 +116,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, initialData
                   type="button"
                   onClick={() => setMember(m)}
                   className={clsx(
-                    "min-h-11 px-3 py-2 rounded-xl text-sm font-medium transition-all border",
+                    "min-h-11 px-3 py-2 rounded-xl text-sm font-medium transition-colors border",
                     member === m ? "text-[#f0ece1]" : "bg-[#dcd0c2]/30 text-[#3d3a36] border-transparent hover:bg-[#dcd0c2]/50"
                   )}
                   style={{

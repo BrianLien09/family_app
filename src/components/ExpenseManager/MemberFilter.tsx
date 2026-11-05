@@ -1,5 +1,7 @@
-import clsx from 'clsx';
+'use client';
+
 import { FamilyMember, FAMILY_MEMBERS, MEMBER_COLORS } from '@/types';
+import Chip from '@/components/ui/Chip';
 
 interface MemberFilterProps {
   selectedMember: FamilyMember | '全體';
@@ -8,41 +10,28 @@ interface MemberFilterProps {
 
 export default function MemberFilter({ selectedMember, onChange }: MemberFilterProps) {
   return (
-    <div className="flex flex-wrap gap-2 mb-6">
-      <button
-        onClick={() => onChange('全體')}
-        aria-pressed={selectedMember === '全體'}
-        className={clsx(
-          "px-4 py-2 rounded-xl text-sm font-bold transition-all border",
-          selectedMember === '全體' ? "bg-[#5f7186] text-[#f0ece1] border-[#5f7186] shadow-[0_8px_20px_rgba(139,121,101,0.08)]"
-            : "bg-[#dcd0c2]/30 text-[#3d3a36] border-dashed border-[#dcd0c2]/50 hover:bg-[#dcd0c2]/50"
-        )}
-      >
+    <div className="mb-6 flex flex-wrap gap-2" role="group" aria-label="篩選成員">
+      <Chip selected={selectedMember === '全體'} onClick={() => onChange('全體')}>
         全體
-      </button>
-      {FAMILY_MEMBERS.map(member => (
-        <button
-          key={member}
-          onClick={() => onChange(member)}
-          aria-pressed={selectedMember === member}
-          className={clsx(
-            "px-4 py-2 rounded-xl text-sm font-bold transition-all border-2 border-dashed flex items-center gap-2",
-            selectedMember === member
-              ? "text-[#f0ece1] shadow-[0_8px_20px_rgba(139,121,101,0.08)]"
-              : "bg-[#dcd0c2]/30 text-[#3d3a36] border-dashed border-[#dcd0c2]/50 hover:bg-[#dcd0c2]/50"
-          )}
-          style={{
-            backgroundColor: selectedMember === member ? MEMBER_COLORS[member] : undefined,
-            borderColor: selectedMember === member ? MEMBER_COLORS[member] : undefined,
-          }}
-        >
-          <div 
-            className="w-2 h-2 rounded-full" 
-            style={{ backgroundColor: selectedMember === member ? '#fff' : MEMBER_COLORS[member] }}
-          />
-          {member}
-        </button>
-      ))}
+      </Chip>
+      {FAMILY_MEMBERS.map(member => {
+        const isSelected = selectedMember === member;
+        return (
+          <Chip
+            key={member}
+            selected={isSelected}
+            onClick={() => onChange(member)}
+            // 選取時改用成員代表色，讓使用者一眼知道目前在看誰的帳
+            style={isSelected ? { backgroundColor: MEMBER_COLORS[member], borderColor: MEMBER_COLORS[member] } : undefined}
+          >
+            <span
+              className="h-2 w-2 rounded-full"
+              style={{ backgroundColor: isSelected ? '#f0ece1' : MEMBER_COLORS[member] }}
+            />
+            {member}
+          </Chip>
+        );
+      })}
     </div>
   );
 }

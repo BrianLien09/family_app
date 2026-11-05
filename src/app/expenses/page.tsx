@@ -3,7 +3,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useExpenses } from '@/hooks/useExpenses';
 import { FamilyMember, ExpenseItem } from '@/types';
-import { Plus, ChevronLeft, ChevronRight, CheckSquare, Trash2 } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, CheckSquare, ReceiptText } from 'lucide-react';
+import { AnimatePresence, m, type Variants } from 'motion/react';
 import toast from 'react-hot-toast';
 import { auth } from '@/lib/firebase';
 import MemberFilter from '@/components/ExpenseManager/MemberFilter';
@@ -11,18 +12,32 @@ import ExpenseSummary from '@/components/ExpenseManager/ExpenseSummary';
 import ExpenseCard from '@/components/ExpenseManager/ExpenseCard';
 import AddExpenseModal from '@/components/ExpenseManager/AddExpenseModal';
 import ConfirmDialog from '@/components/ConfirmDialog';
-import CapybaraLoader from '@/components/CapybaraLoader';
-import clsx from 'clsx';
+import Button from '@/components/ui/Button';
+import IconButton from '@/components/ui/IconButton';
+import BatchToolbar from '@/components/ui/BatchToolbar';
+import EmptyState from '@/components/ui/EmptyState';
+import PageShell from '@/components/ui/PageShell';
+import PageHeader from '@/components/ui/PageHeader';
+import LoadingGate from '@/components/ui/LoadingGate';
+import { DURATION } from '@/lib/motion';
+
+// 依切換方向滑動；exit 透過 custom 取得最新方向，避免反向切換時舊月份從錯誤的一側離開
+const monthVariants: Variants = {
+  enter: (direction: number) => ({ opacity: 0, x: direction * 16 }),
+  center: { opacity: 1, x: 0, transition: { duration: DURATION.base } },
+  leave: (direction: number) => ({ opacity: 0, x: direction * -16, transition: { duration: DURATION.fast } }),
+};
 
 export default function ExpensesPage() {
   const { expenses, addExpense, updateExpense, deleteExpense, deleteExpenses, isLoaded } = useExpenses();
   const [selectedMember, setSelectedMember] = useState<FamilyMember | '全體'>('全體');
-  
-  // 月份切換
+
+  // 月份切換；direction 記錄方向，讓月份文字依前進／後退滑動
   const [currentDate, setCurrentDate] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
+  const [direction, setDirection] = useState<1 | -1>(1);
 
   // 批次操作
   const [batchMode, setBatchMode] = useState(false);
@@ -51,17 +66,19 @@ export default function ExpensesPage() {
     });
   }, [expenses, currentDate, selectedMember]);
 
-  const prevMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
-  const nextMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  const prevMonth = () => {
+    setDirection(-1);
+    setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
+  const nextMonth = () => {
+    setDirection(1);
+    setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
 
   // 未登入提示
   useEffect(() => {
     if (isLoaded && !auth.currentUser) {
-      toast('歡迎！請先登入以使用帳本功能 🔒', {
-        icon: '👋',
-        duration: 5000,
-        style: { background: '#333', color: '#fff', borderRadius: '10px' },
-      });
+      toast('歡迎！請先登入以使用帳本功能 🔒', { icon: '👋', duration: 5000 });
     }
   }, [isLoaded]);
 
@@ -79,132 +96,146 @@ export default function ExpensesPage() {
     setIsDeleteDialogOpen(true);
   };
 
-  if (!isLoaded) return <CapybaraLoader label="正在整理家庭帳本..." />;
+  const openAddModal = () => {
+    setEditingExpense(null);
+    setIsModalOpen(true);
+  };
+
+  const monthLabel = `${currentDate.getFullYear()} 年 ${currentDate.getMonth() + 1} 月`;
 
   return (
-    <div className="page-enter container mx-auto px-4 py-8 pt-20 max-w-3xl min-h-screen">
-      {/* 頂部標題與月份切換 */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div className="flex items-center gap-4 bg-[#dcd0c2]/30 rounded-2xl p-2 border-2 border-dashed border-dashed border-[#dcd0c2]/50">
-          <button onClick={prevMonth} className="p-2 hover:bg-[#dcd0c2]/50 rounded-xl transition-all duration-200">
-            <ChevronLeft size={20} />
-          </button>
-          <span className="font-bold text-lg min-w-[120px] text-center">
-            {currentDate.getFullYear()} 年 {currentDate.getMonth() + 1} 月
-          </span>
-          <button onClick={nextMonth} className="p-2 hover:bg-[#dcd0c2]/50 rounded-xl transition-all duration-200">
-            <ChevronRight size={20} />
-          </button>
-        </div>
+    <LoadingGate isLoaded={isLoaded} label="正在整理家庭帳本...">
+      <PageShell>
+        <PageHeader title="家庭帳本" visuallyHidden />
 
-        <div className="flex gap-2 w-full sm:w-auto">
-          <button
-            onClick={() => setBatchMode(!batchMode)}
-            className={clsx(
-              "flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border",
-              batchMode ? "bg-[#5f7186]/10 text-[#5f7186] border-[#5f7186]/50" : "bg-[#dcd0c2]/30 text-[#3d3a36] border-dashed border-[#dcd0c2]/50 hover:bg-[#dcd0c2]/50"
-            )}
-          >
-            <CheckSquare size={16} />
-            {batchMode ? '完成' : '批次選取'}
-          </button>
-          <button
-            onClick={() => {
-              setEditingExpense(null);
-              setIsModalOpen(true);
-            }}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[#5f7186] hover:bg-[#47576b] text-[#f0ece1] rounded-xl text-sm font-bold shadow-[0_8px_20px_rgba(139,121,101,0.08)] shadow-[#5f7186]/30 transition-all active:scale-95"
-          >
-            <Plus size={16} />
-            記一筆
-          </button>
-        </div>
-      </div>
-
-      {/* 成員篩選 */}
-      <MemberFilter selectedMember={selectedMember} onChange={setSelectedMember} />
-
-      {/* 批次操作工具列 */}
-      {batchMode && (
-        <div className="glass-card p-3 mb-6 flex items-center justify-between animate-scale-in">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={toggleSelectAll}
-              className="px-3 py-1.5 bg-[#dcd0c2]/30 hover:bg-[#dcd0c2]/30 rounded-lg text-sm font-medium transition-all duration-200"
-            >
-              {selectedIds.length === filteredExpenses.length ? '取消全選' : '全選'}
-            </button>
-            <span className="text-sm text-[#5f7186] font-medium">已選擇 {selectedIds.length} 筆</span>
+        {/* 頂部月份切換與操作 */}
+        <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-1 rounded-2xl border-2 border-dashed border-[#dcd0c2]/50 bg-[#dcd0c2]/30 p-1">
+            <IconButton aria-label="上個月" onClick={prevMonth}>
+              <ChevronLeft size={20} />
+            </IconButton>
+            <div className="relative flex h-11 min-w-[8.5rem] items-center justify-center overflow-hidden" aria-live="polite">
+              <AnimatePresence mode="popLayout" initial={false} custom={direction}>
+                <m.span
+                  key={monthLabel}
+                  custom={direction}
+                  variants={monthVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="leave"
+                  className="text-lg font-bold"
+                >
+                  {monthLabel}
+                </m.span>
+              </AnimatePresence>
+            </div>
+            <IconButton aria-label="下個月" onClick={nextMonth}>
+              <ChevronRight size={20} />
+            </IconButton>
           </div>
-          <button
-            onClick={handleBatchDelete}
-            disabled={selectedIds.length === 0}
-            className="flex items-center gap-2 px-3 py-1.5 bg-[#b87e6b]/20 text-[#b87e6b] hover:bg-[#b87e6b]/20 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-medium transition-all duration-200"
-          >
-            <Trash2 size={16} />
-            刪除
-          </button>
-        </div>
-      )}
 
-      {/* 統計圖表區 */}
-      <ExpenseSummary expenses={filteredExpenses} selectedMember={selectedMember} />
-
-      {/* 紀錄列表 */}
-      <div className="space-y-3">
-        {filteredExpenses.length > 0 ? (
-          filteredExpenses.map(item => (
-            <ExpenseCard
-              key={item.id}
-              item={item}
-              onDelete={deleteExpense}
-              onEdit={(expense) => {
-                setEditingExpense(expense);
-                setIsModalOpen(true);
+          <div className="flex w-full gap-2 sm:w-auto">
+            <Button
+              variant={batchMode ? 'secondary' : 'soft'}
+              aria-pressed={batchMode}
+              className="flex-1 sm:flex-none"
+              onClick={() => {
+                setBatchMode(!batchMode);
+                setSelectedIds([]);
               }}
-              isSelected={selectedIds.includes(item.id)}
-              onToggleSelect={(id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])}
-              batchMode={batchMode}
-            />
-          ))
-        ) : (
-          <div className="text-center py-12 text-[#3d3a36] bg-[#dcd0c2]/30 rounded-2xl border-2 border-dashed border-dashed border-[#dcd0c2]/50 border-dashed">
-            <p className="mb-2">本月尚無紀錄 📝</p>
-            <p className="text-sm">點擊右上角「記一筆」開始記錄</p>
+            >
+              <CheckSquare size={16} aria-hidden="true" />
+              {batchMode ? '完成' : '批次選取'}
+            </Button>
+            <Button variant="secondary" className="flex-1 sm:flex-none" onClick={openAddModal}>
+              <Plus size={16} aria-hidden="true" />
+              記一筆
+            </Button>
           </div>
-        )}
-      </div>
+        </div>
 
-      {/* 新增/編輯 Modal */}
-      {isModalOpen && (
-        <AddExpenseModal
-          key={editingExpense?.id ?? 'new'}
-          isOpen
-          onClose={() => {
-            setIsModalOpen(false);
-            setEditingExpense(null);
-          }}
-          initialData={editingExpense}
-          defaultMember={selectedMember === '全體' ? '共同' : selectedMember}
-          onSubmit={async (data) => {
-            return editingExpense ? updateExpense(editingExpense.id, data) : addExpense(data);
+        {/* 成員篩選 */}
+        <MemberFilter selectedMember={selectedMember} onChange={setSelectedMember} />
+
+        {/* 批次操作工具列 */}
+        <AnimatePresence initial={false}>
+          {batchMode && (
+            <div key="batch-toolbar" className="mb-6">
+              <BatchToolbar
+                selectedCount={selectedIds.length}
+                totalCount={filteredExpenses.length}
+                onToggleAll={toggleSelectAll}
+                onDelete={handleBatchDelete}
+              />
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* 統計圖表區 */}
+        <ExpenseSummary expenses={filteredExpenses} selectedMember={selectedMember} />
+
+        {/* 紀錄列表：新增、刪除與復原都會有進出場，initial={false} 避免首次進頁面時整排播放 */}
+        {filteredExpenses.length > 0 ? (
+          <ul className="space-y-3">
+            <AnimatePresence initial={false} mode="popLayout">
+              {filteredExpenses.map(item => (
+                <ExpenseCard
+                  key={item.id}
+                  item={item}
+                  onDelete={deleteExpense}
+                  onEdit={(expense) => {
+                    setEditingExpense(expense);
+                    setIsModalOpen(true);
+                  }}
+                  isSelected={selectedIds.includes(item.id)}
+                  onToggleSelect={(id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])}
+                  batchMode={batchMode}
+                />
+              ))}
+            </AnimatePresence>
+          </ul>
+        ) : (
+          <EmptyState
+            icon={ReceiptText}
+            title="本月尚無紀錄"
+            description="點擊上方「記一筆」開始記錄。"
+          />
+        )}
+
+        {/* 新增/編輯 Modal */}
+        <AnimatePresence>
+          {isModalOpen && (
+            <AddExpenseModal
+              key={editingExpense?.id ?? 'new'}
+              isOpen
+              onClose={() => {
+                setIsModalOpen(false);
+                setEditingExpense(null);
+              }}
+              initialData={editingExpense}
+              defaultMember={selectedMember === '全體' ? '共同' : selectedMember}
+              onSubmit={async (data) => {
+                return editingExpense ? updateExpense(editingExpense.id, data) : addExpense(data);
+              }}
+            />
+          )}
+        </AnimatePresence>
+
+        <ConfirmDialog
+          danger
+          isOpen={isDeleteDialogOpen}
+          title="刪除選取的記錄？"
+          description={`將刪除 ${selectedIds.length} 筆帳本記錄，此操作可在完成後透過提示訊息復原。`}
+          confirmLabel="刪除記錄"
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={() => {
+            deleteExpenses(selectedIds);
+            setSelectedIds([]);
+            setBatchMode(false);
+            setIsDeleteDialogOpen(false);
           }}
         />
-      )}
-
-      <ConfirmDialog
-        isOpen={isDeleteDialogOpen}
-        title="刪除選取的記錄？"
-        description={`將刪除 ${selectedIds.length} 筆帳本記錄，此操作可在完成後透過提示訊息復原。`}
-        confirmLabel="刪除記錄"
-        onClose={() => setIsDeleteDialogOpen(false)}
-        onConfirm={() => {
-          deleteExpenses(selectedIds);
-          setSelectedIds([]);
-          setBatchMode(false);
-          setIsDeleteDialogOpen(false);
-        }}
-      />
-    </div>
+      </PageShell>
+    </LoadingGate>
   );
 }

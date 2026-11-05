@@ -43,7 +43,7 @@ export default function ExpenseSummary({ expenses, selectedMember }: ExpenseSumm
         catMap[e.category] = (catMap[e.category] || 0) + e.amount;
       });
       // 給分類隨機產生一些好看的顏色
-      const COLORS = ['#fb7185', '#f472b6', '#c084fc', '#818cf8', '#38bdf8', '#2dd4bf', '#34d399', '#a3e635', '#facc15', '#fb923c'];
+      const COLORS = ['#b87e6b', '#5f7186', '#c9a15b', '#6f9a8f', '#9a859b', '#8a9276', '#c98a8a', '#8aa3c0', '#b49a70', '#7aa9a1'];
       return Object.entries(catMap)
         .map(([name, value], index) => ({ name, value, color: COLORS[index % COLORS.length] }))
         .sort((a, b) => b.value - a.value);
@@ -86,7 +86,7 @@ export default function ExpenseSummary({ expenses, selectedMember }: ExpenseSumm
         </div>
         <div className="glass-card p-3 sm:p-6 flex flex-col justify-center items-center text-center">
           <span className="text-[10px] sm:text-sm text-[#3d3a36] mb-1">結餘</span>
-          <span className={`text-sm sm:text-2xl font-bold break-all tabular-nums ${balance >= 0 ? 'text-blue-400' : 'text-[#b87e6b]'}`}>
+          <span className={`text-sm sm:text-2xl font-bold break-all tabular-nums ${balance >= 0 ? 'text-[#5f7186]' : 'text-[#b87e6b]'}`}>
             ${balance.toLocaleString()}
           </span>
         </div>
@@ -145,8 +145,8 @@ export default function ExpenseSummary({ expenses, selectedMember }: ExpenseSumm
                     labelStyle={{ color: '#3d3a36', fontWeight: 'bold', marginBottom: '4px' }}
                     itemStyle={{ color: '#3d3a36' }}
                   />
-                  <Line type="monotone" dataKey="expense" name="支出" stroke="#fb7185" strokeWidth={2} dot={{ r: 3, fill: '#fb7185' }} />
-                  <Line type="monotone" dataKey="income" name="收入" stroke="#34d399" strokeWidth={2} dot={{ r: 3, fill: '#34d399' }} />
+                  <Line type="monotone" dataKey="expense" name="支出" stroke="#b87e6b" strokeWidth={2} dot={{ r: 3, fill: '#b87e6b' }} />
+                  <Line type="monotone" dataKey="income" name="收入" stroke="#5f7186" strokeWidth={2} dot={{ r: 3, fill: '#5f7186' }} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (

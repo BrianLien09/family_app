@@ -3,9 +3,23 @@
 import { useEffect, useId, useRef, type FormEventHandler, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { m, useIsPresent, type Variants } from 'motion/react';
+import { DURATION, EASE_IN, EASE_OUT } from '@/lib/motion';
 import { useImmersiveMode } from '@/hooks/useImmersiveMode';
 import { useModalViewport } from '@/hooks/useModalViewport';
 import SaveButton from '@/components/SaveButton';
+
+// 背景只淡入淡出；面板由下往上浮出（手機像底部面板，桌面則是輕微上浮），離場更短以免讓人等待
+const backdropVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: DURATION.base } },
+  exit: { opacity: 0, transition: { duration: DURATION.fast, ease: EASE_IN } },
+};
+const panelVariants: Variants = {
+  hidden: { opacity: 0, y: 24, scale: 0.98 },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: DURATION.slow, ease: EASE_OUT } },
+  exit: { opacity: 0, y: 12, scale: 0.98, transition: { duration: DURATION.fast, ease: EASE_IN } },
+};
 
 interface ModalProps {
   isOpen?: boolean;
@@ -25,8 +39,10 @@ export default function Modal({ isOpen = true, title, onClose, children, footer,
   const titleId = useId();
   const viewportRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const current = useRef({ onClose, isBusy });
-  useEffect(() => { current.current = { onClose, isBusy }; }, [onClose, isBusy]);
+  // 離場動畫播放期間視為已關閉：忽略鍵盤與點擊，避免使用者對正在消失的彈窗重複操作
+  const isPresent = useIsPresent();
+  const current = useRef({ onClose, isBusy, isPresent });
+  useEffect(() => { current.current = { onClose, isBusy, isPresent }; }, [onClose, isBusy, isPresent]);
   useImmersiveMode(isOpen);
   useModalViewport(viewportRef, isOpen);
 
@@ -40,7 +56,7 @@ export default function Modal({ isOpen = true, title, onClose, children, footer,
       : null;
     (firstInput ?? panel)?.focus({ preventScroll: true });
     const handleKey = (event: KeyboardEvent) => {
-      if (event.isComposing || event.defaultPrevented) return;
+      if (event.isComposing || event.defaultPrevented || !current.current.isPresent) return;
       if (event.key === 'Escape') {
         event.preventDefault();
         if (!current.current.isBusy) current.current.onClose();
@@ -66,12 +82,15 @@ export default function Modal({ isOpen = true, title, onClose, children, footer,
   }, [isOpen]);
 
   if (!isOpen || typeof document === 'undefined') return null;
-  const close = () => { if (!current.current.isBusy) current.current.onClose(); };
+  const close = () => { if (!current.current.isBusy && current.current.isPresent) current.current.onClose(); };
   return createPortal(
-    <div ref={viewportRef} className={`modal-viewport ${size === 'compact' ? 'modal-viewport-compact' : ''}`}>
-      <div className="modal-backdrop" onClick={closeOnBackdrop ? close : undefined} aria-hidden="true" />
-      <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={titleId}
-        aria-busy={isBusy} className={`modal-panel modal-${size}`}>
+    <div ref={viewportRef} className={`modal-viewport ${size === 'compact' ? 'modal-viewport-compact' : ''}`}
+      style={{ pointerEvents: isPresent ? undefined : 'none' }}>
+      <m.div className="modal-backdrop" variants={backdropVariants} initial="hidden" animate="visible" exit="exit"
+        onClick={closeOnBackdrop ? close : undefined} aria-hidden="true" />
+      <m.div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={titleId}
+        aria-busy={isBusy} className={`modal-panel modal-${size}`}
+        variants={panelVariants} initial="hidden" animate="visible" exit="exit">
         <header className="modal-header">
           <h2 id={titleId} className="min-w-0 flex-1 break-words text-lg font-bold leading-snug sm:text-xl">{title}</h2>
           <div className="flex shrink-0 items-center gap-1">
@@ -83,7 +102,7 @@ export default function Modal({ isOpen = true, title, onClose, children, footer,
           <div className="modal-body custom-scrollbar">{children}</div>
           {footer && <footer className="modal-footer">{footer}</footer>}
         </form>
-      </div>
+      </m.div>
     </div>, document.body,
   );
 }

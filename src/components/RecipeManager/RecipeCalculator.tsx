@@ -8,6 +8,7 @@ import { useFormSubmission } from '@/hooks/useFormSubmission';
 import SaveButton from '@/components/SaveButton';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import toast from 'react-hot-toast';
 
 interface RecipeCalculatorProps {
   recipe: Recipe;
@@ -127,7 +128,7 @@ export default function RecipeCalculator({ recipe, onClose, onDelete, onAdd, onE
       pdf.save(fileName);
     } catch (error) {
       console.error('PDF 匯出失敗:', error);
-      alert('匯出失敗，請稍後再試');
+      toast.error('匯出失敗，請稍後再試');
     } finally {
       exportPending.current = false;
       setIsExporting(false);

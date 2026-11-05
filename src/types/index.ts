@@ -57,11 +57,11 @@ export type FamilyMember = typeof FAMILY_MEMBERS[number];
 
 // 家庭成員顏色對應（用於圖表與 UI）
 export const MEMBER_COLORS: Record<FamilyMember, string> = {
-  Sandy: '#fb7185',   // rose-400
-  Brian: '#818cf8',   // indigo-400
-  Mango: '#fbbf24',   // amber-400
-  孔呆: '#2dd4bf',   // teal-400
-  共同: '#c084fc',   // purple-400
+  Sandy: '#c98a8a',   // 暖玫瑰
+  Brian: '#5f7186',   // 石板藍
+  Mango: '#c9a15b',   // 赭黃
+  孔呆: '#6f9a8f',   // 鼠尾草綠
+  共同: '#9a859b',   // 藕紫
 };
 
 // 支出分類

@@ -9,6 +9,7 @@ import { getTodayDateString } from '@/lib/date';
 import { useCategories } from '@/hooks/useCategories';
 import { useCategoryTimePresets } from '@/hooks/useCategoryTimePresets';
 import clsx from 'clsx';
+import toast from 'react-hot-toast';
 import { useFormSubmission } from '@/hooks/useFormSubmission';
 import Modal, { ModalActions } from '@/components/Modal';
 
@@ -109,11 +110,11 @@ export default function AddDateModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
-      alert('請輸入行程標題！');
+      toast.error('請輸入行程標題！');
       return;
     }
     if (!date) {
-      alert('請選擇日期！');
+      toast.error('請選擇日期！');
       return;
     }
 
@@ -202,7 +203,7 @@ export default function AddDateModal({
                 <button
                   type="button"
                   onClick={() => setShowAddCategory(true)}
-                  className="min-h-11 px-3 py-2 rounded-xl text-sm font-medium bg-[#f0ece1] border-2 border-dashed border-dashed border-[#dcd0c2] text-[#3d3a36] hover:border-[#5f7186]/50 hover:text-[#5f7186] transition-all"
+                  className="min-h-11 px-3 py-2 rounded-xl text-sm font-medium bg-[#f0ece1] border-2 border-dashed border-dashed border-[#dcd0c2] text-[#3d3a36] hover:border-[#5f7186]/50 hover:text-[#5f7186] transition-colors"
                   aria-label="新增自訂類別"
                 >
                   <Plus size={13} className="inline mr-0.5" />
@@ -225,7 +226,7 @@ export default function AddDateModal({
                     type="button"
                     onClick={handleAddCategory}
                     aria-label="儲存自訂類別"
-                    className="min-h-11 px-3 py-2 bg-[#5f7186] hover:bg-[#5f7186] text-[#f0ece1] rounded-lg text-xs transition-all duration-200"
+                    className="min-h-11 px-3 py-2 bg-[#5f7186] hover:bg-[#5f7186] text-[#f0ece1] rounded-lg text-xs transition-colors duration-200"
                   >
                     <Check size={16} />
                   </button>
@@ -233,7 +234,7 @@ export default function AddDateModal({
                     type="button"
                     aria-label="取消新增類別"
                     onClick={() => { setShowAddCategory(false); setNewCategoryName(''); }}
-                    className="min-h-11 px-3 py-2 bg-[#dcd0c2]/50 hover:bg-[#dcd0c2]/80 text-[#3d3a36] rounded-lg text-xs transition-all duration-200"
+                    className="min-h-11 px-3 py-2 bg-[#dcd0c2]/50 hover:bg-[#dcd0c2]/80 text-[#3d3a36] rounded-lg text-xs transition-colors duration-200"
                   >
                     <X size={13} />
                   </button>
@@ -245,7 +246,7 @@ export default function AddDateModal({
                 type="button"
                 onClick={() => setShowSubCatManager(v => !v)}
                 className={clsx(
-                  'min-h-11 px-3 py-2 rounded-xl text-sm transition-all border',
+                  'min-h-11 px-3 py-2 rounded-xl text-sm transition-colors border',
                   showSubCatManager
                     ? 'bg-[#5f7186] border-[#5f7186] text-[#f0ece1]'
                     : 'bg-[#f0ece1] border-[#dcd0c2] text-[#3d3a36] hover:text-[#5f7186] hover:border-[#5f7186]'
@@ -265,7 +266,7 @@ export default function AddDateModal({
                     key={sub.name}
                     type="button"
                     onClick={() => handleSelectSubCategory(sub.name, sub.startTime, sub.endTime)}
-                    className="min-h-11 px-3 py-2 rounded-xl text-sm font-medium bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] text-[#3d3a36] hover:border-[#5f7186]/50 hover:text-[#5f7186] transition-all"
+                    className="min-h-11 px-3 py-2 rounded-xl text-sm font-medium bg-[#f0ece1] border-2 border-dashed border-[#dcd0c2] text-[#3d3a36] hover:border-[#5f7186]/50 hover:text-[#5f7186] transition-colors"
                     title={`${sub.startTime}${sub.endTime ? ` ~ ${sub.endTime}` : ''}`}
                   >
                     {sub.name}
@@ -339,7 +340,7 @@ export default function AddDateModal({
                     type="button"
                     onClick={handleSaveSubCat}
                     disabled={!subCatForm.name.trim() || !subCatForm.startTime}
-                    className="min-h-11 px-3 py-2 bg-[#5f7186] hover:bg-[#5f7186] disabled:opacity-40 disabled:cursor-not-allowed text-[#f0ece1] rounded-lg text-xs transition-all duration-200"
+                    className="min-h-11 px-3 py-2 bg-[#5f7186] hover:bg-[#5f7186] disabled:opacity-40 disabled:cursor-not-allowed text-[#f0ece1] rounded-lg text-xs transition-colors duration-200"
                     aria-label="儲存子分類"
                   >
                     <Check size={16} />

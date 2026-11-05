@@ -2,7 +2,10 @@
 
 import { Armchair, CookingPot, Laptop, Pencil, Plug, ShoppingBag, Smartphone, Trash2 } from 'lucide-react';
 import { PurchaseItem, formatPurchasePrice } from '@/lib/purchases';
+import { m } from 'motion/react';
 import { MEMBER_COLORS } from '@/types';
+import IconButton from '@/components/ui/IconButton';
+import { listItem } from '@/lib/motion';
 
 interface PurchaseRecordProps {
   item: PurchaseItem;
@@ -14,7 +17,7 @@ const icons = new Map([['手機', <Smartphone key="phone" size={19} />], ['3C產
 
 export default function PurchaseRecord({ item, isDeleting, onEdit, onDelete }: PurchaseRecordProps) {
   const icon = icons.get(item.category) ?? <ShoppingBag size={19} />;
-  return <article className="glass-card min-w-0 p-4 sm:p-5">
+  return <m.article layout="position" variants={listItem} initial="hidden" animate="visible" exit="exit" className="glass-card min-w-0 p-4 sm:p-5">
     <div className="flex items-start gap-3 sm:gap-4">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#f0ece1]" style={{ backgroundColor: MEMBER_COLORS[item.beneficiary] }}>{icon}</div>
       <div className="min-w-0 flex-1">
@@ -31,11 +34,11 @@ export default function PurchaseRecord({ item, isDeleting, onEdit, onDelete }: P
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 break-words text-lg font-bold text-[#b87e6b]">{item.price === null && item.priceCny === null && <span className="text-xs font-normal text-[#5f6368]">未填價格</span>}{item.price !== null && <span>{formatPurchasePrice(item.price)}</span>}{item.priceCny !== null && <span>{formatPurchasePrice(item.priceCny, 'CNY')}</span>}</div>
         <div className="mt-2 text-xs leading-5 text-[#5f6368] sm:text-sm">購買人：<strong className="font-semibold text-[#3d3a36]">{item.purchaser}</strong></div>
       </div>
-      <div className="flex shrink-0 flex-col gap-1 sm:flex-row">
-        <button onClick={() => onEdit(item)} aria-label={`編輯 ${item.name}`} className="rounded-lg p-2 text-[#3d3a36] transition-colors hover:bg-[#5f7186]/10 hover:text-[#5f7186]"><Pencil size={17} /></button>
-        <button disabled={isDeleting} onClick={() => onDelete(item)} aria-label={`刪除 ${item.name}`} className="rounded-lg p-2 text-[#3d3a36] transition-colors hover:bg-[#b87e6b]/10 hover:text-[#b87e6b] disabled:opacity-50"><Trash2 size={17} /></button>
+      <div className="flex shrink-0 flex-col sm:flex-row">
+        <IconButton tone="accent" onClick={() => onEdit(item)} aria-label={`編輯 ${item.name}`}><Pencil size={17} /></IconButton>
+        <IconButton tone="danger" disabled={isDeleting} onClick={() => onDelete(item)} aria-label={`刪除 ${item.name}`}><Trash2 size={17} /></IconButton>
       </div>
     </div>
     {item.note && <details className="mt-3 border-t border-dashed border-[#dcd0c2] pt-3 text-sm text-[#5f6368]"><summary className="w-fit cursor-pointer hover:text-[#5f7186]">備註</summary><p className="mt-2 whitespace-pre-wrap break-words leading-6">{item.note}</p></details>}
-  </article>;
+  </m.article>;
 }

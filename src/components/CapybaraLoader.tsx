@@ -43,7 +43,7 @@ export default function CapybaraLoader({
 
       {/* 載入文字 */}
       {label && (
-        <p className="text-[#5f6368] text-sm tracking-wide animate-pulse">
+        <p className="text-[#5f6368] text-sm tracking-wide motion-safe:animate-pulse">
           {label}
         </p>
       )}
@@ -53,7 +53,8 @@ export default function CapybaraLoader({
   // 全頁遮罩模式：固定定位並置中
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#e6e2d8]">
+      // 位於 Navbar（z-40）下方並讓出其 70px 高度，載入時仍可切換頁面
+      <div role="status" aria-live="polite" className="fixed inset-x-0 bottom-0 top-[70px] z-30 flex items-center justify-center bg-[#e6e2d8]">
         {inner}
       </div>
     );
@@ -61,7 +62,7 @@ export default function CapybaraLoader({
 
   // 區塊模式：佔滿父容器高度
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div role="status" aria-live="polite" className="min-h-screen flex items-center justify-center">
       {inner}
     </div>
   );

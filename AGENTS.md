@@ -6,7 +6,7 @@ This document provides guidelines for AI coding agents working in this Next.js f
 
 - **Framework**: Next.js 16.1.1 (App Router) with React 19.2.3
 - **Language**: TypeScript (strict mode)
-- **Styling**: Tailwind CSS with glassmorphism design
+- **Styling**: Tailwind CSS，Woven & Weft 大地色系；動畫使用 `motion`
 - **Backend**: Firebase (Firestore + Auth)
 - **Deployment**: Static export to GitHub Pages
 - **No Testing Framework**: Currently no Jest/Vitest/Playwright configured
@@ -147,27 +147,33 @@ export default function MyComponent({ title, onClose }: MyComponentProps) {
 
 **Tailwind-first approach:**
 ```tsx
-// ✅ Good - Inline Tailwind utilities
-<button className="px-4 py-2 bg-purple-500 hover:bg-purple-600 rounded-lg">
+// ✅ Good - 優先使用共用元件（src/components/ui），不要每頁手刻按鈕／篩選膠囊／空狀態
+<Button variant="primary">新增</Button>
+<Chip selected={isActive} onClick={toggle}>分類</Chip>
 
-// ✅ Good - Use clsx for conditional classes
+// ✅ Good - Use clsx for conditional classes，且只過渡需要的屬性
 <div className={clsx(
-  "base-class transition-all",
-  isActive && "bg-purple-500 text-white",
-  !isActive && "bg-white/5 text-slate-300"
+  "base-class transition-colors duration-200",
+  isActive && "bg-[#5f7186] text-[#f0ece1]",
 )}>
 
-// ✅ Good - Custom utilities in globals.css for reusable patterns
-// .glass-card, .btn-primary, .custom-scrollbar
-
-// ❌ Avoid - Creating component-specific CSS files
+// ❌ Avoid - transition-all、行內縮寫 background、component-specific CSS files
 ```
 
-**Design system:**
-- Background: `#0f111a`
-- Glass cards: `bg-white/5 backdrop-blur-md border border-white/10`
-- Accent colors: Purple/pink/orange gradients
-- Responsive: Mobile-first with `md:`, `lg:` breakpoints
+**Design system（Woven & Weft 大地色系）:**
+- Background `#e6e2d8`、卡片 `#f0ece1`、邊框 `#dcd0c2`（常用 dashed）、文字 `#3d3a36`
+- 主色鐵鏽 `#b87e6b`、輔色石板藍 `#5f7186`、警示 `#9b4436`
+- 卡片 `.glass-card` 不使用 backdrop-blur（長清單會拖慢捲動）
+- Responsive: Mobile-first with `md:`, `lg:` breakpoints；觸控目標至少 44px
+
+**共用 UI 元件（`src/components/ui/`）:** `Button`、`IconButton`（必填 aria-label）、`Chip`、`SearchInput`、`SelectCheckbox`、`BatchToolbar`、`EmptyState`、`PageShell`／`PageHeader`、`LoadingGate`。
+
+**動畫（`motion` 套件）:**
+- token 與 variants 集中在 `src/lib/motion.ts`（EASE_OUT、DURATION、fadeUp、popIn、collapse、listItem），不要在元件內自訂時長與 easing
+- 使用 `m.*`（LazyMotion strict），`MotionProvider` 以 `reducedMotion="user"` 處理減少動態效果
+- 需要離場動畫的元件，由呼叫端用 `AnimatePresence` 包住條件渲染；`Modal` 只負責進出場本身
+- 路由切換只做進場（`src/app/template.tsx`）；載入 → 內容使用 `LoadingGate`
+- Add*Modal／PurchaseModal 的測試以固定模組清單模擬依賴，這些檔案不要新增未列於 `tests/modalForms.test.mjs` 的 import
 
 ### State Management
 

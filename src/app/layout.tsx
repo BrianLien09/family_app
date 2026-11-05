@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import ToasterContext from '@/components/ToasterContext';
 import PWAUpdateProvider from '@/components/PWAUpdateProvider';
+import MotionProvider from '@/components/MotionProvider';
 
 const outfit = Outfit({ subsets: ["latin"] });
 
@@ -32,12 +33,14 @@ export default function RootLayout({
     <html lang="zh-TW">
 
       <body className={`${outfit.className} pb-24 antialiased selection:bg-orange-200 selection:text-orange-900`}>
-        <main className="min-h-screen relative z-10">
-          {children}
-        </main>
-        <Navbar />
-        <ToasterContext />
-        <PWAUpdateProvider />
+        <MotionProvider>
+          <main className="min-h-screen relative z-10">
+            {children}
+          </main>
+          <Navbar />
+          <ToasterContext />
+          <PWAUpdateProvider />
+        </MotionProvider>
       </body>
     </html>
   );

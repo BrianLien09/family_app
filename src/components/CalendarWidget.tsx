@@ -9,10 +9,21 @@ import {
 import { zhTW } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, RotateCw, Plus, CheckSquare, Square, Trash2, X, Copy, Download } from 'lucide-react';
 import clsx from 'clsx';
+import { AnimatePresence, m, type Variants } from 'motion/react';
+import Button from '@/components/ui/Button';
+import IconButton from '@/components/ui/IconButton';
+import { collapse, DURATION, EASE_OUT } from '@/lib/motion';
 import { DateItem } from '@/types';
 import DateCard from '@/components/DateManager/DateCard';
 import { CategoryColorMap, getCategoryColorStyles } from '@/lib/categoryColors';
 import { createCalendarImage, downloadCalendarImage } from './calendarImage';
+
+// 月份切換依方向水平滑動；custom 讓離開中的舊月份也能取得最新方向
+const monthVariants: Variants = {
+  enter: (direction: number) => ({ opacity: 0, x: direction * 24 }),
+  center: { opacity: 1, x: 0, transition: { duration: DURATION.slow, ease: EASE_OUT } },
+  leave: (direction: number) => ({ opacity: 0, x: direction * -24, transition: { duration: DURATION.fast } }),
+};
 
 interface CalendarWidgetProps {
   events: DateItem[];
@@ -80,7 +91,16 @@ const DayCell = memo(function DayCell({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-pressed={isSelected}
+      aria-label={`${format(day, 'M月d日')}，${events.length} 個行程`}
       onClick={() => onDayClick(day)}
+      // 只處理格子本身的按鍵，避免攔截內部新增按鈕的 Enter／Space
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onDayClick(day); }
+      }}
       onDragOver={onDragOver}
       onDrop={(e) => onDrop(e, day)}
       className={clsx(
@@ -99,7 +119,7 @@ const DayCell = memo(function DayCell({
         <span
           className={clsx(
             'text-xs md:text-sm font-medium block text-center md:text-left',
-            isTodayDate ? 'text-blue-400 font-bold' : 'text-[#3d3a36]',
+            isTodayDate ? 'text-[#5f7186] font-bold' : 'text-[#3d3a36]',
             // 選取狀態用主色調鐵鏽紅，在淺色背景下保持可見
             isSelected && 'text-[#b87e6b] font-bold',
             !isCurrentMonth && 'opacity-50',
@@ -112,8 +132,8 @@ const DayCell = memo(function DayCell({
         {showAddButton && isCurrentMonth && (
           <button
             onClick={(e) => onAddClick(e, day)}
-            className="hidden md:flex w-5 h-5 items-center justify-center rounded bg-[#5f7186] hover:bg-[#47576b] text-[#f0ece1] transition-opacity duration-200 shadow-[0_2px_8px_rgba(139,121,101,0.04)] opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
-            title={`新增 ${format(day, 'M/d')} 的行程`}
+            className="hidden md:flex w-6 h-6 items-center justify-center rounded bg-[#5f7186] hover:bg-[#47576b] text-[#f0ece1] transition-opacity duration-200 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+            aria-label={`新增 ${format(day, 'M/d')} 的行程`}
           >
             <Plus size={14} />
           </button>
@@ -135,9 +155,10 @@ const DayCell = memo(function DayCell({
       {showAddButton && isCurrentMonth && isSelected && (
         <button
           onClick={(e) => onAddClick(e, day)}
-          className="md:hidden absolute bottom-1 right-1 w-4 h-4 flex items-center justify-center rounded bg-[#5f7186] text-[#f0ece1] shadow-[0_2px_8px_rgba(139,121,101,0.04)]"
+          aria-label={`新增 ${format(day, 'M/d')} 的行程`}
+          className="md:hidden absolute bottom-0.5 right-0.5 w-7 h-7 flex items-center justify-center rounded-md bg-[#5f7186] text-[#f0ece1]"
         >
-          <Plus size={10} />
+          <Plus size={14} />
         </button>
       )}
 
@@ -199,6 +220,7 @@ export default function CalendarWidget({
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [currentPage, setCurrentPage] = useState(1);
+  const [monthDirection, setMonthDirection] = useState<1 | -1>(1);
   const [isExporting, setIsExporting] = useState(false);
   const itemsPerPage = 5;
   
@@ -242,8 +264,8 @@ export default function CalendarWidget({
   const days = eachDayOfInterval({ start: startDate, end: endDate });
   const weekDays = ['一', '二', '三', '四', '五', '六', '日'];
 
-  const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
-  const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
+  const nextMonth = () => { setMonthDirection(1); setCurrentMonth(addMonths(currentMonth, 1)); };
+  const prevMonth = () => { setMonthDirection(-1); setCurrentMonth(subMonths(currentMonth, 1)); };
 
   // eventsByDate 必須在 handleDayClick 之前定義，因為後者依賴它
   // 使用 HashMap 做 O(1) 查詢，避免在每個格子 render 時都 filter 整個 events 陣列
@@ -375,109 +397,65 @@ export default function CalendarWidget({
     <div className="glass-card p-4 md:px-5 md:py-4 select-none h-full flex flex-col">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-3 shrink-0">
-        
-        {/* ✨ 修改這裡：將標題和重整按鈕包在一起 */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1">
           <h2 className="text-lg md:text-2xl font-bold text-[#3d3a36] tracking-wide whitespace-nowrap">
             {format(currentMonth, 'yyyy年 M月', { locale: zhTW })}
           </h2>
           {onRefresh && (
-             <button 
-               onClick={onRefresh}
-               disabled={isRefreshing}
-               className="p-1.5 rounded-full hover:bg-[#dcd0c2]/50 text-[#3d3a36] hover:text-[#b87e6b] transition-all duration-200 disabled:opacity-50"
-               title="重新整理資料"
-             >
-               <RotateCw 
-                 size={18} 
-                 className={clsx("transition-all duration-700", isRefreshing && "animate-spin")} 
-               />
-             </button>
-           )}
+            <IconButton aria-label="重新整理資料" onClick={onRefresh} disabled={isRefreshing}>
+              <RotateCw size={18} className={clsx(isRefreshing && 'motion-safe:animate-spin')} />
+            </IconButton>
+          )}
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-           <button onClick={() => handleExport(true)} disabled={isExporting} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#b87e6b] hover:bg-[#a66a58] text-[#f0ece1] text-xs font-bold disabled:opacity-50 transition-colors">
-             <Copy size={16} />{isExporting ? '產生圖片中…' : '複製圖片'}
-           </button>
-           <button onClick={() => handleExport(false)} disabled={isExporting} aria-label="下載月曆圖片" title="下載 PNG" className="p-2 rounded-full hover:bg-[#dcd0c2]/50 text-[#3d3a36] disabled:opacity-50"><Download size={18} /></button>
-           <button onClick={prevMonth} aria-label="上個月" className="p-1.5 md:p-2 hover:bg-[#dcd0c2]/50 rounded-full text-[#3d3a36] transition-all duration-200">
-             <ChevronLeft size={20} />
-           </button>
-           <button onClick={nextMonth} aria-label="下個月" className="p-1.5 md:p-2 hover:bg-[#dcd0c2]/50 rounded-full text-[#3d3a36] transition-all duration-200">
-             <ChevronRight size={20} />
-           </button>
+        <div className="flex items-center gap-1 flex-wrap">
+          <Button variant="primary" size="sm" onClick={() => handleExport(true)} disabled={isExporting} className="mr-1">
+            <Copy size={16} aria-hidden="true" />{isExporting ? '產生圖片中…' : '複製圖片'}
+          </Button>
+          <IconButton aria-label="下載月曆圖片" onClick={() => handleExport(false)} disabled={isExporting}><Download size={18} /></IconButton>
+          <IconButton aria-label="上個月" onClick={prevMonth}><ChevronLeft size={20} /></IconButton>
+          <IconButton aria-label="下個月" onClick={nextMonth}><ChevronRight size={20} /></IconButton>
         </div>
       </div>
 
       {/* 批次操作工具列 */}
       {onBatchModeToggle && (
         <div className="flex items-center justify-between mb-3 pb-2 border-b border-dashed border-[#dcd0c2]/50 shrink-0">
-          <button
-            onClick={onBatchModeToggle}
-            className={clsx(
-              "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
-              batchMode 
-                ? "bg-[#5f7186] text-[#f0ece1] shadow-[0_8px_20px_rgba(139,121,101,0.08)] shadow-purple-500/30" 
-                : "bg-[#dcd0c2]/30 hover:bg-[#dcd0c2]/50 text-[#3d3a36]"
-            )}
-            aria-label="批次選擇模式"
-            aria-pressed={batchMode}
-          >
-            {batchMode ? <CheckSquare size={14} /> : <Square size={14} />}
+          <Button size="sm" variant={batchMode ? 'secondary' : 'soft'} onClick={onBatchModeToggle} aria-pressed={batchMode}>
+            {batchMode ? <CheckSquare size={14} aria-hidden="true" /> : <Square size={14} aria-hidden="true" />}
             {batchMode ? '離開批次' : '批次操作'}
-          </button>
-          
+          </Button>
+
           {batchMode && (
             <div className="flex items-center gap-2">
               {onSelectAll && (
-                <button
-                  onClick={onSelectAll}
-                  className="px-2 py-1 text-[10px] bg-[#dcd0c2]/30 hover:bg-[#dcd0c2]/50 rounded text-[#3d3a36] transition-all duration-200"
-                  aria-label="全選/取消全選"
-                >
-                  {allSelected ? '取消全選' : '全選'}
-                </button>
+                <Button size="sm" onClick={onSelectAll}>{allSelected ? '取消全選' : '全選'}</Button>
               )}
-              
               {selectedIds.length > 0 && onBatchDelete && (
-                <button
-                  onClick={onBatchDelete}
-                  className="flex items-center gap-1 px-2 py-1 text-[10px] bg-[#b87e6b]/20 hover:bg-[#b87e6b]/20 text-[#b87e6b] rounded transition-all duration-200"
-                  aria-label={`刪除選取的 ${selectedIds.length} 個項目`}
-                >
-                  <Trash2 size={12} />
+                <Button size="sm" variant="danger" onClick={onBatchDelete} aria-label={`刪除選取的 ${selectedIds.length} 個項目`}>
+                  <Trash2 size={14} aria-hidden="true" />
                   刪除 ({selectedIds.length})
-                </button>
+                </Button>
               )}
             </div>
           )}
         </div>
       )}
 
-      {/* Ctrl+多選批次新增工具列 */}
-      {selectedEmptyDates.length > 0 && (
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-dashed border-[#dcd0c2]/50 bg-[#5f7186]/10 px-4 py-2 rounded-lg shrink-0 animate-scale-in">
-          <span className="text-sm text-[#5f7186] font-medium">
-            已選擇 {selectedEmptyDates.length} 個日期
-          </span>
-          <div className="flex gap-2">
-            <button
-              onClick={handleBatchAdd}
-              className="px-3 py-1.5 bg-[#5f7186] hover:bg-[#5f7186] text-[#f0ece1] text-sm font-medium rounded-lg transition-all duration-200 shadow-[0_8px_20px_rgba(139,121,101,0.08)] shadow-purple-500/30"
-            >
-              執行批次新增
-            </button>
-            <button
-              onClick={handleCancelBatchSelect}
-              className="p-1.5 hover:bg-[#dcd0c2]/50 text-[#3d3a36] hover:text-[#b87e6b] rounded-lg transition-all duration-200"
-              aria-label="取消多選"
-            >
-              <X size={18} />
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Ctrl+多選批次新增工具列：用 AnimatePresence 讓出現與消失都有高度過渡，不會讓月曆瞬間跳動 */}
+      <AnimatePresence initial={false}>
+        {selectedEmptyDates.length > 0 && (
+          <m.div variants={collapse} initial="hidden" animate="visible" exit="exit" className="shrink-0 overflow-hidden">
+            <div className="mb-4 flex items-center justify-between rounded-lg bg-[#5f7186]/10 px-4 py-2">
+              <span className="text-sm font-medium text-[#5f7186]">已選擇 {selectedEmptyDates.length} 個日期</span>
+              <div className="flex gap-2">
+                <Button size="sm" variant="secondary" onClick={handleBatchAdd}>執行批次新增</Button>
+                <IconButton aria-label="取消多選" onClick={handleCancelBatchSelect} className="h-9 w-9"><X size={18} /></IconButton>
+              </div>
+            </div>
+          </m.div>
+        )}
+      </AnimatePresence>
 
       {/* Week Days */}
       <div className="min-w-0">
@@ -489,33 +467,45 @@ export default function CalendarWidget({
         ))}
       </div>
 
-      {/* Days Grid */}
-      <div className="grid grid-cols-7 gap-px bg-[#dcd0c2]/40 rounded-lg overflow-hidden border-2 border-dashed border-[#dcd0c2]/50 shrink-0">
-        {days.map((day) => {
-          const dateKey = format(day, 'yyyy-MM-dd');
-          const dayEvents = eventsByDate[dateKey] || [];
+      {/* Days Grid：切換月份時依方向滑動；以 grid 重疊讓新舊月份交疊，避免高度跳動 */}
+      <div className="grid overflow-hidden rounded-lg">
+        <AnimatePresence initial={false} custom={monthDirection}>
+          <m.div
+            key={format(currentMonth, 'yyyy-MM')}
+            custom={monthDirection}
+            variants={monthVariants}
+            initial="enter"
+            animate="center"
+            exit="leave"
+            className="col-start-1 row-start-1 grid grid-cols-7 gap-px bg-[#dcd0c2]/40 rounded-lg overflow-hidden border-2 border-dashed border-[#dcd0c2]/50"
+          >
+            {days.map((day) => {
+              const dateKey = format(day, 'yyyy-MM-dd');
+              const dayEvents = eventsByDate[dateKey] || [];
 
-          return (
-            <DayCell
-              key={dateKey}
-              day={day}
-              events={dayEvents}
-              isCurrentMonth={isSameMonth(day, currentMonth)}
-              isSelected={isSameDay(day, selectedDate)}
-              isTodayDate={isToday(day)}
-              isMultiSelected={selectedEmptyDates.some(d => format(d, 'yyyy-MM-dd') === dateKey)}
-              isDragActive={!!draggedEventId}
-              showAddButton={!!onAddEvent}
-              onDayClick={handleDayClick}
-              onAddClick={handleAddClick}
-              onDragStart={handleDragStart}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              onDragEnd={handleDragEnd}
-              categoryColors={categoryColors}
-            />
-          );
-        })}
+              return (
+                <DayCell
+                  key={dateKey}
+                  day={day}
+                  events={dayEvents}
+                  isCurrentMonth={isSameMonth(day, currentMonth)}
+                  isSelected={isSameDay(day, selectedDate)}
+                  isTodayDate={isToday(day)}
+                  isMultiSelected={selectedEmptyDates.some(d => format(d, 'yyyy-MM-dd') === dateKey)}
+                  isDragActive={!!draggedEventId}
+                  showAddButton={!!onAddEvent}
+                  onDayClick={handleDayClick}
+                  onAddClick={handleAddClick}
+                  onDragStart={handleDragStart}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  onDragEnd={handleDragEnd}
+                  categoryColors={categoryColors}
+                />
+              );
+            })}
+          </m.div>
+        </AnimatePresence>
       </div>
 
       </div>
@@ -525,54 +515,46 @@ export default function CalendarWidget({
             <span className="w-1 h-4 bg-[#5f7186] rounded-full"></span>
             {format(selectedDate, 'M月d日')} 的行程 ({selectedDayEvents.length})
          </h3>
-         
+
          <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
             {selectedDayEvents.length > 0 ? (
-              paginatedEvents.map(event => (
-                <DateCard 
-                  key={event.id}
-                  item={event}
-                  onDelete={onDelete}
-                  onEdit={() => onEdit(event)}
-                  batchMode={batchMode}
-                  isSelected={selectedIds.includes(event.id)}
-                  onToggleSelect={onToggleSelect}
-                  categoryColors={categoryColors}
-                />
-              ))
+              <AnimatePresence initial={false} mode="popLayout">
+                {paginatedEvents.map(event => (
+                  <DateCard
+                    key={event.id}
+                    item={event}
+                    onDelete={onDelete}
+                    onEdit={() => onEdit(event)}
+                    batchMode={batchMode}
+                    isSelected={selectedIds.includes(event.id)}
+                    onToggleSelect={onToggleSelect}
+                    categoryColors={categoryColors}
+                  />
+                ))}
+              </AnimatePresence>
             ) : (
-              <div className="h-full max-h-32 flex items-center justify-center border-2 border-dashed border-dashed border-dashed border-[#dcd0c2]/50 rounded-xl bg-white/[0.02]">
+              <div className="flex h-full max-h-32 items-center justify-center rounded-xl border-2 border-dashed border-[#dcd0c2]/50 py-6">
                 <p className="text-[#3d3a36] text-sm">本日無行程，好好休息吧！😴</p>
               </div>
             )}
          </div>
-         
+
          {/* Pagination Controls */}
          {totalPages > 1 && (
            <div className="mt-4 pt-3 border-t border-dashed border-[#dcd0c2]/50 flex items-center justify-between shrink-0">
-             <button
-               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-               disabled={currentPage === 1}
-               className="px-3 py-1.5 text-xs bg-[#dcd0c2]/30 hover:bg-[#dcd0c2]/50 rounded-lg text-[#3d3a36] transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
-               aria-label="上一頁"
-             >
-               <ChevronLeft size={14} />
+             <Button size="sm" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1} aria-label="上一頁">
+               <ChevronLeft size={14} aria-hidden="true" />
                上一頁
-             </button>
-             
+             </Button>
+
              <span className="text-xs text-[#3d3a36]">
                第 <span className="text-[#5f7186] font-bold">{currentPage}</span> / {totalPages} 頁
              </span>
-             
-             <button
-               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-               disabled={currentPage === totalPages}
-               className="px-3 py-1.5 text-xs bg-[#dcd0c2]/30 hover:bg-[#dcd0c2]/50 rounded-lg text-[#3d3a36] transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
-               aria-label="下一頁"
-             >
+
+             <Button size="sm" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages} aria-label="下一頁">
                下一頁
-               <ChevronRight size={14} />
-             </button>
+               <ChevronRight size={14} aria-hidden="true" />
+             </Button>
            </div>
          )}
       </div>

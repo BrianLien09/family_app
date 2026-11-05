@@ -106,7 +106,7 @@ export function useRecipes() {
                 toast.error("復原失敗");
               }
             }}
-            className="px-3 py-1 bg-[#b87e6b] hover:bg-[#b87e6b] text-[#f0ece1] text-sm font-semibold rounded-md transition-all duration-200"
+            className="min-h-9 px-3 py-1.5 bg-[#5f7186] hover:bg-[#47576b] text-[#f0ece1] text-sm font-semibold rounded-lg transition-colors duration-200"
           >
             復原
           </button>

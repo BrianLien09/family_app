@@ -4,7 +4,7 @@ import { countPurchases, formatPurchasePrice, sumPurchasePrices, PURCHASE_CATEGO
 import { FAMILY_MEMBERS, MEMBER_COLORS } from '@/types';
 
 interface PurchaseSummaryProps { items: PurchaseItem[]; categoryNames?: string[]; }
-const colors = ['#818cf8', '#5f7186', '#b87e6b', '#8a9276', '#b49a70', '#99859b', '#7aa9a1', '#cc9b8b', '#8aa3c0', '#b7a0bd'];
+const colors = ['#c9a15b', '#5f7186', '#b87e6b', '#8a9276', '#b49a70', '#99859b', '#7aa9a1', '#cc9b8b', '#8aa3c0', '#b7a0bd'];
 
 export default function PurchaseSummary({ items, categoryNames }: PurchaseSummaryProps) {
   const categories = countPurchases(items, 'category');
@@ -23,7 +23,7 @@ export default function PurchaseSummary({ items, categoryNames }: PurchaseSummar
       {[
         { label: '購買紀錄', value: items.length, color: 'text-[#5f7186]' },
         { label: '購買分類', value: categories.length, color: 'text-[#b87e6b]' },
-        { label: '購買平台', value: platformCount, color: 'text-[#818cf8]' },
+        { label: '購買平台', value: platformCount, color: 'text-[#5f7186]' },
       ].map(stat => <div key={stat.label} className="glass-card flex flex-col items-center justify-center gap-1 p-3 text-center sm:p-5">
         <span className="whitespace-nowrap text-xs text-[#5f6368] sm:text-sm">{stat.label}</span>
         <span className={`text-2xl font-bold tabular-nums sm:text-3xl ${stat.color}`}>{stat.value}</span>

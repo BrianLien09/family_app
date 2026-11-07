@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.3.0](https://github.com/BrianLien09/family_app/compare/v0.2.1...v0.3.0) (2026-11-05)
+
+
+### Features
+
+* **notify:** LINE 提醒改由 Cloudflare Worker 執行 ([70d5699](https://github.com/BrianLien09/family_app/commit/70d5699b32895eb615bc5ef6789601251b27bf7e))
+* **notify:** 重構 LINE 提醒為週報與隔日兩種模板並提早啟動等待發送 ([383b7e2](https://github.com/BrianLien09/family_app/commit/383b7e2313783c4cb3ffc5cc425b3d108828f1bd))
+* **purchases:** 按需展開人民幣價格並修正開發設定 ([1feecfd](https://github.com/BrianLien09/family_app/commit/1feecfdaa4232d60d58211de6756545a14043558))
+* **ui:** 品牌名稱改用草寫字體並修正登入頭像載入 ([9429393](https://github.com/BrianLien09/family_app/commit/942939344a55bc04531b3b8f8234d141825c8135))
+* **ui:** 專案更名為 Famly Hub 並於導覽列改用網站圖標 ([db637af](https://github.com/BrianLien09/family_app/commit/db637af7ce5a5b59542e7bd4b8e23fa8460f82ae))
+* **ui:** 導入 motion 重構動畫，並抽出共用元件統一介面 ([e493020](https://github.com/BrianLien09/family_app/commit/e493020b8adad733bc41d9bf7ab49b78d036813a))
+* **ui:** 調整頁面與彈窗動效 ([6a290a0](https://github.com/BrianLien09/family_app/commit/6a290a046ebe011d7ab03ffcf3ba88426bd6a9eb))
+* **ui:** 重新設計首頁版面，月曆預設滿版並直接提供圖片匯出 ([b7a7da0](https://github.com/BrianLien09/family_app/commit/b7a7da0714f79393a25fd1d6504a738e102b3096))
+
+
+### Reverts
+
+* **notify:** 還原提醒訊息的 emoji 排版 ([729a092](https://github.com/BrianLien09/family_app/commit/729a092cfa799fdb8b40442328083f98e73aff92))
+
 ## [0.2.1](https://github.com/BrianLien09/family_app/compare/v0.2.0...v0.2.1) (2026-10-16)
 
 

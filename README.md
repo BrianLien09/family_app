@@ -136,7 +136,7 @@ npm run deploy
 
 - Firebase 設定值與 GitHub Actions Secrets 不會提交到儲存庫。
 - `public/sw.js` 與 `public/workbox-*.js` 由 PWA 建置流程產生，無須手動編輯。
-- 每日行程 LINE 提醒由 `notify-worker/`（Cloudflare Worker）執行，台灣時間 23:30 觸發：週一至週六提醒隔日行程，週日提醒下週總覽；沒有行程也會發送，並附上隨機小叮嚀（清單在 `notify-worker/src/messages.ts` 的 `TIPS`）。憑證存放於 Cloudflare Secrets，不放在儲存庫。
+- 每日行程 LINE 提醒由 `notify-worker/`（Cloudflare Worker）執行，台灣時間 22:00 觸發：週一至週六提醒隔日行程，週日提醒下週總覽；沒有行程也會發送，並附上隨機小叮嚀（清單在 `notify-worker/src/messages.ts` 的 `TIPS`）。憑證存放於 Cloudflare Secrets，不放在儲存庫。
 
 ## 部署 LINE 提醒 Worker
 

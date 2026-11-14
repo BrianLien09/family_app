@@ -5,6 +5,7 @@ import { collection, onSnapshot, orderBy, query, type OrderByDirection } from 'f
 import { onAuthStateChanged } from 'firebase/auth';
 import toast from 'react-hot-toast';
 import { auth, db } from '@/lib/firebase';
+import { writeLocalCache } from '@/lib/localCache';
 
 interface SharedCollectionOptions<T> {
   collectionName: string;
@@ -28,12 +29,8 @@ export function useSharedCollection<T>(options: SharedCollectionOptions<T>) {
 
   const updateCache = useCallback((items: T[], uid: string | undefined = auth.currentUser?.uid) => {
     if (!uid) return;
-    try {
-      localStorage.setItem(`${cachePrefix}${uid}`, JSON.stringify(items));
-    } catch (error) {
-      // 快取不可用不代表雲端儲存失敗。
-      console.error('更新本機快取失敗：', error);
-    }
+    // 快取不可用不代表雲端儲存失敗，空間不足的處理集中在 writeLocalCache
+    writeLocalCache(`${cachePrefix}${uid}`, items);
   }, [cachePrefix]);
 
   useEffect(() => {

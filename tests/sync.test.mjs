@@ -87,7 +87,7 @@ function createHarness() {
         }
         return dependency(name);
       },
-      window: {}, console: { error() {} },
+      window: {}, console: { error() {}, warn() {} },
       localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) },
     }, { filename: absolute });
     return compiled.exports;

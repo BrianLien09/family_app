@@ -5,6 +5,7 @@ import { doc, onSnapshot, runTransaction } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import toast from 'react-hot-toast';
 import { db, auth } from '@/lib/firebase';
+import { writeLocalCache } from '@/lib/localCache';
 import { CategoryTimePreset, CategoryTimePresets, SubCategoryPreset } from '@/types';
 
 type SubCategoryEntry = { name: string } & SubCategoryPreset;
@@ -54,11 +55,7 @@ export function useCategoryTimePresets() {
         if (generation !== currentGeneration || auth.currentUser?.uid !== user.uid || snapshot.metadata.hasPendingWrites || snapshot.metadata.fromCache) return;
         const remote = migrateAllPresets((snapshot.data()?.presets ?? {}) as CategoryTimePresets);
         setPresets(remote);
-        try {
-          localStorage.setItem(cacheKey, JSON.stringify(remote));
-        } catch (error) {
-          console.error('儲存分類時間快取失敗：', error);
-        }
+        writeLocalCache(cacheKey, remote);
       }, (error) => {
         if (generation !== currentGeneration) return;
         console.error('分類時間同步失敗：', error);

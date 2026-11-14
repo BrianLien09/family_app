@@ -5,6 +5,7 @@ import { arrayRemove, arrayUnion, doc, onSnapshot, setDoc } from 'firebase/fires
 import { onAuthStateChanged } from 'firebase/auth';
 import toast from 'react-hot-toast';
 import { auth, db } from '@/lib/firebase';
+import { writeLocalCache } from '@/lib/localCache';
 import { DEFAULT_CATEGORIES } from '@/types';
 
 function parseCategories(value: unknown): string[] {
@@ -23,11 +24,7 @@ function readCategories(key: string): string[] {
 }
 
 function cacheCategories(uid: string, categories: string[]) {
-  try {
-    localStorage.setItem('custom_categories_v2_' + uid, JSON.stringify(categories));
-  } catch (error) {
-    console.error('儲存分類快取失敗：', error);
-  }
+  writeLocalCache('custom_categories_v2_' + uid, categories);
 }
 
 const getSettingsRef = () => doc(db, 'settings', 'category_presets');

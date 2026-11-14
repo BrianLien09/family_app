@@ -2,6 +2,8 @@
 
 import clsx from 'clsx';
 import { Search, X } from 'lucide-react';
+import { AnimatePresence, m } from 'motion/react';
+import { popIn } from '@/lib/motion';
 
 interface SearchInputProps {
   value: string;
@@ -22,18 +24,26 @@ export default function SearchInput({ value, onChange, placeholder, className, '
         placeholder={placeholder}
         aria-label={ariaLabel}
         onChange={event => onChange(event.target.value)}
-        className="min-h-11 w-full rounded-xl border-2 border-dashed border-[#dcd0c2]/70 bg-[#dcd0c2]/30 py-2.5 pl-10 pr-11 text-sm text-[#3d3a36] transition-colors duration-200 placeholder:text-[#78716c]/70 hover:bg-[#dcd0c2]/40 focus:border-[#b87e6b] focus:bg-[#f0ece1]"
+        className="min-h-11 w-full rounded-xl border-2 border-dashed border-[#dcd0c2]/70 bg-[#dcd0c2]/30 py-2.5 pl-10 pr-11 text-sm text-[#3d3a36] transition-colors duration-fast placeholder:text-[#78716c]/70 hover:bg-[#dcd0c2]/40 focus:border-[#b87e6b] focus:bg-[#f0ece1]"
       />
+      {/* 清除鈕在輸入第一個字時浮現，避免右側突然冒出圖示 */}
+      <AnimatePresence initial={false}>
       {value && (
-        <button
+        <m.button
+          key="clear-search"
+          variants={popIn}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
           type="button"
           onClick={() => onChange('')}
           aria-label="清除搜尋"
-          className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-[#5f6368] transition-colors hover:text-[#b87e6b]"
+          className="absolute right-1 top-[calc(50%-1.125rem)] flex h-9 w-9 items-center justify-center rounded-lg text-[#5f6368] transition-colors duration-fast hover:text-[#b87e6b]"
         >
           <X size={16} />
-        </button>
+        </m.button>
       )}
+      </AnimatePresence>
     </div>
   );
 }

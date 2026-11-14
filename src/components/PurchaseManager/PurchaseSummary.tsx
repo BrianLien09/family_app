@@ -2,8 +2,18 @@
 
 import { countPurchases, formatPurchasePrice, sumPurchasePrices, PURCHASE_CATEGORIES, PurchaseItem } from '@/lib/purchases';
 import { FAMILY_MEMBERS, MEMBER_COLORS } from '@/types';
+import { m } from 'motion/react';
+import AnimatedNumber from '@/components/ui/AnimatedNumber';
+import Collapsible from '@/components/ui/Collapsible';
+import { DURATION, EASE_OUT } from '@/lib/motion';
 
 interface PurchaseSummaryProps { items: PurchaseItem[]; categoryNames?: string[]; }
+// 圖表與數字同用 slow 節奏：篩選後整組統計一起移動，看得出增減方向
+const CHART_TRANSITION = { duration: DURATION.slow, ease: EASE_OUT };
+const formatCount = (value: number) => Math.round(value).toString();
+// 金額可能有小數（step 0.01），補間中取兩位，終值才會與實際金額一致
+const formatTwd = (value: number) => formatPurchasePrice(Number(value.toFixed(2)));
+const formatCny = (value: number) => formatPurchasePrice(Number(value.toFixed(2)), 'CNY');
 const colors = ['#c9a15b', '#5f7186', '#b87e6b', '#8a9276', '#b49a70', '#99859b', '#7aa9a1', '#cc9b8b', '#8aa3c0', '#b7a0bd'];
 
 export default function PurchaseSummary({ items, categoryNames }: PurchaseSummaryProps) {
@@ -26,15 +36,15 @@ export default function PurchaseSummary({ items, categoryNames }: PurchaseSummar
         { label: '購買平台', value: platformCount, color: 'text-[#5f7186]' },
       ].map(stat => <div key={stat.label} className="glass-card flex flex-col items-center justify-center gap-1 p-3 text-center sm:p-5">
         <span className="whitespace-nowrap text-xs text-[#5f6368] sm:text-sm">{stat.label}</span>
-        <span className={`text-2xl font-bold tabular-nums sm:text-3xl ${stat.color}`}>{stat.value}</span>
+        <span className={`text-2xl font-bold tabular-nums sm:text-3xl ${stat.color}`}><AnimatedNumber value={stat.value} format={formatCount} /></span>
       </div>)}
     </div>
-    {items.some(item => item.price !== null || item.priceCny !== null) && <div className="glass-card flex flex-wrap items-center gap-x-6 gap-y-2 p-5" aria-label="依幣別分開合計">
+    <Collapsible>{items.some(item => item.price !== null || item.priceCny !== null) && <div className="glass-card flex flex-wrap items-center gap-x-6 gap-y-2 p-5" aria-label="依幣別分開合計">
       <h2 className="text-sm font-bold">已記錄金額</h2>
-      {items.some(item => item.price !== null) && <span className="break-words text-lg font-bold tabular-nums text-[#b87e6b]">{formatPurchasePrice(totals.twd)}</span>}
-      {items.some(item => item.priceCny !== null) && <span className="break-words text-lg font-bold tabular-nums text-[#5f7186]">{formatPurchasePrice(totals.cny, 'CNY')}</span>}
-    </div>}
-    {items.length > 0 && <div className="grid min-w-0 gap-4 md:grid-cols-2">
+      {items.some(item => item.price !== null) && <span className="break-words text-lg font-bold tabular-nums text-[#b87e6b]"><AnimatedNumber value={totals.twd} format={formatTwd} /></span>}
+      {items.some(item => item.priceCny !== null) && <span className="break-words text-lg font-bold tabular-nums text-[#5f7186]"><AnimatedNumber value={totals.cny} format={formatCny} /></span>}
+    </div>}</Collapsible>
+    <Collapsible>{items.length > 0 && <div className="grid min-w-0 gap-4 md:grid-cols-2">
       <div className="glass-card min-w-0 p-5">
         <h2 className="mb-4 text-sm font-bold">購買分類占比</h2>
         <div className="flex flex-col items-center justify-center gap-5 sm:flex-row">
@@ -43,7 +53,8 @@ export default function PurchaseSummary({ items, categoryNames }: PurchaseSummar
             {categories.map(({ name, count }, index) => {
               const length = count / items.length * circumference;
               const start = categories.slice(0, index).reduce((sum, category) => sum + category.count, 0) / items.length * circumference;
-              return <circle key={name} cx="70" cy="70" r="54" fill="none" stroke={categoryColor(name)} strokeWidth="14" strokeDasharray={`${length} ${circumference - length}`} strokeDashoffset={-start} transform="rotate(-90 70 70)"><title>{name}：{count} 筆，{Math.round(count / items.length * 100)}%</title></circle>;
+              // 篩選後各段弧長與起點一起補間，環形圖是「轉過去」而不是瞬間重畫
+              return <m.circle key={name} cx="70" cy="70" r="54" fill="none" stroke={categoryColor(name)} strokeWidth="14" initial={false} animate={{ strokeDasharray: `${length} ${circumference - length}`, strokeDashoffset: -start }} transition={CHART_TRANSITION} transform="rotate(-90 70 70)"><title>{name}：{count} 筆，{Math.round(count / items.length * 100)}%</title></m.circle>;
             })}
             <text x="70" y="68" textAnchor="middle" fontSize="26" fontWeight="700" fill="#3d3a36">{items.length}</text>
             <text x="70" y="90" textAnchor="middle" fontSize="13" fill="#5f6368">筆紀錄</text>
@@ -62,11 +73,11 @@ export default function PurchaseSummary({ items, categoryNames }: PurchaseSummar
           {FAMILY_MEMBERS.map(name => {
             const count = members.find(member => member.name === name)?.count ?? 0;
             return <div key={name} className="grid grid-cols-[3.5rem_minmax(0,1fr)_2.5rem] items-center gap-3 text-sm">
-              <span>{name}</span><svg width="100%" height="12" className="h-3 w-full" role="img" aria-label={`${name} ${count} 筆`}><rect width="100%" height="12" rx="6" fill="#e6e2d8" /><rect width={`${count / items.length * 100}%`} height="12" rx="6" fill={MEMBER_COLORS[name]} /></svg><span className="text-right font-semibold tabular-nums">{count} 筆</span>
+              <span>{name}</span><svg width="100%" height="12" className="h-3 w-full" role="img" aria-label={`${name} ${count} 筆`}><rect width="100%" height="12" rx="6" fill="#e6e2d8" /><m.rect height="12" rx="6" fill={MEMBER_COLORS[name]} initial={false} animate={{ width: `${count / items.length * 100}%` }} transition={CHART_TRANSITION} /></svg><span className="text-right font-semibold tabular-nums">{count} 筆</span>
             </div>;
           })}
         </div>
       </div>
-    </div>}
+    </div>}</Collapsible>
   </section>;
 }

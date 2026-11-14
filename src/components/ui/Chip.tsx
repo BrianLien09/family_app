@@ -16,7 +16,7 @@ export default function Chip({ selected, className, type = 'button', ...props }:
       aria-pressed={selected}
       whileTap={TAP_SCALE}
       className={clsx(
-        'inline-flex min-h-10 max-w-full items-center gap-2 break-words rounded-xl border px-4 py-2 text-sm font-bold transition-colors duration-200 ease-out-expo',
+        'inline-flex min-h-10 max-w-full items-center gap-2 break-words rounded-xl border px-4 py-2 text-sm font-bold transition-colors duration-fast ease-out-expo',
         selected
           ? 'border-[#5f7186] bg-[#5f7186] text-[#f0ece1]'
           : 'border-dashed border-[#dcd0c2] bg-[#dcd0c2]/30 text-[#3d3a36] hover:bg-[#dcd0c2]/50',

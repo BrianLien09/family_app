@@ -34,7 +34,7 @@ export default function Button({ variant = 'soft', size = 'md', className, disab
       disabled={disabled}
       whileTap={disabled ? undefined : TAP_SCALE}
       className={clsx(
-        'inline-flex items-center justify-center whitespace-nowrap font-bold transition-colors duration-200 ease-out-expo',
+        'inline-flex items-center justify-center whitespace-nowrap font-bold transition-colors duration-fast ease-out-expo',
         'disabled:cursor-not-allowed disabled:opacity-50',
         VARIANT_CLASS[variant],
         SIZE_CLASS[size],

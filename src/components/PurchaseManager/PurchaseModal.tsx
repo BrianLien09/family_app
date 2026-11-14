@@ -5,6 +5,7 @@ import { Hash, Plus } from 'lucide-react';
 import { useFormSubmission } from '@/hooks/useFormSubmission';
 import Modal, { ModalActions } from '@/components/Modal';
 import PurchaseChoiceField from '@/components/PurchaseManager/PurchaseChoiceField';
+import Collapsible from '@/components/ui/Collapsible';
 import { FAMILY_MEMBERS, MEMBER_COLORS, FamilyMember } from '@/types';
 import { getTodayDateString } from '@/lib/date';
 import { PHONE_MEMORY, PHONE_STORAGE, PURCHASE_PLATFORMS, PurchaseItem, PurchaseInput } from '@/lib/purchases';
@@ -55,11 +56,13 @@ export default function PurchaseModal({ item, categories, choiceOptions, onClose
                 <span className="sr-only">台幣 NT$</span><span aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold">NT$</span>
                 <input type="number" inputMode="decimal" required={!priceCny.trim()} min="0" max={Number.MAX_SAFE_INTEGER} step="0.01" className={`${inputStyle} pl-12`} value={price} onChange={e => setPrice(e.target.value)} placeholder="台幣金額" />
               </label>
-              {!isCnyVisible ? <button type="button" className="modal-secondary w-full border-dashed"
+              {/* 按鈕與人民幣欄位各自收合展開，兩者同時進出讓高度連續變化，不會先塌陷再撐開 */}
+              <Collapsible>{!isCnyVisible && <button type="button" className="modal-secondary w-full border-dashed"
                 ref={element => { if (element && cnyFocusTarget.current === 'button') { cnyFocusTarget.current = null; element.focus(); } }}
                 aria-expanded={false} aria-controls={cnyFieldId} onClick={() => { cnyFocusTarget.current = 'input'; setIsCnyVisible(true); }}>
                 <Plus size={16} />填寫人民幣價格
-              </button> : <div id={cnyFieldId} className="space-y-2">
+              </button>}</Collapsible>
+              <Collapsible>{isCnyVisible && <div id={cnyFieldId} className="space-y-2">
                 <div className="flex min-w-0 items-center justify-between gap-2">
                   <label htmlFor={`${cnyFieldId}-input`} className="text-sm font-medium">人民幣價格（選填）</label>
                   <button type="button" className="modal-secondary shrink-0" aria-label="移除人民幣價格"
@@ -69,7 +72,7 @@ export default function PurchaseModal({ item, categories, choiceOptions, onClose
                   <span aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold">¥</span>
                   <input id={`${cnyFieldId}-input`} ref={element => { if (element && cnyFocusTarget.current === 'input') { cnyFocusTarget.current = null; element.focus(); } }} type="number" inputMode="decimal" min="0" max={Number.MAX_SAFE_INTEGER} step="0.01" className={`${inputStyle} pl-8`} value={priceCny} onChange={e => setPriceCny(e.target.value)} placeholder="人民幣金額" />
                 </div>
-              </div>}
+              </div>}</Collapsible>
             </div>
           </fieldset>
           <fieldset className="min-w-0 md:col-span-2">
@@ -79,11 +82,12 @@ export default function PurchaseModal({ item, categories, choiceOptions, onClose
               <button type="button" aria-pressed={category === ''} onClick={() => setCategory('')} className={`flex min-h-12 items-center gap-1.5 rounded-xl border-2 border-dashed px-3 py-2.5 text-sm font-semibold transition-colors ${category === '' ? 'border-[#5f7186] bg-[#5f7186] text-[#f0ece1]' : 'border-[#dcd0c2] hover:bg-[#e6e2d8]'}`}><Plus size={16} />新增</button>
             </div>
           </fieldset>
-          {category === '' && <label className="flex min-w-0 flex-col gap-3 text-sm font-bold leading-5 md:col-span-2"><span>自訂分類名稱</span><input required maxLength={30} className={inputStyle} value={customCategory} onChange={e => setCustomCategory(e.target.value)} placeholder="例如：攝影器材" /></label>}
-          {selectedCategory === '手機' && <>
+          <Collapsible className="md:col-span-2">{category === '' && <label className="flex min-w-0 flex-col gap-3 text-sm font-bold leading-5"><span>自訂分類名稱</span><input required maxLength={30} className={inputStyle} value={customCategory} onChange={e => setCustomCategory(e.target.value)} placeholder="例如：攝影器材" /></label>}</Collapsible>
+          {/* 手機規格是整張表單最大的版面變化，展開收合讓下方欄位順勢移動而不是瞬間跳位 */}
+          <Collapsible className="md:col-span-2">{selectedCategory === '手機' && <div className="grid min-w-0 grid-cols-1 items-start gap-x-6 gap-y-5 md:grid-cols-2">
             <PurchaseChoiceField isFullWidth={false} isRequired={false} label="記憶體" options={choiceOptions?.memories ?? PHONE_MEMORY} value={memory ?? ''} onChange={setMemory} placeholder="例如：24GB" maxLength={30} />
             <PurchaseChoiceField isFullWidth={false} isRequired={false} label="儲存空間" options={choiceOptions?.storages ?? PHONE_STORAGE} value={storage ?? ''} onChange={setStorage} placeholder="例如：2TB" maxLength={30} />
-          </>}
+          </div>}</Collapsible>
           {[
             { label: '使用對象', value: beneficiary, onSelect: setBeneficiary },
             { label: '購買人', value: purchaser, onSelect: setPurchaser },

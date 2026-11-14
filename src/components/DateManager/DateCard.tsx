@@ -7,7 +7,7 @@ import clsx from 'clsx';
 import { CategoryColorMap, getCategoryColorStyles } from '@/lib/categoryColors';
 import IconButton from '@/components/ui/IconButton';
 import SelectCheckbox from '@/components/ui/SelectCheckbox';
-import { listItem } from '@/lib/motion';
+import { HOVER_LIFT, listItem } from '@/lib/motion';
 
 interface DateCardProps {
   item: DateItem;
@@ -45,7 +45,7 @@ export default function DateCard({ item, onDelete, onEdit, batchMode = false, is
       animate="visible"
       exit="exit"
       // 只對 transform 做 hover 位移；移除 backdrop-blur 與常駐 will-change，長清單才不會累積合成層
-      whileHover={batchMode ? undefined : { y: -2 }}
+      whileHover={batchMode ? undefined : HOVER_LIFT}
       role={batchMode ? 'checkbox' : undefined}
       aria-checked={batchMode ? isSelected : undefined}
       tabIndex={batchMode ? 0 : undefined}
@@ -56,7 +56,7 @@ export default function DateCard({ item, onDelete, onEdit, batchMode = false, is
         }
       } : undefined}
       className={clsx(
-        'group relative flex items-start gap-3 rounded-lg border-2 border-dashed p-3 transition-colors duration-200',
+        'group relative flex items-start gap-3 rounded-lg border-2 border-dashed p-3 transition-colors duration-fast',
         batchMode && 'cursor-pointer',
         isSelected
           ? 'border-[#5f7186]/60 bg-[#5f7186]/10'
@@ -121,7 +121,7 @@ export default function DateCard({ item, onDelete, onEdit, batchMode = false, is
 
       {/* 桌面版：hover 或鍵盤聚焦才顯示；手機版常駐（沒有 hover），且維持 44px 觸控面積 */}
       {!batchMode && (
-        <div className="flex shrink-0 gap-1 md:absolute md:right-2 md:top-1/2 md:-translate-y-1/2 md:opacity-0 md:transition-opacity md:duration-200 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
+        <div className="flex shrink-0 gap-1 md:absolute md:right-2 md:top-1/2 md:-translate-y-1/2 md:opacity-0 md:transition-opacity md:duration-fast md:group-hover:opacity-100 md:group-focus-within:opacity-100">
           <IconButton tone="accent" aria-label={`編輯 ${item.title}`} onClick={onEdit}>
             <Edit size={16} />
           </IconButton>

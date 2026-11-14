@@ -15,8 +15,11 @@ const config: Config = {
       transitionTimingFunction: {
         "out-expo": "cubic-bezier(0.16, 1, 0.3, 1)",
       },
+      // 與 src/lib/motion.ts 的 DURATION 刻度一致，避免 CSS 過渡另外長出 200ms／300ms 等第二套節奏
       transitionDuration: {
-        400: "400ms",
+        fast: "150ms",
+        base: "250ms",
+        slow: "400ms",
       },
     },
   },

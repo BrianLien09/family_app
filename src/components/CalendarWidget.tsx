@@ -9,21 +9,20 @@ import {
 import { zhTW } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, RotateCw, Plus, CheckSquare, Square, Trash2, X, Copy, Download } from 'lucide-react';
 import clsx from 'clsx';
-import { AnimatePresence, m, type Variants } from 'motion/react';
+import { AnimatePresence, m } from 'motion/react';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
-import { collapse, DURATION, EASE_OUT } from '@/lib/motion';
+import { collapse, popIn, slideX } from '@/lib/motion';
+import FadeSwap from '@/components/ui/FadeSwap';
+import Collapsible from '@/components/ui/Collapsible';
 import { DateItem } from '@/types';
 import DateCard from '@/components/DateManager/DateCard';
 import { CategoryColorMap, getCategoryColorStyles } from '@/lib/categoryColors';
 import { createCalendarImage, downloadCalendarImage } from './calendarImage';
 
-// 月份切換依方向水平滑動；custom 讓離開中的舊月份也能取得最新方向
-const monthVariants: Variants = {
-  enter: (direction: number) => ({ opacity: 0, x: direction * 24 }),
-  center: { opacity: 1, x: 0, transition: { duration: DURATION.slow, ease: EASE_OUT } },
-  leave: (direction: number) => ({ opacity: 0, x: direction * -24, transition: { duration: DURATION.fast } }),
-};
+// 月份切換依方向水平滑動：格子面積大用 24px，標題文字小用 12px，兩者共用同一個方向與節奏
+const monthVariants = slideX(24);
+const monthTitleVariants = slideX(12);
 
 interface CalendarWidgetProps {
   events: DateItem[];
@@ -104,7 +103,7 @@ const DayCell = memo(function DayCell({
       onDragOver={onDragOver}
       onDrop={(e) => onDrop(e, day)}
       className={clsx(
-        'relative flex flex-col cursor-pointer transition-colors duration-200 motion-reduce:transition-none p-1 md:px-1.5 md:py-1 group',
+        'relative flex flex-col cursor-pointer transition-[color,background-color,box-shadow] duration-fast ease-out-expo motion-reduce:transition-none p-1 md:px-1.5 md:py-1 group',
         // 手機維持方格＋圓點；桌面不限制高度上限，讓完整標題換行呈現
         'aspect-square min-h-[44px] md:aspect-auto md:min-h-[88px]',
         !isCurrentMonth ? 'bg-[#dcd0c2]/20 text-[#3d3a36]' : 'bg-transparent hover:bg-[#b87e6b]/5',
@@ -132,7 +131,7 @@ const DayCell = memo(function DayCell({
         {showAddButton && isCurrentMonth && (
           <button
             onClick={(e) => onAddClick(e, day)}
-            className="hidden md:flex w-6 h-6 items-center justify-center rounded bg-[#5f7186] hover:bg-[#47576b] text-[#f0ece1] transition-opacity duration-200 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+            className="hidden md:flex w-6 h-6 items-center justify-center rounded bg-[#5f7186] hover:bg-[#47576b] text-[#f0ece1] transition-opacity duration-fast opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
             aria-label={`新增 ${format(day, 'M/d')} 的行程`}
           >
             <Plus size={14} />
@@ -152,15 +151,22 @@ const DayCell = memo(function DayCell({
       </div>
 
       {/* 手機版：選中日期後顯示新增按鈕 */}
+      <AnimatePresence initial={false}>
       {showAddButton && isCurrentMonth && isSelected && (
-        <button
+        <m.button
+          key="mobile-add"
+          variants={popIn}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
           onClick={(e) => onAddClick(e, day)}
           aria-label={`新增 ${format(day, 'M/d')} 的行程`}
           className="md:hidden absolute bottom-0.5 right-0.5 w-7 h-7 flex items-center justify-center rounded-md bg-[#5f7186] text-[#f0ece1]"
         >
           <Plus size={14} />
-        </button>
+        </m.button>
       )}
+      </AnimatePresence>
 
       {/* 桌面版：顯示當日全部行程，標題完整換行不截斷（可拖曳複製） */}
       <div className="hidden md:flex flex-col gap-1 w-full min-w-0">
@@ -398,8 +404,21 @@ export default function CalendarWidget({
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-3 shrink-0">
         <div className="flex items-center gap-1">
-          <h2 className="text-lg md:text-2xl font-bold text-[#3d3a36] tracking-wide whitespace-nowrap">
-            {format(currentMonth, 'yyyy年 M月', { locale: zhTW })}
+          {/* 標題與下方格子同方向滑動，避免文字瞬間換字、格子卻還在滑的節奏落差 */}
+          <h2 className="relative overflow-hidden text-lg md:text-2xl font-bold text-[#3d3a36] tracking-wide whitespace-nowrap" aria-live="polite">
+            <AnimatePresence mode="popLayout" initial={false} custom={monthDirection}>
+              <m.span
+                key={format(currentMonth, 'yyyy-MM')}
+                custom={monthDirection}
+                variants={monthTitleVariants}
+                initial="enter"
+                animate="center"
+                exit="leave"
+                className="inline-block"
+              >
+                {format(currentMonth, 'yyyy年 M月', { locale: zhTW })}
+              </m.span>
+            </AnimatePresence>
           </h2>
           {onRefresh && (
             <IconButton aria-label="重新整理資料" onClick={onRefresh} disabled={isRefreshing}>
@@ -410,7 +429,7 @@ export default function CalendarWidget({
 
         <div className="flex items-center gap-1 flex-wrap">
           <Button variant="primary" size="sm" onClick={() => handleExport(true)} disabled={isExporting} className="mr-1">
-            <Copy size={16} aria-hidden="true" />{isExporting ? '產生圖片中…' : '複製圖片'}
+            <Copy size={16} aria-hidden="true" /><FadeSwap as="span" swapKey={isExporting ? 'exporting' : 'idle'}>{isExporting ? '產生圖片中…' : '複製圖片'}</FadeSwap>
           </Button>
           <IconButton aria-label="下載月曆圖片" onClick={() => handleExport(false)} disabled={isExporting}><Download size={18} /></IconButton>
           <IconButton aria-label="上個月" onClick={prevMonth}><ChevronLeft size={20} /></IconButton>
@@ -423,11 +442,12 @@ export default function CalendarWidget({
         <div className="flex items-center justify-between mb-3 pb-2 border-b border-dashed border-[#dcd0c2]/50 shrink-0">
           <Button size="sm" variant={batchMode ? 'secondary' : 'soft'} onClick={onBatchModeToggle} aria-pressed={batchMode}>
             {batchMode ? <CheckSquare size={14} aria-hidden="true" /> : <Square size={14} aria-hidden="true" />}
-            {batchMode ? '離開批次' : '批次操作'}
+            <FadeSwap as="span" swapKey={batchMode ? 'leave' : 'enter'}>{batchMode ? '離開批次' : '批次操作'}</FadeSwap>
           </Button>
 
+          <AnimatePresence initial={false}>
           {batchMode && (
-            <div className="flex items-center gap-2">
+            <m.div key="batch-actions" variants={popIn} initial="hidden" animate="visible" exit="exit" className="flex items-center gap-2">
               {onSelectAll && (
                 <Button size="sm" onClick={onSelectAll}>{allSelected ? '取消全選' : '全選'}</Button>
               )}
@@ -437,8 +457,9 @@ export default function CalendarWidget({
                   刪除 ({selectedIds.length})
                 </Button>
               )}
-            </div>
+            </m.div>
           )}
+          </AnimatePresence>
         </div>
       )}
 
@@ -513,10 +534,14 @@ export default function CalendarWidget({
       <div className="mt-4 pt-4 border-t border-dashed border-[#dcd0c2]/50 flex-1 flex flex-col min-h-0">
          <h3 className="text-sm font-bold text-[#3d3a36] mb-3 flex items-center gap-2 shrink-0">
             <span className="w-1 h-4 bg-[#5f7186] rounded-full"></span>
-            {format(selectedDate, 'M月d日')} 的行程 ({selectedDayEvents.length})
+            <FadeSwap as="span" swapKey={`${format(selectedDate, 'yyyy-MM-dd')}-${selectedDayEvents.length}`}>
+              {format(selectedDate, 'M月d日')} 的行程 ({selectedDayEvents.length})
+            </FadeSwap>
          </h3>
 
-         <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+         <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
+            {/* 有行程↔無行程交叉淡入；同為有行程的日期切換時，由 DateCard 自身的進出場處理 */}
+            <FadeSwap swapKey={selectedDayEvents.length > 0 ? 'list' : 'empty'} className="relative h-full space-y-3">
             {selectedDayEvents.length > 0 ? (
               <AnimatePresence initial={false} mode="popLayout">
                 {paginatedEvents.map(event => (
@@ -537,10 +562,11 @@ export default function CalendarWidget({
                 <p className="text-[#3d3a36] text-sm">本日無行程，好好休息吧！😴</p>
               </div>
             )}
+            </FadeSwap>
          </div>
 
          {/* Pagination Controls */}
-         {totalPages > 1 && (
+         <Collapsible className="shrink-0">{totalPages > 1 && (
            <div className="mt-4 pt-3 border-t border-dashed border-[#dcd0c2]/50 flex items-center justify-between shrink-0">
              <Button size="sm" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1} aria-label="上一頁">
                <ChevronLeft size={14} aria-hidden="true" />
@@ -556,7 +582,7 @@ export default function CalendarWidget({
                <ChevronRight size={14} aria-hidden="true" />
              </Button>
            </div>
-         )}
+         )}</Collapsible>
       </div>
     </div>
   );

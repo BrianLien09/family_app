@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { auth, googleProvider } from '@/lib/firebase';
 import { signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/auth';
 import toast from 'react-hot-toast';
+import FadeSwap from '@/components/ui/FadeSwap';
 
 export default function Login() {
   const [user, setUser] = useState<User | null>(null);
@@ -33,8 +34,10 @@ export default function Login() {
     await signOut(auth);
   };
 
-  if (user) {
-    return (
+  // 登入狀態由 Firebase 非同步回報，訪客↔使用者交叉淡入，載入完成時不會瞬間換一塊
+  return (
+    <FadeSwap swapKey={user ? 'user' : 'guest'}>
+      {user ? (
       <div className="flex items-center gap-2">
         {/* 顯示頭像或名字 */}
         <span
@@ -60,16 +63,15 @@ export default function Login() {
           登出
         </button>
       </div>
-    );
-  }
-
-  return (
-    <button 
+      ) : (
+    <button
       onClick={handleLogin}
-      className="min-h-10 px-4 py-1.5 bg-[#dcd0c2]/30 border-2 border-dashed border-[#dcd0c2]/50 text-[#3d3a36] hover:text-[#b87e6b] hover:bg-[#dcd0c2]/50 rounded-full font-medium text-sm transition-colors duration-200"
+      className="min-h-10 px-4 py-1.5 bg-[#dcd0c2]/30 border-2 border-dashed border-[#dcd0c2]/50 text-[#3d3a36] hover:text-[#b87e6b] hover:bg-[#dcd0c2]/50 rounded-full font-medium text-sm transition-colors duration-fast"
       aria-label="Google 登入"
     >
       G 登入
     </button>
+      )}
+    </FadeSwap>
   );
 }

@@ -26,6 +26,11 @@ export const SPRING_SOFT: Transition = { type: 'spring', stiffness: 380, damping
 // 按壓回饋統一為 0.97，取代過去 scale-95／.98／[0.98] 並存的情況
 export const TAP_SCALE = { scale: 0.97 } as const;
 
+// 卡片 hover 只上浮 2px：Woven & Weft 是安靜的織物質感，位移過大會像在跳動
+export const HOVER_LIFT = { y: -2 } as const;
+// 浮動按鈕（FAB）面積小，改用輕微放大提示可點擊
+export const HOVER_GROW = { scale: 1.06 } as const;
+
 /** 頁面或區塊進場：只用透明度與極小位移，避免影響操作 */
 export const fadeUp: Variants = {
   hidden: { opacity: 0, y: 8 },
@@ -40,17 +45,21 @@ export const popIn: Variants = {
   exit: { opacity: 0, scale: 0.98, transition: TRANSITION_EXIT },
 };
 
-/** 摺疊區塊（篩選面板等）：高度由 0 展開，overflow 需由呼叫端設為 hidden */
+/**
+ * 摺疊區塊（篩選面板、條件表單欄位）：高度由 0 展開。
+ * 為什麼由 variants 控制 overflow：動畫期間必須 hidden 才不會露出內容，
+ * 但展開後若仍 hidden，輸入框的 focus 外框（outline-offset）會被裁掉，所以結束時改回 visible。
+ */
 export const collapse: Variants = {
-  hidden: { height: 0, opacity: 0 },
-  visible: { height: 'auto', opacity: 1, transition: { duration: DURATION.slow, ease: EASE_OUT } },
-  exit: { height: 0, opacity: 0, transition: { duration: DURATION.base, ease: EASE_IN } },
-};
-
-/** 清單容器：只負責 stagger，子項目使用 listItem */
-export const listContainer: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.03, delayChildren: 0.02 } },
+  hidden: { height: 0, opacity: 0, overflow: 'hidden' },
+  visible: {
+    height: 'auto',
+    opacity: 1,
+    overflow: 'hidden',
+    transition: { duration: DURATION.slow, ease: EASE_OUT },
+    transitionEnd: { overflow: 'visible' },
+  },
+  exit: { height: 0, opacity: 0, overflow: 'hidden', transition: { duration: DURATION.base, ease: EASE_IN } },
 };
 
 export const listItem: Variants = {
@@ -59,5 +68,24 @@ export const listItem: Variants = {
   exit: { opacity: 0, scale: 0.97, transition: TRANSITION_EXIT },
 };
 
-/** stagger 只套用前幾筆，避免長清單初次載入時等待過久 */
-export const STAGGER_LIMIT = 8;
+/**
+ * 同一位置的內容替換（空狀態↔清單、計算結果、標籤文字）。
+ * 為什麼不用 popIn：同一張卡片內換內容若整塊縮放彈出會「閃眼睛」，只做淡入加 4px 位移較順。
+ */
+export const crossFade: Variants = {
+  hidden: { opacity: 0, y: 4 },
+  visible: { opacity: 1, y: 0, transition: TRANSITION_BASE },
+  exit: { opacity: 0, y: -4, transition: TRANSITION_EXIT },
+};
+
+/**
+ * 依方向水平滑動（月份、分頁）。搭配 AnimatePresence 的 custom 傳入 1／-1，
+ * 讓正在離場的舊內容也能拿到最新方向；距離由呼叫端決定（文字小、格子大）。
+ */
+export function slideX(distance: number): Variants {
+  return {
+    enter: (direction: number) => ({ opacity: 0, x: direction * distance }),
+    center: { opacity: 1, x: 0, transition: TRANSITION_BASE },
+    leave: (direction: number) => ({ opacity: 0, x: direction * -distance, transition: TRANSITION_EXIT }),
+  };
+}

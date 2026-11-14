@@ -5,6 +5,9 @@ import { Plus, Trash2 } from 'lucide-react';
 import { Recipe, RecipeIngredient } from '@/types';
 import { useFormSubmission } from '@/hooks/useFormSubmission';
 import Modal, { ModalActions } from '@/components/Modal';
+import { AnimatePresence, m } from 'motion/react';
+import Collapsible from '@/components/ui/Collapsible';
+import { listItem } from '@/lib/motion';
 
 interface AddRecipeModalProps {
   isOpen: boolean;
@@ -109,8 +112,11 @@ export default function AddRecipeModal({ isOpen, onClose, onSubmit, initialData 
         <label className="modal-field">備註（選填）<textarea rows={2} className="modal-input resize-y" placeholder="簡單筆記…" value={description} onChange={e => setDescription(e.target.value)} /></label>
         <section aria-labelledby="ingredient-heading" className="space-y-3">
           <h3 id="ingredient-heading" className="text-sm font-bold">食材清單</h3>
-          {ingredientError && <p id="recipe-ingredient-error" className="modal-error" role="alert">{ingredientError}</p>}
-          {ingredients.map((ingredient, index) => <div key={ingredient.id} className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-3 rounded-xl border border-[#dcd0c2]/70 p-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
+          <Collapsible>{ingredientError && <p id="recipe-ingredient-error" className="modal-error" role="alert">{ingredientError}</p>}</Collapsible>
+          {/* 新增／刪除食材列時其餘列順勢補位；popLayout 讓離場列脫離版面，relative 作為其定位基準 */}
+          <div className="relative space-y-3">
+          <AnimatePresence initial={false} mode="popLayout">
+          {ingredients.map((ingredient, index) => <m.div key={ingredient.id} layout="position" variants={listItem} initial="hidden" animate="visible" exit="exit" className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-3 rounded-xl border border-[#dcd0c2]/70 p-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
             <label className="modal-field col-span-3 sm:col-span-1">食材名稱
               <input className="modal-input" aria-label={`第 ${index + 1} 項食材名稱`} aria-invalid={Boolean(ingredientError)} aria-describedby={ingredientError ? 'recipe-ingredient-error' : undefined} value={ingredient.name} placeholder="例如：麵粉"
                 ref={element => {
@@ -125,7 +131,9 @@ export default function AddRecipeModal({ isOpen, onClose, onSubmit, initialData 
               value={ingredient.amount || ''} placeholder="0" onChange={e => updateIngredient(index, 'amount', Number(e.target.value))} /></label>
             <label className="modal-field">單位<input className="modal-input" value={ingredient.unit} placeholder="g" onChange={e => updateIngredient(index, 'unit', e.target.value)} /></label>
             <button type="button" disabled={ingredients.length === 1} className="modal-icon-button" aria-label={`刪除第 ${index + 1} 項食材`} onClick={() => handleRemoveIngredient(index)}><Trash2 size={18} /></button>
-          </div>)}
+          </m.div>)}
+          </AnimatePresence>
+          </div>
           <button type="button" className="modal-secondary w-full border-dashed" onClick={handleAddIngredient}><Plus size={18} />新增食材</button>
         </section>
       </fieldset>

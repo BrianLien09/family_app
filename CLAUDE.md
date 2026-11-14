@@ -58,7 +58,8 @@ node --test --test-name-pattern="即時更新" tests/sync.test.mjs
 **樣式寫法**：Tailwind 優先，用 `clsx` 組合條件 class；只過渡需要的屬性（`transition-colors` 等），不使用 `transition-all`；不新增元件專屬 CSS 檔（`CapybaraLoader.module.css` 為既有例外）。
 
 **動畫（`motion`）**
-- 時長、easing 與 variants 集中在 `src/lib/motion.ts`（`EASE_OUT`、`DURATION`、`fadeUp`、`popIn`、`collapse`、`listItem`），元件內不自訂。
+- 時長、easing 與 variants 集中在 `src/lib/motion.ts`（`EASE_OUT`、`DURATION`、`fadeUp`、`popIn`、`collapse`、`listItem`、`crossFade`、`slideX(distance)`、`HOVER_LIFT`），元件內不自訂。CSS 過渡用 Tailwind 的 `duration-fast`／`duration-base`／`duration-slow`（對應 `DURATION`）搭配 `ease-out-expo`，不使用 `duration-200` 等其他刻度。
+- 常見狀態變化先用共用動效元件：條件欄位或面板 `Collapsible`（`<Collapsible>{cond && …}</Collapsible>`）、同位置內容替換（空狀態↔清單、按鈕文字）`FadeSwap`、金額與計數 `AnimatedNumber`（`format` 需為模組層級函式）、等寬分段切換 `SegmentedToggle`。
 - 使用 `m.*`（LazyMotion strict）；`MotionProvider` 以 `reducedMotion="user"` 處理減少動態效果，`globals.css` 另有 CSS 動畫的全域兜底。
 - 需要離場動畫的元件，由呼叫端用 `AnimatePresence` 包住條件渲染；`Modal` 只負責自身進出場，離場期間會忽略鍵盤與點擊。
 - 路由切換只做進場（`src/app/template.tsx`），App Router 無法穩定做離場；載入 → 內容使用 `LoadingGate`。
@@ -73,7 +74,7 @@ node --test --test-name-pattern="即時更新" tests/sync.test.mjs
 - 主表單內的自訂分類／子分類有各自的儲存範圍：子分類名稱按 Enter 必須阻止外層表單送出，中文輸入法組字中（`isComposing`）不得誤觸發。
 - 食材反推不可把份數四捨五入後儲存（1 份／1000g 反推 1g 應保留 0.001 份）；儲存前檢查正數與有限值，無效輸入時不得保留舊結果或允許另存、匯出。
 - 收入分類選單的值直接提交，不被固定字串覆蓋；舊紀錄的既有分類編輯時仍要能顯示。
-- `Add*Modal`、`PurchaseModal` 的測試（`tests/modalForms.test.mjs`、`tests/addDateModal.test.mjs`）以固定模組清單模擬依賴，這些檔案不要新增未列在測試模擬清單中的 import，否則會出現 `Unexpected import`。
+- `Add*Modal`、`PurchaseModal` 的測試（`tests/modalForms.test.mjs`、`tests/addDateModal.test.mjs`）以固定模組清單模擬依賴，這些檔案不要新增未列在測試模擬清單中的 import，否則會出現 `Unexpected import`；需要新依賴時同步在 `modalForms.test.mjs` 的 `modules` 加上模擬（動效元件以字串型別模擬即可）。
 
 ## 開發環境注意事項
 

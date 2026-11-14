@@ -19,8 +19,14 @@ import PageShell from '@/components/ui/PageShell';
 import PageHeader from '@/components/ui/PageHeader';
 import LoadingGate from '@/components/ui/LoadingGate';
 import { collapse, popIn } from '@/lib/motion';
+import FadeSwap from '@/components/ui/FadeSwap';
+import Collapsible from '@/components/ui/Collapsible';
+import AnimatedNumber from '@/components/ui/AnimatedNumber';
 import toast from 'react-hot-toast';
 import { auth } from '@/lib/firebase';
+
+// AnimatedNumber 需要穩定的格式函式，放在模組層級
+const formatCount = (value: number) => Math.round(value).toString();
 
 export default function Home() {
   const { dates, addDate, deleteDate, deleteDates, updateDate, duplicateDate, addDateToMultipleDates, isLoaded, refresh, isRefreshing } = useDates();
@@ -292,9 +298,13 @@ export default function Home() {
                 回顧過往
               </Button>
 
-              {hasAnyFilter && (
-                <Button size="sm" variant="ghost" onClick={clearFilters}>清除篩選</Button>
-              )}
+              <AnimatePresence initial={false}>
+                {hasAnyFilter && (
+                  <m.div key="clear-filters" variants={popIn} initial="hidden" animate="visible" exit="exit">
+                    <Button size="sm" variant="ghost" onClick={clearFilters}>清除篩選</Button>
+                  </m.div>
+                )}
+              </AnimatePresence>
 
               {/* handleOpenAdd 內已含登入檢查 */}
               <Button variant="primary" className="lg:ml-2" onClick={() => handleOpenAdd()}>
@@ -351,11 +361,11 @@ export default function Home() {
           </AnimatePresence>
 
           {/* 篩選結果提示 */}
-          {hasAnyFilter && (
-            <div className="mt-4 text-xs text-[#3d3a36]" aria-live="polite">
-              找到 <span className="text-[#5f7186] font-bold">{filteredDates.length}</span> 個符合條件的行程
+          <Collapsible>{hasAnyFilter && (
+            <div className="pt-4 text-xs text-[#3d3a36]" aria-live="polite">
+              找到 <AnimatedNumber value={filteredDates.length} format={formatCount} className="text-[#5f7186] font-bold tabular-nums" /> 個符合條件的行程
             </div>
-          )}
+          )}</Collapsible>
         </div>
 
         {/* 快速預覽卡片 */}
@@ -365,7 +375,7 @@ export default function Home() {
             return (
               <m.div key="quick-preview" variants={popIn} initial="hidden" animate="visible" exit="exit" className="glass-card p-5 mb-6">
                 <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
+                  <FadeSwap swapKey={`${previewMode}-${currentPreview.id}`} className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <span className={previewMode === 'upcoming'
                         ? 'px-2 py-1 rounded text-xs font-medium bg-[#5f7186]/10 text-[#5f7186]'
@@ -385,7 +395,7 @@ export default function Home() {
                         day: 'numeric'
                       })} {weekdays[previewDate.getDay()]}
                     </h3>
-                  </div>
+                  </FadeSwap>
                   <IconButton aria-label="關閉預覽" onClick={closePreview}>
                     <X size={20} />
                   </IconButton>
@@ -420,8 +430,8 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* 當前行程詳情 */}
-                <div className="mb-4">
+                {/* 當前行程詳情：與標題同一個 swapKey，下拉切換時一起交叉淡入 */}
+                <FadeSwap swapKey={`${previewMode}-${currentPreview.id}`} className="mb-4">
                   <div className="flex items-start gap-3 p-4 bg-[#dcd0c2]/30 rounded-lg">
                     <div className="flex flex-col items-center justify-center min-w-[56px] h-14 bg-[#5f7186]/10 rounded-lg border-2 border-dashed border-[#5f7186]/30">
                       <span className="text-xs text-[#5f7186] leading-none mb-1">{previewDate.getMonth() + 1}月</span>
@@ -453,7 +463,7 @@ export default function Home() {
                       )}
                     </div>
                   </div>
-                </div>
+                </FadeSwap>
 
                 <div className="flex gap-2">
                   <Button
@@ -475,8 +485,8 @@ export default function Home() {
         </AnimatePresence>
 
         {/* 最近行程：單行精簡呈現，把垂直空間留給月曆 */}
-        {upcomingDates.length > 0 && (
-          <div className="flex items-center gap-3 mb-4 px-1 min-w-0">
+        <Collapsible>{upcomingDates.length > 0 && (
+          <div className="flex items-center gap-3 pb-4 px-1 min-w-0">
             <span className="shrink-0 text-xs font-bold text-[#3d3a36] tracking-wider flex items-center gap-2">
               <span className="w-1 h-3 bg-[#5f7186] rounded-full"></span>
               最近行程
@@ -487,7 +497,7 @@ export default function Home() {
                   key={item.id}
                   type="button"
                   onClick={() => handleOpenEdit(item)}
-                  className="flex min-h-9 max-w-full items-center gap-2 px-3 py-1.5 rounded-full bg-[#f0ece1] border border-dashed border-[#dcd0c2] hover:border-[#b87e6b] text-xs text-[#3d3a36] transition-colors duration-200"
+                  className="flex min-h-9 max-w-full items-center gap-2 px-3 py-1.5 rounded-full bg-[#f0ece1] border border-dashed border-[#dcd0c2] hover:border-[#b87e6b] text-xs text-[#3d3a36] transition-colors duration-fast"
                   title={item.title}
                 >
                   <span className="font-bold text-[#b87e6b] tabular-nums">{new Date(item.date).getMonth() + 1}/{new Date(item.date).getDate()}</span>
@@ -497,7 +507,7 @@ export default function Home() {
               ))}
             </div>
           </div>
-        )}
+        )}</Collapsible>
 
         {/* 月曆預設即為完整寬度，並直接提供圖片匯出 */}
         <div id="overview-calendar" className="min-w-0 scroll-mt-24">

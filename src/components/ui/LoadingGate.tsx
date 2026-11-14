@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { AnimatePresence, m } from 'motion/react';
 import CapybaraLoader from '@/components/CapybaraLoader';
-import { DURATION, EASE_OUT } from '@/lib/motion';
+import { TRANSITION_BASE, TRANSITION_EXIT } from '@/lib/motion';
 
 interface LoadingGateProps {
   isLoaded: boolean;
@@ -24,14 +24,14 @@ export default function LoadingGate({ isLoaded, label, children }: LoadingGatePr
         <m.div
           key="content-view"
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1, transition: { duration: DURATION.base, ease: EASE_OUT } }}
+          animate={{ opacity: 1, transition: TRANSITION_BASE }}
         >
           {children}
         </m.div>
       ) : (
         <m.div
           key="loading-view"
-          exit={{ opacity: 0, transition: { duration: DURATION.fast } }}
+          exit={{ opacity: 0, transition: TRANSITION_EXIT }}
         >
           <CapybaraLoader label={label} />
         </m.div>

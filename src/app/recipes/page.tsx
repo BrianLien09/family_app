@@ -18,9 +18,14 @@ import EmptyState from '@/components/ui/EmptyState';
 import PageShell from '@/components/ui/PageShell';
 import PageHeader from '@/components/ui/PageHeader';
 import LoadingGate from '@/components/ui/LoadingGate';
-import { listItem, TAP_SCALE } from '@/lib/motion';
+import { collapse, HOVER_GROW, HOVER_LIFT, listItem, slideX, TAP_SCALE } from '@/lib/motion';
+import FadeSwap from '@/components/ui/FadeSwap';
+import Collapsible from '@/components/ui/Collapsible';
 import { auth } from '@/lib/firebase';
 import toast from 'react-hot-toast';
+
+// 換頁時整頁卡片依方向滑動，讓「上一頁／下一頁」有前後位置感
+const pageVariants = slideX(24);
 
 export default function RecipesPage() {
   const { recipes, addRecipe, updateRecipe, deleteRecipe, deleteRecipes, isLoaded, refresh, isRefreshing } = useRecipes();
@@ -37,6 +42,7 @@ export default function RecipesPage() {
 
   // 分頁狀態
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageDirection, setPageDirection] = useState<1 | -1>(1);
   const itemsPerPage = 12;
 
   const filteredRecipes = recipes.filter(r =>
@@ -141,6 +147,8 @@ export default function RecipesPage() {
           value={searchTerm}
           onChange={value => {
             setSearchTerm(value);
+            // 回到第一頁視為往前翻，滑動方向才與頁碼變化一致
+            setPageDirection(-1);
             setCurrentPage(1);
           }}
         />
@@ -158,9 +166,19 @@ export default function RecipesPage() {
           )}
         </AnimatePresence>
 
+        <FadeSwap swapKey={paginatedRecipes.length > 0 ? 'list' : 'empty'}>
         {paginatedRecipes.length > 0 ? (
-          // initial={false}：頁面首次進入由路由轉場負責，只有後續新增／刪除／篩選才播放卡片進出場
-          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          // 外層依頁碼切換做方向滑動；內層 initial={false} 讓首次進入與換頁由外層負責，只有新增／刪除／篩選才播放卡片進出場
+          <AnimatePresence mode="wait" initial={false} custom={pageDirection}>
+          <m.ul
+            key={currentPage}
+            custom={pageDirection}
+            variants={pageVariants}
+            initial="enter"
+            animate="center"
+            exit="leave"
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          >
             <AnimatePresence initial={false} mode="popLayout">
               {paginatedRecipes.map(recipe => {
                 const isSelected = selectedIds.includes(recipe.id);
@@ -173,27 +191,32 @@ export default function RecipesPage() {
                         if (batchMode) toggleSelectItem(recipe.id);
                         else setSelectedRecipe(recipe);
                       }}
-                      whileHover={{ y: -2 }}
+                      whileHover={HOVER_LIFT}
                       whileTap={TAP_SCALE}
                       className={clsx(
-                        'glass-card group flex h-full w-full flex-col p-6 text-left transition-colors duration-200',
+                        'glass-card group flex h-full w-full flex-col p-6 text-left transition-colors duration-fast',
                         isSelected ? 'border-[#b87e6b] bg-[#b87e6b]/10' : 'hover:border-[#b87e6b]/60',
                       )}
                     >
-                      {batchMode && (
-                        <span className="mb-2 flex justify-end">
-                          <SelectCheckbox checked={isSelected} />
-                        </span>
-                      )}
+                      {/* 進入批次模式時勾選框展開，卡片高度平順長高；用 span 是因為 button 內不能放 div */}
+                      <AnimatePresence initial={false}>
+                        {batchMode && (
+                          <m.span key="batch-checkbox" variants={collapse} initial="hidden" animate="visible" exit="exit" className="block">
+                            <span className="mb-2 flex justify-end">
+                              <SelectCheckbox checked={isSelected} />
+                            </span>
+                          </m.span>
+                        )}
+                      </AnimatePresence>
                       <span className="mb-3 flex items-start justify-between">
-                        <span className="rounded-2xl bg-[#b87e6b]/20 p-3 text-[#b87e6b] transition-colors duration-200 group-hover:bg-[#b87e6b] group-hover:text-[#f0ece1]">
+                        <span className="rounded-2xl bg-[#b87e6b]/20 p-3 text-[#b87e6b] transition-colors duration-fast group-hover:bg-[#b87e6b] group-hover:text-[#f0ece1]">
                           <ChefHat size={24} aria-hidden="true" />
                         </span>
                         <span className="rounded-md border-2 border-dashed border-[#dcd0c2]/50 bg-[#dcd0c2]/30 px-2 py-1 text-xs font-bold text-[#3d3a36]">
                           {recipe.baseServings} 人份
                         </span>
                       </span>
-                      <h3 className="mb-2 line-clamp-1 text-xl font-bold text-[#3d3a36] transition-colors duration-200 group-hover:text-[#b87e6b]">
+                      <h3 className="mb-2 line-clamp-1 text-xl font-bold text-[#3d3a36] transition-colors duration-fast group-hover:text-[#b87e6b]">
                         {recipe.title}
                       </h3>
                       <p className="mb-4 line-clamp-2 flex-1 border-l-2 border-[#dcd0c2] pl-3 text-sm text-[#3d3a36]">
@@ -201,8 +224,8 @@ export default function RecipesPage() {
                       </p>
                       <span className="flex items-center justify-between border-t border-dashed border-[#dcd0c2]/50 pt-3 text-xs text-[#3d3a36]">
                         <span>{recipe.ingredients.length} 項食材</span>
-                        <span className="text-[10px] font-bold tracking-wider text-[#b87e6b]/70 transition-colors duration-200 group-hover:text-[#b87e6b]">
-                          {batchMode ? '點擊選取' : '點擊換算'}
+                        <span className="text-[10px] font-bold tracking-wider text-[#b87e6b]/70 transition-colors duration-fast group-hover:text-[#b87e6b]">
+                          <FadeSwap as="span" swapKey={batchMode ? 'select' : 'calculate'}>{batchMode ? '點擊選取' : '點擊換算'}</FadeSwap>
                         </span>
                       </span>
                     </m.button>
@@ -210,7 +233,8 @@ export default function RecipesPage() {
                 );
               })}
             </AnimatePresence>
-          </ul>
+          </m.ul>
+          </AnimatePresence>
         ) : (
           <EmptyState
             icon={ChefHat}
@@ -218,10 +242,11 @@ export default function RecipesPage() {
             description={searchTerm ? '試試其他關鍵字。' : '點擊右下角的「＋」新增第一份食譜。'}
           />
         )}
+        </FadeSwap>
 
-        {totalPages > 1 && (
-          <nav aria-label="食譜分頁" className="mt-8 flex flex-wrap items-center justify-center gap-4">
-            <Button onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1} aria-label="上一頁">
+        <Collapsible>{totalPages > 1 && (
+          <nav aria-label="食譜分頁" className="flex pt-8 flex-wrap items-center justify-center gap-4">
+            <Button onClick={() => { setPageDirection(-1); setCurrentPage(prev => Math.max(1, prev - 1)); }} disabled={currentPage === 1} aria-label="上一頁">
               <ChevronLeft size={16} aria-hidden="true" />
               上一頁
             </Button>
@@ -229,20 +254,20 @@ export default function RecipesPage() {
               第 <span className="font-bold text-[#b87e6b]">{currentPage}</span> / {totalPages} 頁
               <span className="ml-2 text-[#5f6368]">({filteredRecipes.length} 個食譜)</span>
             </span>
-            <Button onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages} aria-label="下一頁">
+            <Button onClick={() => { setPageDirection(1); setCurrentPage(prev => Math.min(totalPages, prev + 1)); }} disabled={currentPage === totalPages} aria-label="下一頁">
               下一頁
               <ChevronRight size={16} aria-hidden="true" />
             </Button>
           </nav>
-        )}
+        )}</Collapsible>
 
         <m.button
           type="button"
           onClick={openAddModal}
           aria-label="新增食譜"
-          whileHover={{ scale: 1.06 }}
+          whileHover={HOVER_GROW}
           whileTap={TAP_SCALE}
-          className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#b87e6b] text-[#f0ece1] shadow-[0_8px_20px_rgba(184,126,107,0.35)] transition-colors duration-200 hover:bg-[#a66a58]"
+          className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#b87e6b] text-[#f0ece1] shadow-[0_8px_20px_rgba(184,126,107,0.35)] transition-colors duration-fast hover:bg-[#a66a58]"
         >
           <Plus size={28} strokeWidth={3} aria-hidden="true" />
         </m.button>

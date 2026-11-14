@@ -1,6 +1,14 @@
 import { useMemo } from 'react';
 import { ExpenseItem, FamilyMember, MEMBER_COLORS } from '@/types';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, LineChart, Line, XAxis, YAxis } from 'recharts';
+import clsx from 'clsx';
+import AnimatedNumber from '@/components/ui/AnimatedNumber';
+import FadeSwap from '@/components/ui/FadeSwap';
+import { DURATION } from '@/lib/motion';
+
+// recharts 預設動畫約 1.5 秒，比全站節奏慢很多；對齊 DURATION.slow，切月份時數字與圖表同步落定
+const CHART_ANIMATION_MS = DURATION.slow * 1000;
+const formatMoney = (value: number) => `$${Math.round(value).toLocaleString()}`;
 
 interface ExpenseSummaryProps {
   expenses: ExpenseItem[];
@@ -78,17 +86,23 @@ export default function ExpenseSummary({ expenses, selectedMember }: ExpenseSumm
       <div className="grid grid-cols-3 gap-4">
         <div className="glass-card p-3 sm:p-6 flex flex-col justify-center items-center text-center">
           <span className="text-[10px] sm:text-sm text-[#3d3a36] mb-1">總收入</span>
-          <span className="text-sm sm:text-2xl font-bold text-[#5f7186] break-all tabular-nums">${totalIncome.toLocaleString()}</span>
+          <AnimatedNumber value={totalIncome} format={formatMoney} className="text-sm sm:text-2xl font-bold text-[#5f7186] break-all tabular-nums" />
         </div>
         <div className="glass-card p-3 sm:p-6 flex flex-col justify-center items-center text-center">
           <span className="text-[10px] sm:text-sm text-[#3d3a36] mb-1">總支出</span>
-          <span className="text-sm sm:text-2xl font-bold text-[#b87e6b] break-all tabular-nums">${totalExpense.toLocaleString()}</span>
+          <AnimatedNumber value={totalExpense} format={formatMoney} className="text-sm sm:text-2xl font-bold text-[#b87e6b] break-all tabular-nums" />
         </div>
         <div className="glass-card p-3 sm:p-6 flex flex-col justify-center items-center text-center">
           <span className="text-[10px] sm:text-sm text-[#3d3a36] mb-1">結餘</span>
-          <span className={`text-sm sm:text-2xl font-bold break-all tabular-nums ${balance >= 0 ? 'text-[#5f7186]' : 'text-[#b87e6b]'}`}>
-            ${balance.toLocaleString()}
-          </span>
+          {/* 正負翻轉時顏色漸變，與數字補間同步，避免數字還在跑、顏色已先跳過去 */}
+          <AnimatedNumber
+            value={balance}
+            format={formatMoney}
+            className={clsx(
+              'text-sm sm:text-2xl font-bold break-all tabular-nums transition-colors duration-slow ease-out-expo',
+              balance >= 0 ? 'text-[#5f7186]' : 'text-[#b87e6b]',
+            )}
+          />
         </div>
       </div>
 
@@ -97,7 +111,9 @@ export default function ExpenseSummary({ expenses, selectedMember }: ExpenseSumm
         {/* 圓餅圖 */}
         <div className="glass-card p-4 h-[300px] flex flex-col">
           <h3 className="text-sm font-bold text-[#3d3a36] mb-4">
-            {selectedMember === '全體' ? '各成員支出佔比' : '支出分類分佈'}
+            <FadeSwap as="span" swapKey={selectedMember === '全體' ? 'member' : 'category'}>
+              {selectedMember === '全體' ? '各成員支出佔比' : '支出分類分佈'}
+            </FadeSwap>
           </h3>
           <div className="flex-1 relative">
             {pieData.length > 0 ? (
@@ -111,6 +127,7 @@ export default function ExpenseSummary({ expenses, selectedMember }: ExpenseSumm
                     outerRadius={80}
                     paddingAngle={5}
                     dataKey="value"
+                    animationDuration={CHART_ANIMATION_MS}
                   >
                     {pieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -145,8 +162,8 @@ export default function ExpenseSummary({ expenses, selectedMember }: ExpenseSumm
                     labelStyle={{ color: '#3d3a36', fontWeight: 'bold', marginBottom: '4px' }}
                     itemStyle={{ color: '#3d3a36' }}
                   />
-                  <Line type="monotone" dataKey="expense" name="支出" stroke="#b87e6b" strokeWidth={2} dot={{ r: 3, fill: '#b87e6b' }} />
-                  <Line type="monotone" dataKey="income" name="收入" stroke="#5f7186" strokeWidth={2} dot={{ r: 3, fill: '#5f7186' }} />
+                  <Line type="monotone" dataKey="expense" name="支出" stroke="#b87e6b" strokeWidth={2} dot={{ r: 3, fill: '#b87e6b' }} animationDuration={CHART_ANIMATION_MS} />
+                  <Line type="monotone" dataKey="income" name="收入" stroke="#5f7186" strokeWidth={2} dot={{ r: 3, fill: '#5f7186' }} animationDuration={CHART_ANIMATION_MS} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (

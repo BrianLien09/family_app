@@ -14,7 +14,7 @@ export default function SelectCheckbox({ checked }: { checked: boolean }) {
     <span
       aria-hidden="true"
       className={clsx(
-        'flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-colors duration-200',
+        'flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-colors duration-fast',
         checked ? 'border-[#5f7186] bg-[#5f7186]' : 'border-dashed border-[#78716c] bg-[#dcd0c2]/30',
       )}
     >

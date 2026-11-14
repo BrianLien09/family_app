@@ -9,7 +9,8 @@ import { Menu, X, ExternalLink } from 'lucide-react';
 import { AnimatePresence, m } from 'motion/react';
 import Login from '@/components/Login';
 import IconButton from '@/components/ui/IconButton';
-import { DURATION, EASE_IN, EASE_OUT, SPRING_SOFT } from '@/lib/motion';
+import { collapse, DURATION, EASE_OUT, SPRING_SOFT } from '@/lib/motion';
+import FadeSwap from '@/components/ui/FadeSwap';
 import siteIcon from '../../public/icon-192x192.png';
 import { Caveat } from 'next/font/google';
 
@@ -109,7 +110,7 @@ export default function Navbar() {
                     href={item.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-bold text-[#3d3a36] transition-colors duration-200 hover:bg-[#dcd0c2]/30 hover:text-[#b87e6b]"
+                    className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-bold text-[#3d3a36] transition-colors duration-fast hover:bg-[#dcd0c2]/30 hover:text-[#b87e6b]"
                   >
                     {item.name}
                     <ExternalLink size={16} className="shrink-0" aria-hidden="true" />
@@ -123,7 +124,7 @@ export default function Navbar() {
                   href={item.href}
                   aria-current={isActive ? 'page' : undefined}
                   className={clsx(
-                    'relative whitespace-nowrap rounded-lg px-4 py-2 text-sm font-bold transition-colors duration-200',
+                    'relative whitespace-nowrap rounded-lg px-4 py-2 text-sm font-bold transition-colors duration-fast',
                     isActive ? 'text-[#f0ece1]' : 'text-[#3d3a36] hover:bg-[#dcd0c2]/30 hover:text-[#b87e6b]',
                   )}
                 >
@@ -157,7 +158,9 @@ export default function Navbar() {
             aria-controls={MOBILE_MENU_ID}
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            <FadeSwap as="span" swapKey={isMobileMenuOpen ? 'close' : 'open'} className="flex">
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </FadeSwap>
           </IconButton>
         </div>
       </div>
@@ -170,10 +173,11 @@ export default function Navbar() {
           <m.div
             id={MOBILE_MENU_ID}
             key="mobile-menu"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1, transition: { duration: DURATION.slow, ease: EASE_OUT } }}
-            exit={{ height: 0, opacity: 0, transition: { duration: DURATION.base, ease: EASE_IN } }}
-            className="overflow-hidden border-t border-dashed border-[#dcd0c2] bg-[#e6e2d8] md:hidden"
+            variants={collapse}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="border-t border-dashed border-[#dcd0c2] bg-[#e6e2d8] md:hidden"
           >
             <div className="flex flex-col gap-1 p-4">
               {NAV_ITEMS.map((item) => {
@@ -187,7 +191,7 @@ export default function Navbar() {
                       href={item.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex min-h-11 items-center gap-1.5 rounded-lg px-4 py-3 text-base font-bold text-[#3d3a36] transition-colors duration-200 hover:bg-[#dcd0c2]/30 hover:text-[#b87e6b]"
+                      className="flex min-h-11 items-center gap-1.5 rounded-lg px-4 py-3 text-base font-bold text-[#3d3a36] transition-colors duration-fast hover:bg-[#dcd0c2]/30 hover:text-[#b87e6b]"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       {item.name}
@@ -203,7 +207,7 @@ export default function Navbar() {
                     aria-current={isActive ? 'page' : undefined}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={clsx(
-                      'flex min-h-11 items-center rounded-lg px-4 py-3 text-base font-bold transition-colors duration-200',
+                      'flex min-h-11 items-center rounded-lg px-4 py-3 text-base font-bold transition-colors duration-fast',
                       isActive
                         ? 'border-2 border-dashed border-[#b87e6b]/30 bg-[#b87e6b]/10 text-[#b87e6b]'
                         : 'text-[#3d3a36] hover:bg-[#dcd0c2]/30 hover:text-[#b87e6b]',

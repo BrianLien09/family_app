@@ -38,7 +38,7 @@ export default function ExpenseCard({ item, onDelete, onEdit, isSelected, onTogg
         }
       } : undefined}
       className={clsx(
-        'glass-card flex list-none items-center gap-4 p-4 transition-colors duration-200',
+        'glass-card flex list-none items-center gap-4 p-4 transition-colors duration-fast',
         batchMode && 'cursor-pointer hover:bg-[#dcd0c2]/50',
         isSelected && 'border-[#5f7186]/60 bg-[#5f7186]/10',
       )}

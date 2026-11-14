@@ -24,7 +24,7 @@ export default function IconButton({ tone = 'neutral', className, disabled, type
       whileTap={disabled ? undefined : TAP_SCALE}
       // h-11 w-11 達到 44px 觸控標準，手機上不會誤觸相鄰按鈕
       className={clsx(
-        'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[#3d3a36] transition-colors duration-200 ease-out-expo',
+        'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[#3d3a36] transition-colors duration-fast ease-out-expo',
         'disabled:cursor-not-allowed disabled:opacity-50',
         TONE_CLASS[tone],
         className,

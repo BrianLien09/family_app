@@ -33,6 +33,13 @@ function createForm(path, props, extraModules = {}) {
     'react-hot-toast': { __esModule: true, default: { error() {} } },
     html2canvas: { __esModule: true, default() {} },
     jspdf: { __esModule: true, default() {} },
+    // 動效元件只影響視覺，以字串型別代替；測試沿 props.children 遍歷，行為與原本的條件渲染相同
+    'motion/react': { AnimatePresence: 'AnimatePresence', m: new Proxy({}, { get: (_, tag) => `m.${String(tag)}` }) },
+    '@/lib/motion': { listItem: {} },
+    '@/components/ui/Collapsible': { __esModule: true, default: 'Collapsible' },
+    '@/components/ui/FadeSwap': { __esModule: true, default: 'FadeSwap' },
+    '@/components/ui/AnimatedNumber': { __esModule: true, default: 'AnimatedNumber' },
+    '@/components/ui/SegmentedToggle': { __esModule: true, default: 'SegmentedToggle' },
     ...extraModules,
   };
   const loaded = { exports: {} };

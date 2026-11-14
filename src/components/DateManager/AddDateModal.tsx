@@ -12,6 +12,9 @@ import clsx from 'clsx';
 import toast from 'react-hot-toast';
 import { useFormSubmission } from '@/hooks/useFormSubmission';
 import Modal, { ModalActions } from '@/components/Modal';
+import { AnimatePresence, m } from 'motion/react';
+import Collapsible from '@/components/ui/Collapsible';
+import { listItem } from '@/lib/motion';
 
 interface AddDateModalProps {
   isOpen: boolean;
@@ -198,8 +201,8 @@ export default function AddDateModal({
                   </button>
               ))}
 
-              {/* 新增類別按鈕 */}
-              {!showAddCategory ? (
+              {/* 新增類別按鈕；輸入列佔滿整行，用收合展開避免下方欄位瞬間被推開 */}
+              {!showAddCategory && (
                 <button
                   type="button"
                   onClick={() => setShowAddCategory(true)}
@@ -209,7 +212,8 @@ export default function AddDateModal({
                   <Plus size={13} className="inline mr-0.5" />
                   自訂類別
                 </button>
-              ) : (
+              )}
+              <Collapsible className="w-full">{showAddCategory && (
                 <div className="flex w-full min-w-0 flex-wrap items-center gap-2">
                   <input
                     type="text"
@@ -226,7 +230,7 @@ export default function AddDateModal({
                     type="button"
                     onClick={handleAddCategory}
                     aria-label="儲存自訂類別"
-                    className="min-h-11 px-3 py-2 bg-[#5f7186] hover:bg-[#5f7186] text-[#f0ece1] rounded-lg text-xs transition-colors duration-200"
+                    className="min-h-11 px-3 py-2 bg-[#5f7186] hover:bg-[#5f7186] text-[#f0ece1] rounded-lg text-xs transition-colors duration-fast"
                   >
                     <Check size={16} />
                   </button>
@@ -234,12 +238,12 @@ export default function AddDateModal({
                     type="button"
                     aria-label="取消新增類別"
                     onClick={() => { setShowAddCategory(false); setNewCategoryName(''); }}
-                    className="min-h-11 px-3 py-2 bg-[#dcd0c2]/50 hover:bg-[#dcd0c2]/80 text-[#3d3a36] rounded-lg text-xs transition-colors duration-200"
+                    className="min-h-11 px-3 py-2 bg-[#dcd0c2]/50 hover:bg-[#dcd0c2]/80 text-[#3d3a36] rounded-lg text-xs transition-colors duration-fast"
                   >
                     <X size={13} />
                   </button>
                 </div>
-              )}
+              )}</Collapsible>
 
               {/* 子分類管理按鈕（選中分類後才顯示） */}
               <button
@@ -259,7 +263,7 @@ export default function AddDateModal({
             </div>
 
             {/* 子分類快速選擇列（若有子分類才顯示） */}
-            {subCategories.length > 0 && (
+            <Collapsible>{subCategories.length > 0 && (
               <div className="flex flex-wrap gap-1.5 pl-0.5">
                 {subCategories.map(sub => (
                   <button
@@ -273,11 +277,11 @@ export default function AddDateModal({
                   </button>
                 ))}
               </div>
-            )}
+            )}</Collapsible>
 
-            {/* inline 子分類管理器 */}
-            {showSubCatManager && (
-              <div className="mt-1.5 p-3 bg-[#dcd0c2]/30 border-2 border-dashed border-[#dcd0c2] rounded-lg space-y-2">
+            {/* inline 子分類管理器：外距改為收合區內的 pt，收合時不殘留間距 */}
+            <Collapsible className="pt-1.5">{showSubCatManager && (
+              <div className="p-3 bg-[#dcd0c2]/30 border-2 border-dashed border-[#dcd0c2] rounded-lg space-y-2">
                 <p className="text-xs text-[#3d3a36] font-medium">
                   「{category}」的子分類設定
                 </p>
@@ -285,9 +289,16 @@ export default function AddDateModal({
                 {/* 既有子分類清單 */}
                 {subCategories.length > 0 && (
                   <div className="space-y-1.5">
+                    {/* 刪除子分類後其他列順勢補位，initial={false} 避免開啟面板時整排播放 */}
+                    <AnimatePresence initial={false} mode="popLayout">
                     {subCategories.map(sub => (
-                      <div
+                      <m.div
                         key={sub.name}
+                        layout="position"
+                        variants={listItem}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
                         className="flex items-center gap-2 text-xs text-[#3d3a36]"
                       >
                         <span className="font-medium w-16 shrink-0 truncate">{sub.name}</span>
@@ -302,8 +313,9 @@ export default function AddDateModal({
                         >
                           <Trash2 size={12} />
                         </button>
-                      </div>
+                      </m.div>
                     ))}
+                    </AnimatePresence>
                     <div className="border-t border-[#dcd0c2] pt-1" />
                   </div>
                 )}
@@ -340,14 +352,14 @@ export default function AddDateModal({
                     type="button"
                     onClick={handleSaveSubCat}
                     disabled={!subCatForm.name.trim() || !subCatForm.startTime}
-                    className="min-h-11 px-3 py-2 bg-[#5f7186] hover:bg-[#5f7186] disabled:opacity-40 disabled:cursor-not-allowed text-[#f0ece1] rounded-lg text-xs transition-colors duration-200"
+                    className="min-h-11 px-3 py-2 bg-[#5f7186] hover:bg-[#5f7186] disabled:opacity-40 disabled:cursor-not-allowed text-[#f0ece1] rounded-lg text-xs transition-colors duration-fast"
                     aria-label="儲存子分類"
                   >
                     <Check size={16} />
                   </button>
                 </div>
               </div>
-            )}
+            )}</Collapsible>
           </div>
 
 

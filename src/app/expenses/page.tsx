@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useExpenses } from '@/hooks/useExpenses';
 import { FamilyMember, ExpenseItem } from '@/types';
 import { Plus, ChevronLeft, ChevronRight, CheckSquare, ReceiptText } from 'lucide-react';
-import { AnimatePresence, m, type Variants } from 'motion/react';
+import { AnimatePresence, m } from 'motion/react';
 import toast from 'react-hot-toast';
 import { auth } from '@/lib/firebase';
 import MemberFilter from '@/components/ExpenseManager/MemberFilter';
@@ -19,14 +19,11 @@ import EmptyState from '@/components/ui/EmptyState';
 import PageShell from '@/components/ui/PageShell';
 import PageHeader from '@/components/ui/PageHeader';
 import LoadingGate from '@/components/ui/LoadingGate';
-import { DURATION } from '@/lib/motion';
+import FadeSwap from '@/components/ui/FadeSwap';
+import { slideX } from '@/lib/motion';
 
-// 依切換方向滑動；exit 透過 custom 取得最新方向，避免反向切換時舊月份從錯誤的一側離開
-const monthVariants: Variants = {
-  enter: (direction: number) => ({ opacity: 0, x: direction * 16 }),
-  center: { opacity: 1, x: 0, transition: { duration: DURATION.base } },
-  leave: (direction: number) => ({ opacity: 0, x: direction * -16, transition: { duration: DURATION.fast } }),
-};
+// 月份文字只滑 16px：標籤寬度小，位移過大會像被甩出框外
+const monthVariants = slideX(16);
 
 export default function ExpensesPage() {
   const { expenses, addExpense, updateExpense, deleteExpense, deleteExpenses, isLoaded } = useExpenses();
@@ -145,7 +142,7 @@ export default function ExpensesPage() {
               }}
             >
               <CheckSquare size={16} aria-hidden="true" />
-              {batchMode ? '完成' : '批次選取'}
+              <FadeSwap as="span" swapKey={batchMode ? 'done' : 'select'}>{batchMode ? '完成' : '批次選取'}</FadeSwap>
             </Button>
             <Button variant="secondary" className="flex-1 sm:flex-none" onClick={openAddModal}>
               <Plus size={16} aria-hidden="true" />
@@ -175,8 +172,10 @@ export default function ExpensesPage() {
         <ExpenseSummary expenses={filteredExpenses} selectedMember={selectedMember} />
 
         {/* 紀錄列表：新增、刪除與復原都會有進出場，initial={false} 避免首次進頁面時整排播放 */}
+        {/* 清單與空狀態交叉淡入；切到沒有紀錄的月份時不會瞬間換成空白 */}
+        <FadeSwap swapKey={filteredExpenses.length > 0 ? 'list' : 'empty'}>
         {filteredExpenses.length > 0 ? (
-          <ul className="space-y-3">
+          <ul className="relative space-y-3">
             <AnimatePresence initial={false} mode="popLayout">
               {filteredExpenses.map(item => (
                 <ExpenseCard
@@ -201,6 +200,7 @@ export default function ExpensesPage() {
             description="點擊上方「記一筆」開始記錄。"
           />
         )}
+        </FadeSwap>
 
         {/* 新增/編輯 Modal */}
         <AnimatePresence>

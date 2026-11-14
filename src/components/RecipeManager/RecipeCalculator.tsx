@@ -9,6 +9,8 @@ import SaveButton from '@/components/SaveButton';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import toast from 'react-hot-toast';
+import FadeSwap from '@/components/ui/FadeSwap';
+import AnimatedNumber from '@/components/ui/AnimatedNumber';
 
 interface RecipeCalculatorProps {
   recipe: Recipe;
@@ -19,6 +21,17 @@ interface RecipeCalculatorProps {
 }
 
 type ScaleMode = 'servings' | 'ingredient';
+
+// 放在模組層級：AnimatedNumber 的 format 需要穩定參照，補間中的每一幀都會呼叫
+function formatAmount(num: number) {
+  if (num > 0 && num < 0.1) return Number(num.toPrecision(6)).toString();
+  return parseFloat(num.toFixed(1)).toString();
+}
+
+// 倍率極小時（1000g 反推 1g）要保留有效位數，否則會顯示成 0.00 倍
+function formatScale(scale: number) {
+  return scale < 0.01 ? formatAmount(scale) : scale.toFixed(2);
+}
 
 export default function RecipeCalculator({ recipe, onClose, onDelete, onAdd, onEdit }: RecipeCalculatorProps) {
   const { isSubmitting, submit, close } = useFormSubmission(onClose);
@@ -76,11 +89,6 @@ export default function RecipeCalculator({ recipe, onClose, onDelete, onAdd, onE
     }));
   };
 
-  const formatAmount = (num: number) => {
-    if (num > 0 && num < 0.1) return Number(num.toPrecision(6)).toString();
-    return parseFloat(num.toFixed(1)).toString();
-  };
-  
   /**
    * 匯出 PDF - 使用 html2canvas 轉換 HTML 為圖片後生成 PDF
    * 完美支援中文顯示
@@ -157,7 +165,7 @@ export default function RecipeCalculator({ recipe, onClose, onDelete, onAdd, onE
           </h1>
           <div style={{ fontSize: '14px', color: '#6b7280', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
             <span>📊 目標份數: <strong>{customServings} 人份</strong></span>
-            <span>🔢 縮放倍率: <strong>{scale < 0.01 ? formatAmount(scale) : scale.toFixed(2)}x</strong></span>
+            <span>🔢 縮放倍率: <strong>{formatScale(scale)}x</strong></span>
             <span>📋 基準份數: {recipe.baseServings} 人份</span>
             {recipe.cookingTime && (
               <span style={{ color: '#ea580c' }}>⏱️ 烹飪時間: <strong>{recipe.cookingTime.value}{recipe.cookingTime.unit} {recipe.cookingTime.minutes}分鐘</strong></span>
@@ -211,7 +219,7 @@ export default function RecipeCalculator({ recipe, onClose, onDelete, onAdd, onE
         </>}
         footer={<>
           <button type="button" disabled={isSubmitting || isExporting} onClick={close} className="modal-secondary">關閉</button>
-          <button type="button" disabled={isSubmitting || isExporting || !hasValidScale} onClick={handleExportPDF} className="modal-secondary"><FileDown size={18} />{isExporting ? '匯出中…' : 'PDF'}</button>
+          <button type="button" disabled={isSubmitting || isExporting || !hasValidScale} onClick={handleExportPDF} className="modal-secondary"><FileDown size={18} /><FadeSwap as="span" swapKey={isExporting ? 'exporting' : 'idle'}>{isExporting ? '匯出中…' : 'PDF'}</FadeSwap></button>
           <SaveButton type="button" disabled={isExporting || !hasValidScale} isSubmitting={isSubmitting} onClick={handleSaveAsNew} className="modal-primary">另存新食譜</SaveButton>
         </>}>
         <fieldset disabled={isSubmitting || isExporting} className="grid min-w-0 grid-cols-1 items-start gap-6 border-0 p-0 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
@@ -221,7 +229,8 @@ export default function RecipeCalculator({ recipe, onClose, onDelete, onAdd, onE
               <button type="button" className="modal-choice" aria-pressed={mode === 'servings'} onClick={() => setMode('servings')}>依份量調整</button>
               <button type="button" className="modal-choice" aria-pressed={mode === 'ingredient'} onClick={() => setMode('ingredient')}>依食材反推</button>
             </div>
-            {mode === 'servings' ? <div key="servings-view" className="space-y-4">
+            {/* 換算方式切換用交叉淡入，不整塊彈出；key 由 FadeSwap 的 swapKey 提供 */}
+            <FadeSwap swapKey={mode}>{mode === 'servings' ? <div className="space-y-4">
               <label className="modal-field" htmlFor="target-servings">製作份數</label>
               <div className="flex min-w-0 items-center gap-2">
                 <button type="button" className="modal-icon-button" aria-label="減少半份" onClick={() => handleServingsChange(customServings - 0.5)}><Minus size={20} /></button>
@@ -229,25 +238,28 @@ export default function RecipeCalculator({ recipe, onClose, onDelete, onAdd, onE
                 <button type="button" className="modal-icon-button" aria-label="增加半份" onClick={() => handleServingsChange(customServings + 0.5)}><Plus size={20} /></button>
               </div>
               <input aria-label="調整製作份數" className="min-h-11 w-full accent-[#b87e6b]" type="range" min="0.1" max={Math.max(10, recipe.baseServings * 3, customServings)} step="0.1" value={customServings} onChange={e => handleServingsChange(Number(e.target.value))} />
-            </div> : <div key="ingredient-view" className="space-y-4">
+            </div> : <div className="space-y-4">
               <label className="modal-field">已知食材<select className="modal-input" value={refIngredientId} onChange={e => { setRefIngredientId(e.target.value); setTargetAmount(''); }}>
                 {recipe.ingredients.map(ingredient => <option key={ingredient.id} value={ingredient.id}>{ingredient.name}（原 {ingredient.amount} {ingredient.unit}）</option>)}
               </select></label>
               <label className="modal-field">現有重量（{currentRefIngredient?.unit}）<input className="modal-input" type="number" inputMode="decimal" min={Number.MIN_VALUE} step="any" aria-invalid={Boolean(targetAmount) && !hasValidScale} aria-describedby={!hasValidScale ? 'scale-feedback' : undefined} placeholder="例如：150" value={targetAmount} onChange={e => handleIngredientScale(e.target.value)} /></label>
-            </div>}
-            <p id="scale-feedback" className="rounded-xl bg-[#dcd0c2]/30 p-4 text-sm leading-7" aria-live="polite">{hasValidScale
-              ? <>製作 {formatAmount(customServings)} 人份 · 原食譜的 {scale < 0.01 ? formatAmount(scale) : scale.toFixed(2)} 倍</>
-              : '請輸入大於 0 的重量，並確認原食材用量大於 0。'}</p>
+            </div>}</FadeSwap>
+            <p id="scale-feedback" className="rounded-xl bg-[#dcd0c2]/30 p-4 text-sm leading-7" aria-live="polite"><FadeSwap as="span" swapKey={hasValidScale ? 'scale' : 'invalid'}>{hasValidScale
+              ? <>製作 <AnimatedNumber value={customServings} format={formatAmount} /> 人份 · 原食譜的 <AnimatedNumber value={scale} format={formatScale} /> 倍</>
+              : '請輸入大於 0 的重量，並確認原食材用量大於 0。'}</FadeSwap></p>
             {recipe.cookingTime && <p className="text-sm leading-7 text-[#5f6368]">烹飪設定：{recipe.cookingTime.value}{recipe.cookingTime.unit}／{recipe.cookingTime.minutes} 分鐘</p>}
             {recipe.description && <p className="whitespace-pre-wrap break-words text-sm leading-7 text-[#5f6368]">{recipe.description}</p>}
           </div>
           <section className="min-w-0 space-y-3" aria-labelledby="calculator-ingredients">
             <h3 id="calculator-ingredients" className="text-sm font-bold">所需食材</h3>
-            {!hasValidScale && <p className="text-sm leading-7 text-[#5f6368]">填寫有效重量後顯示換算結果。</p>}
-            {hasValidScale && recipe.ingredients.map(ingredient => <div key={ingredient.id} className={`flex min-w-0 flex-wrap items-baseline justify-between gap-3 rounded-xl border p-4 ${mode === 'ingredient' && ingredient.id === refIngredientId ? 'border-[#5f7186]/50 bg-[#5f7186]/10' : 'border-[#dcd0c2]/70'}`}>
-              <span className="min-w-0 break-words font-medium">{ingredient.name}</span>
-              <span className="ml-auto break-words text-right font-semibold tabular-nums text-[#5f7186]">{formatAmount(ingredient.amount * scale)} {ingredient.unit}</span>
-            </div>)}
+            {/* 提示↔結果只在有效性改變時交叉淡入；份數連續調整時由 AnimatedNumber 補間，不重播整塊 */}
+            <FadeSwap swapKey={hasValidScale ? 'result' : 'hint'} className="space-y-3">
+              {!hasValidScale && <p className="text-sm leading-7 text-[#5f6368]">填寫有效重量後顯示換算結果。</p>}
+              {hasValidScale && recipe.ingredients.map(ingredient => <div key={ingredient.id} className={`flex min-w-0 flex-wrap items-baseline justify-between gap-3 rounded-xl border p-4 transition-colors duration-base ease-out-expo ${mode === 'ingredient' && ingredient.id === refIngredientId ? 'border-[#5f7186]/50 bg-[#5f7186]/10' : 'border-[#dcd0c2]/70'}`}>
+                <span className="min-w-0 break-words font-medium">{ingredient.name}</span>
+                <span className="ml-auto break-words text-right font-semibold tabular-nums text-[#5f7186]"><AnimatedNumber value={ingredient.amount * scale} format={formatAmount} /> {ingredient.unit}</span>
+              </div>)}
+            </FadeSwap>
           </section>
         </fieldset>
       </Modal>

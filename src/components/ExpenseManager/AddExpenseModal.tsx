@@ -7,7 +7,13 @@ import { FamilyMember, FAMILY_MEMBERS, EXPENSE_CATEGORIES, INCOME_CATEGORIES, Ex
 import { getTodayDateString } from '@/lib/date';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
+import SegmentedToggle, { type SegmentedOption } from '@/components/ui/SegmentedToggle';
 
+// 支出用主色鐵鏽、收入用輔色石板藍，與帳本卡片與統計的配色一致
+const TYPE_OPTIONS: readonly SegmentedOption<'expense' | 'income'>[] = [
+  { value: 'expense', label: '支出', color: '#b87e6b' },
+  { value: 'income', label: '收入', color: '#5f7186' },
+];
 
 interface AddExpenseModalProps {
   isOpen: boolean;
@@ -54,40 +60,16 @@ export default function AddExpenseModal({ isOpen, onClose, onSubmit, initialData
       footer={<ModalActions onClose={close} isSubmitting={isSubmitting}>{initialData ? '儲存修改' : '儲存紀錄'}</ModalActions>}>
       <fieldset disabled={isSubmitting} className="min-w-0 space-y-5 border-0 p-0">
           {/* 收支切換 */}
-          <div className="flex bg-[#dcd0c2]/30 rounded-xl p-1">
-            <button
-              type="button"
-              aria-pressed={type === 'expense'}
-              onClick={() => {
-                if (type !== 'expense') {
-                  setType('expense');
-                  setCategory(EXPENSE_CATEGORIES[0]);
-                }
-              }}
-              className={clsx(
-                "flex-1 min-h-11 py-2 text-sm font-bold rounded-lg transition-colors",
-                type === 'expense' ? "bg-[#b87e6b] text-[#f0ece1] shadow-[0_4px_12px_rgba(139,121,101,0.06)]" : "text-[#3d3a36] hover:text-[#b87e6b]"
-              )}
-            >
-              支出
-            </button>
-            <button
-              type="button"
-              aria-pressed={type === 'income'}
-              onClick={() => {
-                if (type !== 'income') {
-                  setType('income');
-                  setCategory(INCOME_CATEGORIES[0]);
-                }
-              }}
-              className={clsx(
-                "flex-1 min-h-11 py-2 text-sm font-bold rounded-lg transition-colors",
-                type === 'income' ? "bg-[#5f7186] text-[#f0ece1] shadow-[0_4px_12px_rgba(139,121,101,0.06)]" : "text-[#3d3a36] hover:text-[#b87e6b]"
-              )}
-            >
-              收入
-            </button>
-          </div>
+          <SegmentedToggle
+            ariaLabel="收支類型"
+            options={TYPE_OPTIONS}
+            value={type}
+            onChange={(nextType) => {
+              setType(nextType);
+              // 切換收支時分類清單不同，重設為該類型的第一個分類，避免送出不存在的分類
+              setCategory(nextType === 'expense' ? EXPENSE_CATEGORIES[0] : INCOME_CATEGORIES[0]);
+            }}
+          />
 
           {/* 金額 */}
           <label className="modal-field"><span>金額</span>

@@ -12,7 +12,7 @@ import SaveButton from '@/components/SaveButton';
 // 背景只淡入淡出；面板由下往上浮出（手機像底部面板，桌面則是輕微上浮），離場更短以免讓人等待
 const backdropVariants: Variants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: DURATION.base } },
+  visible: { opacity: 1, transition: { duration: DURATION.base, ease: EASE_OUT } },
   exit: { opacity: 0, transition: { duration: DURATION.fast, ease: EASE_IN } },
 };
 const panelVariants: Variants = {

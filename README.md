@@ -136,22 +136,22 @@ npm run deploy
 
 - Firebase 設定值與 GitHub Actions Secrets 不會提交到儲存庫。
 - `public/sw.js` 與 `public/workbox-*.js` 由 PWA 建置流程產生，無須手動編輯。
-- 每日行程 LINE 提醒由 `notify-worker/`（Cloudflare Worker）執行，台灣時間 22:00 觸發：週一至週六提醒隔日行程，週日提醒下週總覽；沒有行程也會發送，並附上隨機小叮嚀（清單在 `notify-worker/src/messages.ts` 的 `TIPS`）。憑證存放於 Cloudflare Secrets，不放在儲存庫。
+## 每日行程 LINE 提醒
 
-## 部署 LINE 提醒 Worker
+LINE 提醒不在這個儲存庫裡。它是個人通知中樞 **notify-hub**（Cloudflare Worker，位於 `02_Tools/notify-hub`）的 `family-line` 任務，和其他專案的通知共用同一個 Cron。
+
+- **時間**：每天台灣時間 22:00。週一至週六提醒隔日行程，週日改發下週總覽。
+- **內容**：以 Firestore REST 讀取 `schedules`。沒有行程也會發送，並附上隨機小叮嚀（清單在 notify-hub 的 `src/jobs/family-line/messages.ts` 的 `TIPS`）。
+- **憑證**：存放於 notify-hub 的 Cloudflare Secrets，名稱都加上 `FAMILY_` 前綴（`FAMILY_FIREBASE_SERVICE_ACCOUNT`、`FAMILY_LINE_CHANNEL_ACCESS_TOKEN`、`FAMILY_LINE_USER_ID`），不放在儲存庫。
+- **失敗通知**：任務失敗會寫進 Workers Logs；若 notify-hub 有設定警報頻道，也會發送到 Discord。
+
+要修改訊息格式、排程或憑證，請到 notify-hub 操作，部署與 secret 設定方式見該專案的 README。手動測試（會立即推播）：
 
 ```bash
-cd notify-worker
-npm install
-npx wrangler login
-npx wrangler secret put LINE_CHANNEL_ACCESS_TOKEN
-npx wrangler secret put LINE_USER_ID
-npx wrangler secret put FIREBASE_CREDENTIALS   # 貼上 Firebase 服務帳戶 JSON
-npx wrangler secret put TRIGGER_SECRET         # 自訂的手動觸發密鑰
-npx wrangler deploy
+curl -X POST -H "Authorization: Bearer <TRIGGER_SECRET>" "https://notify-hub.<子網域>.workers.dev/run?mode=daily&job=family-line"
 ```
 
-手動測試（會立即推播）：`curl -H "Authorization: Bearer <TRIGGER_SECRET>" "https://<worker網址>/?mode=tomorrow"`，`mode` 可為 `tomorrow` 或 `weekly`。
+`mode` 可為 `daily` 或 `weekly`。
 
 ## 歷史更新
 

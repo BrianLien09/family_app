@@ -40,6 +40,9 @@ function createForm(path, props, extraModules = {}) {
     '@/components/ui/FadeSwap': { __esModule: true, default: 'FadeSwap' },
     '@/components/ui/AnimatedNumber': { __esModule: true, default: 'AnimatedNumber' },
     '@/components/ui/SegmentedToggle': { __esModule: true, default: 'SegmentedToggle' },
+    '@/components/ui/DatePicker': { __esModule: true, default: 'DatePicker' },
+    '@/components/ui/TimeRangePicker': { __esModule: true, default: 'TimeRangePicker' },
+    '@/components/DateManager/CategoryPicker': { __esModule: true, default: 'CategoryPicker' },
     ...extraModules,
   };
   const loaded = { exports: {} };
@@ -86,13 +89,13 @@ test('極小食材反推保留正份數及烹飪設定，另存後不會除以�
 test('子分類名稱的 Enter 不會送出整份行程', async () => {
   let mainSaves = 0;
   let subSaves = 0;
-  const render = createForm('../src/components/DateManager/AddDateModal.tsx', { isOpen: true, onClose() {}, onSubmit: async () => { mainSaves++; return true; } }, {
+  const render = createForm('../src/components/DateManager/AddDateModal.tsx', { isOpen: true, onClose() {}, onSubmit: async () => { mainSaves++; return true; }, categoryColors: new Map() }, {
     '@/hooks/useCategories': { useCategories: () => ({ categories: ['其它'], isDefaultCategory: () => true }) },
     '@/hooks/useCategoryTimePresets': { useCategoryTimePresets: () => ({ getDefaultTime: () => ({}), getSubCategories: () => [], saveSubCategory: async () => { subSaves++; return true; } }) },
   });
   find(render(), node => node.type === 'button' && node.props.title === '設定此分類的子分類時間').props.onClick();
   find(render(), node => node.props['aria-label'] === '子分類名稱').props.onChange({ target: { value: '週六班' } });
-  find(render(), node => node.props['aria-label'] === '子分類開始時間').props.onChange({ target: { value: '09:00' } });
+  find(render(), node => node.type === 'TimeRangePicker' && node.props.ariaLabel === '子分類時間').props.onStartChange('09:00');
   let prevented = false;
   find(render(), node => node.props['aria-label'] === '子分類名稱').props.onKeyDown({ key: 'Enter', nativeEvent: { isComposing: false }, preventDefault() { prevented = true; } });
   await new Promise(resolve => setImmediate(resolve));

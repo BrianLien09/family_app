@@ -547,6 +547,7 @@ export default function Home() {
               onSubmit={handleModalSubmit}
               initialData={editingDate}
               presetDate={selectedDateForNew}
+              categoryColors={categoryColors}
             />
           )}
         </AnimatePresence>

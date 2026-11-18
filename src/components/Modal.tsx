@@ -21,6 +21,12 @@ const panelVariants: Variants = {
   exit: { opacity: 0, y: 12, scale: 0.98, transition: { duration: DURATION.fast, ease: EASE_IN } },
 };
 
+type ModalSize = NonNullable<ModalProps['size']>;
+const VIEWPORT_CLASS: Partial<Record<ModalSize, string>> = {
+  compact: 'modal-viewport-compact',
+  sheet: 'modal-viewport-sheet',
+};
+
 interface ModalProps {
   isOpen?: boolean;
   title: string;
@@ -28,7 +34,8 @@ interface ModalProps {
   children: ReactNode;
   footer?: ReactNode;
   headerActions?: ReactNode;
-  size?: 'compact' | 'regular' | 'wide' | 'workspace';
+  /** sheet：手機貼齊底部、高度隨內容（底部面板），桌面與 regular 相同置中 */
+  size?: 'compact' | 'regular' | 'wide' | 'workspace' | 'sheet';
   isBusy?: boolean;
   closeOnBackdrop?: boolean;
   onSubmit?: FormEventHandler<HTMLFormElement>;
@@ -84,7 +91,7 @@ export default function Modal({ isOpen = true, title, onClose, children, footer,
   if (!isOpen || typeof document === 'undefined') return null;
   const close = () => { if (!current.current.isBusy && current.current.isPresent) current.current.onClose(); };
   return createPortal(
-    <div ref={viewportRef} className={`modal-viewport ${size === 'compact' ? 'modal-viewport-compact' : ''}`}
+    <div ref={viewportRef} className={`modal-viewport ${VIEWPORT_CLASS[size] ?? ''}`}
       style={{ pointerEvents: isPresent ? undefined : 'none' }}>
       <m.div className="modal-backdrop" variants={backdropVariants} initial="hidden" animate="visible" exit="exit"
         onClick={closeOnBackdrop ? close : undefined} aria-hidden="true" />

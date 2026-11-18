@@ -7,7 +7,7 @@ import {
   eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday 
 } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, RotateCw, Plus, CheckSquare, Square, Trash2, X, Copy, Download } from 'lucide-react';
+import { CalendarCheck, ChevronLeft, ChevronRight, RotateCw, Plus, CheckSquare, Square, Trash2, X, Copy, Download } from 'lucide-react';
 import clsx from 'clsx';
 import { AnimatePresence, m } from 'motion/react';
 import Button from '@/components/ui/Button';
@@ -92,8 +92,9 @@ const DayCell = memo(function DayCell({
     <div
       role="button"
       tabIndex={0}
+      aria-current={isTodayDate ? 'date' : undefined}
       aria-pressed={isSelected}
-      aria-label={`${format(day, 'M月d日')}，${events.length} 個行程`}
+      aria-label={`${isTodayDate ? '今天，' : ''}${format(day, 'M月d日')}，${events.length} 個行程`}
       onClick={() => onDayClick(day)}
       // 只處理格子本身的按鍵，避免攔截內部新增按鈕的 Enter／Space
       onKeyDown={(e) => {
@@ -107,24 +108,39 @@ const DayCell = memo(function DayCell({
         // 手機維持方格＋圓點；桌面不限制高度上限，讓完整標題換行呈現
         'aspect-square min-h-[44px] md:aspect-auto md:min-h-[88px]',
         !isCurrentMonth ? 'bg-[#dcd0c2]/20 text-[#3d3a36]' : 'bg-transparent hover:bg-[#b87e6b]/5',
+        // 今天的底色比一般 hover 更明顯，但仍低於選取狀態，避免兩者同時出現時互相搶眼
+        isTodayDate && !isSelected && 'bg-[#5f7186]/[0.08]',
         isSelected && 'bg-[#b87e6b]/10 ring-1 ring-inset ring-[#b87e6b]',
-        isTodayDate && !isSelected && 'bg-[#5f7186]/5',
         isMultiSelected && 'ring-2 ring-[#5f7186] bg-[#5f7186]/10',
         isDragActive && 'hover:ring-2 hover:ring-[#5f7186] hover:bg-[#5f7186]/5',
       )}
     >
+      {/* 今天：格子頂端的石板藍細條，在整張月曆掃過去時第一眼就能定位，不必逐格找數字 */}
+      {isTodayDate && (
+        <span aria-hidden="true" className="pointer-events-none absolute inset-x-1 top-0 h-[3px] rounded-b-full bg-[#5f7186]" />
+      )}
+
       {/* 日期數字 + 桌面版新增按鈕 */}
-      <div className="flex items-center justify-between mb-0.5 shrink-0">
-        <span
-          className={clsx(
-            'text-xs md:text-sm font-medium block text-center md:text-left',
-            isTodayDate ? 'text-[#5f7186] font-bold' : 'text-[#3d3a36]',
-            // 選取狀態用主色調鐵鏽紅，在淺色背景下保持可見
-            isSelected && 'text-[#b87e6b] font-bold',
-            !isCurrentMonth && 'opacity-50',
+      <div className="flex items-center justify-center md:justify-between mb-0.5 shrink-0 gap-1">
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span
+            className={clsx(
+              'inline-flex items-center justify-center rounded-full tabular-nums md:text-sm',
+              // 今天用實心圓底＋外圈光暈：與選取狀態（鐵鏽色框線）是不同的視覺語言，兩者重疊時仍能分辨
+              isTodayDate
+                ? 'h-5 w-5 text-[11px] md:h-7 md:w-7 bg-[#5f7186] font-bold text-[#f0ece1] shadow-[0_2px_8px_rgba(95,113,134,0.35)] ring-2 ring-[#5f7186]/20 ring-offset-1 ring-offset-[#f0ece1]'
+                : 'h-5 text-xs md:h-7 font-medium text-[#3d3a36]',
+              // 選取狀態用主色調鐵鏽紅，在淺色背景下保持可見
+              isSelected && !isTodayDate && 'text-[#b87e6b] font-bold',
+              !isCurrentMonth && 'opacity-50',
+            )}
+          >
+            {dateLabel}
+          </span>
+          {/* 桌面格子夠寬才補上文字標籤，手機只靠圓底與頂條，避免數字被擠到換行 */}
+          {isTodayDate && (
+            <span className="hidden md:inline text-[11px] font-bold tracking-wider text-[#5f7186]">今天</span>
           )}
-        >
-          {dateLabel}
         </span>
 
         {/* 新增按鈕 - 桌面版 hover 時才顯示 */}
@@ -150,23 +166,6 @@ const DayCell = memo(function DayCell({
         ))}
       </div>
 
-      {/* 手機版：選中日期後顯示新增按鈕 */}
-      <AnimatePresence initial={false}>
-      {showAddButton && isCurrentMonth && isSelected && (
-        <m.button
-          key="mobile-add"
-          variants={popIn}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          onClick={(e) => onAddClick(e, day)}
-          aria-label={`新增 ${format(day, 'M/d')} 的行程`}
-          className="md:hidden absolute bottom-0.5 right-0.5 w-7 h-7 flex items-center justify-center rounded-md bg-[#5f7186] text-[#f0ece1]"
-        >
-          <Plus size={14} />
-        </m.button>
-      )}
-      </AnimatePresence>
 
       {/* 桌面版：顯示當日全部行程，標題完整換行不截斷（可拖曳複製） */}
       <div className="hidden md:flex flex-col gap-1 w-full min-w-0">
@@ -272,6 +271,15 @@ export default function CalendarWidget({
 
   const nextMonth = () => { setMonthDirection(1); setCurrentMonth(addMonths(currentMonth, 1)); };
   const prevMonth = () => { setMonthDirection(-1); setCurrentMonth(subMonths(currentMonth, 1)); };
+  // 翻到其他月份後一鍵回到今天，方向依目前月份前後決定，滑動動畫才不會反向
+  const goToToday = () => {
+    const today = new Date();
+    if (!isSameMonth(today, currentMonth)) setMonthDirection(today > currentMonth ? 1 : -1);
+    setCurrentMonth(today);
+    setSelectedDate(today);
+    setCurrentPage(1);
+  };
+  const isViewingToday = isSameMonth(currentMonth, new Date()) && isToday(selectedDate);
 
   // eventsByDate 必須在 handleDayClick 之前定義，因為後者依賴它
   // 使用 HashMap 做 O(1) 查詢，避免在每個格子 render 時都 filter 整個 events 陣列
@@ -432,6 +440,9 @@ export default function CalendarWidget({
             <Copy size={16} aria-hidden="true" /><FadeSwap as="span" swapKey={isExporting ? 'exporting' : 'idle'}>{isExporting ? '產生圖片中…' : '複製圖片'}</FadeSwap>
           </Button>
           <IconButton aria-label="下載月曆圖片" onClick={() => handleExport(false)} disabled={isExporting}><Download size={18} /></IconButton>
+          <Button size="sm" variant="soft" onClick={goToToday} disabled={isViewingToday} className="ml-1">
+            <CalendarCheck size={14} aria-hidden="true" />今天
+          </Button>
           <IconButton aria-label="上個月" onClick={prevMonth}><ChevronLeft size={20} /></IconButton>
           <IconButton aria-label="下個月" onClick={nextMonth}><ChevronRight size={20} /></IconButton>
         </div>
@@ -532,12 +543,23 @@ export default function CalendarWidget({
       </div>
       {/* Selected Date Details */}
       <div className="mt-4 pt-4 border-t border-dashed border-[#dcd0c2]/50 flex-1 flex flex-col min-h-0">
-         <h3 className="text-sm font-bold text-[#3d3a36] mb-3 flex items-center gap-2 shrink-0">
+         <div className="mb-3 flex items-center justify-between gap-2 shrink-0">
+         <h3 className="text-sm font-bold text-[#3d3a36] flex items-center gap-2">
             <span className="w-1 h-4 bg-[#5f7186] rounded-full"></span>
-            <FadeSwap as="span" swapKey={`${format(selectedDate, 'yyyy-MM-dd')}-${selectedDayEvents.length}`}>
+            <FadeSwap as="span" swapKey={`${format(selectedDate, 'yyyy-MM-dd')}-${selectedDayEvents.length}`} className="inline-flex items-center gap-2">
               {format(selectedDate, 'M月d日')} 的行程 ({selectedDayEvents.length})
+              {isToday(selectedDate) && (
+                <span className="rounded-full bg-[#5f7186] px-2 py-0.5 text-[11px] font-bold text-[#f0ece1]">今天</span>
+              )}
             </FadeSwap>
          </h3>
+         {/* 手機格子只有約 46px，格內再塞新增按鈕會蓋住「今天」圓底與行程圓點，改放在當日行程標題列 */}
+         {onAddEvent && (
+           <Button size="sm" variant="secondary" onClick={() => onAddEvent(selectedDate)} className="md:hidden" aria-label={`新增 ${format(selectedDate, 'M/d')} 的行程`}>
+             <Plus size={14} aria-hidden="true" />新增
+           </Button>
+         )}
+         </div>
 
          <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
             {/* 有行程↔無行程交叉淡入；同為有行程的日期切換時，由 DateCard 自身的進出場處理 */}

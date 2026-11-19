@@ -45,3 +45,6 @@ next-env.d.ts
 /public/sw.js.map
 /public/workbox-*.js
 /public/workbox-*.js.map
+
+# Claude Code 本機設定（如 launch.json），屬個人開發環境，不納入版本控制
+/.claude/

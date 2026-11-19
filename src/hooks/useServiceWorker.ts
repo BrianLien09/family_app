@@ -42,6 +42,20 @@ export function useServiceWorker(): ServiceWorkerHook {
       return;
     }
 
+    // 開發模式下 next-pwa 停用、不會產生 sw.js；但 localhost:3000 同源的其他專案可能殘留
+    // scope 為 "/" 的 Service Worker（例如 /sw.js?v=4），它涵蓋 /family_app 而讓 ready 成立，
+    // 下方每 60 秒的 update() 就會反覆請求該腳本而 404，甚至用舊快取攔截開發頁面。
+    // 因此開發時直接解除殘留註冊並跳過更新檢查；正式建置時此分支會被移除，不影響線上 PWA。
+    if (process.env.NODE_ENV === 'development') {
+      navigator.serviceWorker
+        .getRegistrations()
+        .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+        .catch((error) => {
+          console.log('開發模式解除 Service Worker 失敗:', error);
+        });
+      return;
+    }
+
     // 檢查是否已有註冊的 Service Worker
     navigator.serviceWorker.ready.then((registration) => {
       // 監聽 Service Worker 狀態變化

@@ -4,7 +4,7 @@
 
 ## 專案概覽
 
-Famly Hub：Next.js 16（App Router）+ React 19 + TypeScript strict 的家庭工具，提供總覽／行事曆、食譜、家庭帳本與購買紀錄。Tailwind CSS 3（Woven & Weft 大地色系）、`motion` 動畫、Firebase（Firestore + Auth）、靜態匯出部署到 GitHub Pages。
+Family Hub：Next.js 16（App Router）+ React 19 + TypeScript strict 的家庭工具，提供總覽／行事曆、食譜、家庭帳本與購買紀錄。Tailwind CSS 3（Woven & Weft 大地色系）、`motion` 動畫、Firebase（Firestore + Auth）、靜態匯出部署到 GitHub Pages。
 
 ## 常用指令
 

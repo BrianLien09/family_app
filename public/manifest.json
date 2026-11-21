@@ -1,6 +1,6 @@
 {
-  "name": "Famly Hub",
-  "short_name": "Famly Hub",
+  "name": "Family Hub",
+  "short_name": "Family Hub",
   "description": "紀錄重要日期與食譜轉換的家庭工具",
   "start_url": "/family_app/",
   "scope": "/family_app/",

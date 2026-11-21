@@ -85,14 +85,14 @@ export default function Navbar() {
           {/* 使用與 PWA／favicon 相同的網站圖標，維持品牌一致 */}
           <Image
             src={siteIcon}
-            alt="Famly Hub 圖標"
+            alt="Family Hub 圖標"
             width={36}
             height={36}
             priority
             className="h-9 w-9 shrink-0 rounded-xl"
           />
           <span className={clsx(brandFont.className, 'text-3xl font-bold leading-none text-[#3d3a36]')}>
-            Famly Hub
+            Family Hub
           </span>
         </Link>
 

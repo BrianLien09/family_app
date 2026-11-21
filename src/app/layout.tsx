@@ -9,13 +9,13 @@ import MotionProvider from '@/components/MotionProvider';
 const outfit = Outfit({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Famly Hub",
+  title: "Family Hub",
   description: "紀錄重要日期與食譜轉換",
   manifest: "/family_app/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Famly Hub",
+    title: "Family Hub",
   },
 };
 
